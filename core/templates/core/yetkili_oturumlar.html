@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oturumlar - Sınav Sistemi</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            color: #fff;
+        }
+        .sidebar-sticky {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 0.75rem 1rem;
+        }
+        .sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+        .main-content {
+            padding: 2rem;
+        }
+        .dashboard-header {
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+        .card-stats {
+            border-left: 4px solid #3a53a8;
+        }
+        .card-exam {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .card-exam:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+        }
+        .card-exam .card-body {
+            padding: 1.5rem;
+        }
+        .exam-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #3a53a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="sidebar-sticky">
+                    <div class="py-4 px-3 mb-4">
+                        <h5 class="text-light">Sınav Sistemi</h5>
+                        <div class="font-weight-light">Yetkili Paneli</div>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:yetkili_panel' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-person"></i> Kullanıcılar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-journal-check"></i> Sınavlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'core:oturumlar' %}">
+                                <i class="bi bi-card-list"></i> Oturumlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:oturum_ekle' %}">
+                                <i class="bi bi-plus-circle"></i> Oturum Ekle
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-bar-chart"></i> İstatistikler
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-gear"></i> Ayarlar
+                            </a>
+                        </li>
+                        <li class="nav-item mt-5">
+                            <a class="nav-link" href="{% url 'index' %}">
+                                <i class="bi bi-arrow-left"></i> Siteye Dön
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:cikis' %}">
+                                <i class="bi bi-box-arrow-right"></i> Çıkış Yap
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="dashboard-header d-flex justify-content-between flex-wrap">
+                    <h2>Sınav Oturumları</h2>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <a href="{% url 'core:oturum_ekle' %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-circle"></i> Yeni Oturum Ekle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Sınav Türleri Kartları -->
+                <div class="row g-4 mb-4">
+                    {% for sinav_turu in sinav_turleri %}
+                    <div class="col-md-4">
+                        <div class="card card-exam shadow-sm" data-sinav-turu="{{ sinav_turu.id }}" data-sinav-kod="{{ sinav_turu.kod }}">
+                            <div class="card-body text-center">
+                                <div class="exam-icon">
+                                    <i class="bi bi-{% if sinav_turu.ikon %}{{ sinav_turu.ikon }}{% else %}journal-check{% endif %}"></i>
+                                </div>
+                                <h3 class="card-title h4">{{ sinav_turu.ad }}</h3>
+                                <p class="card-text">{{ sinav_turu.aciklama|truncatechars:100 }}</p>
+                                <div class="d-flex justify-content-center">
+                                    <span class="badge bg-primary">{{ sinav_turu.kod }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            Henüz tanımlanmış sınav türü bulunmamaktadır. Lütfen önce sınav türleri tanımlayın.
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Alt Türler Modal -->
+    <div class="modal fade" id="altTurlerModal" tabindex="-1" aria-labelledby="altTurlerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="altTurlerModalLabel">Alt Türler</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="altTurlerListe" class="list-group">
+                        <!-- Alt türler burada dinamik olarak gösterilecek -->
+                    </div>
+                    <div id="noAltTurAlert" class="alert alert-warning mt-3" style="display: none;">
+                        Bu sınav türünün alt türleri bulunmamaktadır.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sınav türü kartlarına tıklama işlevi ekle
+            const sinavKartlari = document.querySelectorAll('.card-exam');
+            const altTurlerModal = new bootstrap.Modal(document.getElementById('altTurlerModal'));
+            const altTurlerListe = document.getElementById('altTurlerListe');
+            const noAltTurAlert = document.getElementById('noAltTurAlert');
+            const modalTitle = document.getElementById('altTurlerModalLabel');
+            
+            sinavKartlari.forEach(kart => {
+                kart.addEventListener('click', function() {
+                    const sinavTuruId = this.dataset.sinavTuru;
+                    const sinavKod = this.dataset.sinavKod;
+                    
+                    // Alt türleri getir
+                    fetch(`/api/sinav-turleri/${sinavTuruId}/alt-turler/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Modalı güncelle
+                            altTurlerListe.innerHTML = '';
+                            modalTitle.textContent = `${sinavKod} Alt Türleri`;
+                            
+                            if (data.length > 0) {
+                                // Alt türleri listele
+                                noAltTurAlert.style.display = 'none';
+                                data.forEach(altTur => {
+                                    const listItem = document.createElement('a');
+                                    listItem.href = `/yetkili/oturumlar/${sinavKod.toLowerCase()}/${altTur.kod.toLowerCase()}/`;
+                                    listItem.className = 'list-group-item list-group-item-action';
+                                    
+                                    const content = `
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">${altTur.ad}</h5>
+                                            <small class="text-muted">${altTur.kod}</small>
+                                        </div>
+                                        <p class="mb-1">${altTur.aciklama || ''}</p>
+                                    `;
+                                    
+                                    listItem.innerHTML = content;
+                                    altTurlerListe.appendChild(listItem);
+                                });
+                            } else {
+                                // Alt tür yoksa uyarı göster
+                                noAltTurAlert.style.display = 'block';
+                                
+                                // Doğrudan detay sayfasına yönlendir
+                                setTimeout(() => {
+                                    window.location.href = `/yetkili/oturumlar/${sinavKod.toLowerCase()}/`;
+                                }, 1500);
+                            }
+                            
+                            // Modalı göster
+                            altTurlerModal.show();
+                        })
+                        .catch(error => {
+                            console.error('Hata:', error);
+                            // Hata durumunda doğrudan sınav sayfasına yönlendir
+                            window.location.href = `/yetkili/oturumlar/${sinavKod.toLowerCase()}/`;
+                        });
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

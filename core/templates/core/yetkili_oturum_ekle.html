@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oturum Ekle - Yetkili Paneli</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            color: #fff;
+        }
+        .sidebar-sticky {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 0.75rem 1rem;
+        }
+        .sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+        .main-content {
+            padding: 2rem;
+        }
+        .dashboard-header {
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+        .card-stats {
+            border-left: 4px solid #3a53a8;
+        }
+        /* Bildirim modal stili */
+        .modal-notification {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-notification.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-notification-content {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .modal-notification-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .modal-notification-message {
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="sidebar-sticky">
+                    <div class="py-4 px-3 mb-4">
+                        <h5 class="text-light">Sınav Sistemi</h5>
+                        <div class="font-weight-light">Yetkili Paneli</div>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:yetkili_panel' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-person"></i> Kullanıcılar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-journal-check"></i> Sınavlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'core:oturum_ekle' %}">
+                                <i class="bi bi-plus-circle"></i> Oturum Ekle
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-bar-chart"></i> İstatistikler
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-gear"></i> Ayarlar
+                            </a>
+                        </li>
+                        <li class="nav-item mt-5">
+                            <a class="nav-link" href="{% url 'index' %}">
+                                <i class="bi bi-arrow-left"></i> Siteye Dön
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:cikis' %}">
+                                <i class="bi bi-box-arrow-right"></i> Çıkış Yap
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="dashboard-header d-flex justify-content-between flex-wrap">
+                    <h2>Yeni Oturum Ekle</h2>
+                </div>
+                
+                <!-- Modal Notification -->
+                <div id="modalNotification" class="modal-notification">
+                    <div class="modal-notification-content">
+                        <div id="modalNotificationIcon" class="modal-notification-icon"></div>
+                        <div id="modalNotificationMessage" class="modal-notification-message"></div>
+                    </div>
+                </div>
+                
+                <!-- Oturum Ekleme Formu -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Oturum Bilgilerini Girin</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="oturumForm" method="post">
+                            {% csrf_token %}
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="sinavTuru" class="form-label">Sınav Türü</label>
+                                    <select id="sinavTuru" name="sinav_turu" class="form-select" required>
+                                        <option value="" selected disabled>Sınav türü seçin</option>
+                                        <option value="YKS">YKS</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="altTur" class="form-label">Alt Tür</label>
+                                    <select id="altTur" name="alt_tur" class="form-select" required disabled>
+                                        <option value="" selected disabled>Önce sınav türü seçin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="tarih" class="form-label">Tarih</label>
+                                    <input type="date" class="form-control" id="tarih" name="tarih" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="saat" class="form-label">Saat</label>
+                                    <input type="time" class="form-control" id="saat" name="saat" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="durum" class="form-label">Durum</label>
+                                    <select id="durum" name="durum" class="form-select">
+                                        <option value="Bekliyor" selected>Bekliyor</option>
+                                        <option value="Geçmiş">Geçmiş</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i> Kaydet
+                                </button>
+                                <a href="{% url 'core:yetkili_panel' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle me-1"></i> İptal
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Sınav türlerini JSON olarak al
+        var sinavTurleri = {{ sinav_turleri|safe }};
+        
+        // Dropdown bağlantısını kur
+        document.addEventListener('DOMContentLoaded', function() {
+            const sinavTuruSelect = document.getElementById('sinavTuru');
+            const altTurSelect = document.getElementById('altTur');
+            
+            // Sınav türü seçildiğinde alt türleri güncelle
+            sinavTuruSelect.addEventListener('change', function() {
+                const selectedType = this.value;
+                altTurSelect.innerHTML = '<option value="" selected disabled>Alt tür seçin</option>';
+                
+                if (selectedType && sinavTurleri[selectedType]) {
+                    // Alt tür seçeneğini aktif et
+                    altTurSelect.disabled = false;
+                    
+                    // Alt türleri ekle
+                    sinavTurleri[selectedType].forEach(function(subType) {
+                        const option = document.createElement('option');
+                        option.value = subType;
+                        option.textContent = subType;
+                        altTurSelect.appendChild(option);
+                    });
+                } else {
+                    altTurSelect.disabled = true;
+                }
+            });
+            
+            // Form gönderimini yönet
+            const form = document.getElementById('oturumForm');
+            const modal = document.getElementById('modalNotification');
+            const modalIcon = document.getElementById('modalNotificationIcon');
+            const modalMessage = document.getElementById('modalNotificationMessage');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                
+                fetch('{% url "core:oturum_ekle" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Modal içeriğini hazırla
+                    modalIcon.innerHTML = data.success ? 
+                        '<i class="bi bi-check-circle text-success"></i>' : 
+                        '<i class="bi bi-x-circle text-danger"></i>';
+                        
+                    modalMessage.textContent = data.message;
+                    
+                    // Modalı göster
+                    modal.classList.add('show');
+                    
+                    // 3 saniye sonra modal kaybolsun
+                    setTimeout(() => {
+                        modal.classList.remove('show');
+                        
+                        // Başarılıysa ana sayfaya yönlendir
+                        if (data.success) {
+                            window.location.href = '{% url "core:yetkili_panel" %}';
+                        }
+                    }, 3000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    
+                    // Hata mesajı göster
+                    modalIcon.innerHTML = '<i class="bi bi-x-circle text-danger"></i>';
+                    modalMessage.textContent = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+                    
+                    // Modalı göster
+                    modal.classList.add('show');
+                    
+                    // 3 saniye sonra modal kaybolsun
+                    setTimeout(() => {
+                        modal.classList.remove('show');
+                    }, 3000);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1 @@
+# Core management paket tanımlama dosyası 

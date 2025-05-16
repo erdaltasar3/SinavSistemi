@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yetkili Paneli - Sınav Sistemi</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            color: #fff;
+        }
+        .sidebar-sticky {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 0.75rem 1rem;
+        }
+        .sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+        .main-content {
+            padding: 2rem;
+        }
+        .dashboard-header {
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+        .card-stats {
+            border-left: 4px solid #3a53a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="sidebar-sticky">
+                    <div class="py-4 px-3 mb-4">
+                        <h5 class="text-light">Sınav Sistemi</h5>
+                        <div class="font-weight-light">Yetkili Paneli</div>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'core:yetkili_panel' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-person"></i> Kullanıcılar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-journal-check"></i> Sınavlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:oturumlar' %}">
+                                <i class="bi bi-card-list"></i> Oturumlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:oturum_ekle' %}">
+                                <i class="bi bi-plus-circle"></i> Oturum Ekle
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-bar-chart"></i> İstatistikler
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-gear"></i> Ayarlar
+                            </a>
+                        </li>
+                        <li class="nav-item mt-5">
+                            <a class="nav-link" href="{% url 'index' %}">
+                                <i class="bi bi-arrow-left"></i> Siteye Dön
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:cikis' %}">
+                                <i class="bi bi-box-arrow-right"></i> Çıkış Yap
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="dashboard-header d-flex justify-content-between flex-wrap">
+                    <h2>Hoşgeldiniz, {{ user.first_name|default:user.username }}</h2>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Rapor Oluştur</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Dışa Aktar</button>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card card-stats mb-4 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Toplam Kullanıcı</h5>
+                                <h2 class="text-primary">{{ kullanici_sayisi|default:"0" }}</h2>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-arrow-up text-success"></i> %12 artış
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-stats mb-4 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Aktif Sınav</h5>
+                                <h2 class="text-primary">{{ aktif_sinav_sayisi|default:"0" }}</h2>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-arrow-up text-success"></i> %5 artış
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-stats mb-4 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Tamamlanan Sınav</h5>
+                                <h2 class="text-primary">{{ tamamlanan_sinav_sayisi|default:"0" }}</h2>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-arrow-up text-success"></i> %18 artış
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-stats mb-4 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">Ortalama Başarı</h5>
+                                <h2 class="text-primary">%{{ ortalama_basari|default:"0" }}</h2>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-arrow-down text-danger"></i> %3 düşüş
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Son Aktiviteler</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Kullanıcı</th>
+                                        <th>İşlem</th>
+                                        <th>Tarih</th>
+                                        <th>Durum</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Ahmet Yılmaz</td>
+                                        <td>YKS TYT Deneme Sınavı</td>
+                                        <td>10 Mayıs 2025, 14:30</td>
+                                        <td><span class="badge bg-success">Tamamlandı</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ayşe Kaya</td>
+                                        <td>YKS AYT Deneme Sınavı</td>
+                                        <td>10 Mayıs 2025, 13:15</td>
+                                        <td><span class="badge bg-success">Tamamlandı</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mehmet Demir</td>
+                                        <td>YKS TYT Deneme Sınavı</td>
+                                        <td>10 Mayıs 2025, 12:45</td>
+                                        <td><span class="badge bg-warning text-dark">Devam Ediyor</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Zeynep Şahin</td>
+                                        <td>YKS AYT Deneme Sınavı</td>
+                                        <td>10 Mayıs 2025, 11:30</td>
+                                        <td><span class="badge bg-danger">İptal Edildi</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

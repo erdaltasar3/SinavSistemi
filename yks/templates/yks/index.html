@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}YKS - Sınav Sistemi{% endblock %}
+
+{% block content %}
+
+
+<!-- Oturumlar Section -->
+<div class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Yaklaşan YKS Oturumları</h2>
+        
+        {% if oturumlar %}
+            <div class="row g-4">
+                {% for oturum in oturumlar %}
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h3 class="card-title">{{ oturum.ad }}</h3>
+                                <h5 class="card-subtitle mb-2 text-muted">{{ oturum.kod }} - {{ oturum.yil }}</h5>
+                                <p class="card-text">{{ oturum.aciklama|default:"Açıklama bulunmuyor." }}</p>
+                                {% if oturum.sinav_tarihi %}
+                                    <div class="mt-3 d-flex align-items-center">
+                                        <i class="bi bi-calendar-event text-primary me-2"></i>
+                                        <strong>Sınav Tarihi:</strong> 
+                                        <span class="ms-2">{{ oturum.sinav_tarihi|date:"d F Y, H:i" }}</span>
+                                    </div>
+                                {% endif %}
+                                
+                                
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                Henüz YKS oturumu bulunmamaktadır. Lütfen daha sonra tekrar kontrol ediniz.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">YKS Hakkında</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title h4">TYT</h3>
+                        <p class="card-text">Temel Yeterlilik Testi: Türkçe, matematik, fen bilimleri ve sosyal bilimler testlerinden oluşur.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title h4">AYT</h3>
+                        <p class="card-text">Alan Yeterlilik Testi: Matematik, fen bilimleri, Türk dili ve edebiyatı-sosyal bilimler testlerinden oluşur.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title h4">YDT</h3>
+                        <p class="card-text">Yabancı Dil Testi: İngilizce, Almanca, Fransızca, Rusça veya Arapça dillerinden birinde sınav yapılır.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ alt_tur.ad }} Detayları - Sınav Sistemi</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            color: #fff;
+        }
+        .sidebar-sticky {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 0.75rem 1rem;
+        }
+        .sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+        .main-content {
+            padding: 2rem;
+        }
+        .dashboard-header {
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+        .header-icon {
+            font-size: 2.5rem;
+            margin-right: 1rem;
+            color: #3a53a8;
+        }
+        .breadcrumb a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="sidebar-sticky">
+                    <div class="py-4 px-3 mb-4">
+                        <h5 class="text-light">Sınav Sistemi</h5>
+                        <div class="font-weight-light">Yetkili Paneli</div>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:yetkili_panel' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-person"></i> Kullanıcılar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-journal-check"></i> Sınavlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'core:oturumlar' %}">
+                                <i class="bi bi-card-list"></i> Oturumlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:oturum_ekle' %}">
+                                <i class="bi bi-plus-circle"></i> Oturum Ekle
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-bar-chart"></i> İstatistikler
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-gear"></i> Ayarlar
+                            </a>
+                        </li>
+                        <li class="nav-item mt-5">
+                            <a class="nav-link" href="{% url 'index' %}">
+                                <i class="bi bi-arrow-left"></i> Siteye Dön
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:cikis' %}">
+                                <i class="bi bi-box-arrow-right"></i> Çıkış Yap
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mt-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'core:oturumlar' %}">Oturumlar</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'core:oturum_detay' sinav_turu.kod %}">{{ sinav_turu.ad }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ alt_tur.ad }}</li>
+                    </ol>
+                </nav>
+                
+                <div class="dashboard-header d-flex justify-content-between flex-wrap">
+                    <div class="d-flex align-items-center">
+                        <div class="header-icon">
+                            <i class="bi bi-{% if alt_tur.ikon %}{{ alt_tur.ikon }}{% else %}journal-check{% endif %}"></i>
+                        </div>
+                        <div>
+                            <h2>{{ alt_tur.ad }}</h2>
+                            <div class="text-muted">{{ sinav_turu.kod }} - {{ alt_tur.kod }}</div>
+                        </div>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <a href="{% url 'core:oturum_detay' sinav_turu.kod %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> {{ sinav_turu.ad }}'a Dön
+                            </a>
+                            <a href="{% url 'core:oturum_ekle' %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-circle"></i> Yeni Oturum Ekle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Alt Tür Açıklaması -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Açıklama</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if alt_tur.aciklama %}
+                            <p>{{ alt_tur.aciklama }}</p>
+                        {% else %}
+                            <p class="text-muted">Bu alt tür için açıklama bulunmamaktadır.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Dersler Bölümü -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Dersler</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dersEkleModal">
+                            <i class="bi bi-plus-circle"></i> Ders Ekle
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Kod</th>
+                                        <th>Ad</th>
+                                        <th>Açıklama</th>
+                                        <th>Durum</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="derslerListesi">
+                                    {% for ders in alt_tur.dersler.all %}
+                                    <tr>
+                                        <td>{{ ders.kod }}</td>
+                                        <td>{{ ders.ad }}</td>
+                                        <td>{{ ders.aciklama|truncatechars:50 }}</td>
+                                        <td>
+                                            {% if ders.aktif %}
+                                            <span class="badge bg-success">Aktif</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">Pasif</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button type="button" class="btn btn-outline-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr id="noData">
+                                        <td colspan="5" class="text-center">
+                                            <div class="py-4 text-muted">
+                                                <div class="mb-3">
+                                                    <i class="bi bi-info-circle" style="font-size: 2rem;"></i>
+                                                </div>
+                                                <p>Bu alt türe ait ders bulunmamaktadır.</p>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dersEkleModal">
+                                                    <i class="bi bi-plus-circle"></i> Ders Ekle
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Oturumlar Bölümü (Gelecekte eklenecek) -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Oturumlar</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted text-center py-4">
+                            <i class="bi bi-tools d-block mb-3" style="font-size: 2rem;"></i>
+                            Bu bölüm yapım aşamasındadır. Oturumlar yakında burada listelenecektir.
+                        </p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Ders Ekleme Modal -->
+    <div class="modal fade" id="dersEkleModal" tabindex="-1" aria-labelledby="dersEkleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dersEkleModalLabel">Yeni Ders Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dersEkleForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="alt_tur_id" value="{{ alt_tur.id }}">
+                        <input type="hidden" name="sinav_turu_id" value="{{ sinav_turu.id }}">
+                        
+                        <div class="mb-3">
+                            <label for="dersAd" class="form-label">Ders Adı</label>
+                            <input type="text" class="form-control" id="dersAd" name="ad" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="dersKod" class="form-label">Ders Kodu</label>
+                            <input type="text" class="form-control" id="dersKod" name="kod" required maxlength="10">
+                            <div class="form-text">Ders için benzersiz bir kod girin (örn: MAT, TUR, FIZ)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="dersAciklama" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="dersAciklama" name="aciklama" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="dersIkon" class="form-label">İkon Kodu</label>
+                            <input type="text" class="form-control" id="dersIkon" name="ikon">
+                            <div class="form-text">
+                                <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a> adresinden ikon seçebilirsiniz.
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div id="dersEkleAlert" class="alert d-none mt-3">
+                        <span id="dersEkleAlertMessage"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="dersEkleButton">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dersEkleForm = document.getElementById('dersEkleForm');
+            const dersEkleButton = document.getElementById('dersEkleButton');
+            const dersEkleAlert = document.getElementById('dersEkleAlert');
+            const dersEkleAlertMessage = document.getElementById('dersEkleAlertMessage');
+            const derslerListesi = document.getElementById('derslerListesi');
+            const noData = document.getElementById('noData');
+            const dersEkleModal = new bootstrap.Modal(document.getElementById('dersEkleModal'));
+            
+            dersEkleButton.addEventListener('click', function() {
+                // Form verilerini al
+                const formData = new FormData(dersEkleForm);
+                
+                // Form verilerini gönder
+                fetch('{% url "core:ders_ekle" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Başarılı mesajını göster
+                        dersEkleAlert.classList.remove('d-none', 'alert-danger');
+                        dersEkleAlert.classList.add('alert-success');
+                        dersEkleAlertMessage.textContent = data.message;
+                        
+                        // Formu temizle
+                        dersEkleForm.reset();
+                        
+                        // noData mesajını kaldır (eğer varsa)
+                        if (noData) {
+                            noData.remove();
+                        }
+                        
+                        // Yeni dersi tabloya ekle
+                        const ders = data.ders;
+                        const newRow = document.createElement('tr');
+                        newRow.innerHTML = `
+                            <td>${ders.kod}</td>
+                            <td>${ders.ad}</td>
+                            <td>${ders.aciklama || ''}</td>
+                            <td><span class="badge bg-success">Aktif</span></td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        derslerListesi.appendChild(newRow);
+                        
+                        // 2 saniye sonra modalı kapat
+                        setTimeout(() => {
+                            dersEkleModal.hide();
+                            dersEkleAlert.classList.add('d-none');
+                        }, 2000);
+                    } else {
+                        // Hata mesajını göster
+                        dersEkleAlert.classList.remove('d-none', 'alert-success');
+                        dersEkleAlert.classList.add('alert-danger');
+                        dersEkleAlertMessage.textContent = data.message;
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    dersEkleAlert.classList.remove('d-none', 'alert-success');
+                    dersEkleAlert.classList.add('alert-danger');
+                    dersEkleAlertMessage.textContent = 'Bir hata oluştu. Lütfen tekrar deneyin.';
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

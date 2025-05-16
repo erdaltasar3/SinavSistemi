@@ -1,0 +1,72 @@
+from django.db import models
+
+# Create your models here.
+
+class SinavTurleri(models.Model):
+    """Sınav sisteminde bulunan sınav türleri"""
+    ad = models.CharField(max_length=50, verbose_name="Sınav Adı")
+    kod = models.CharField(max_length=10, unique=True, verbose_name="Sınav Kodu")
+    aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
+    aktif = models.BooleanField(default=True, verbose_name="Aktif")
+    ikon = models.CharField(max_length=50, blank=True, null=True, verbose_name="İkon Kodu")
+    url = models.CharField(max_length=100, verbose_name="URL")
+    
+    def __str__(self):
+        return self.ad
+    
+    class Meta:
+        verbose_name = "Sınav Türü"
+        verbose_name_plural = "Sınav Türleri"
+
+class SinavAltTur(models.Model):
+    """Sınav türlerinin alt türleri (YKS -> TYT, AYT, YDT gibi)"""
+    sinav_turu = models.ForeignKey(SinavTurleri, on_delete=models.CASCADE, related_name="alt_turler", verbose_name="Bağlı Olduğu Sınav")
+    ad = models.CharField(max_length=100, verbose_name="Alt Tür Adı")
+    kod = models.CharField(max_length=20, verbose_name="Alt Tür Kodu")
+    aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
+    ikon = models.CharField(max_length=50, blank=True, null=True, verbose_name="İkon Kodu")
+    aktif = models.BooleanField(default=True, verbose_name="Aktif")
+    
+    def __str__(self):
+        return f"{self.sinav_turu.kod} - {self.ad}"
+    
+    class Meta:
+        verbose_name = "Sınav Alt Türü"
+        verbose_name_plural = "Sınav Alt Türleri"
+        unique_together = ('sinav_turu', 'kod')
+
+class Ders(models.Model):
+    """Sınav türlerinde veya alt türlerinde bulunan dersler"""
+    sinav_turu = models.ForeignKey(SinavTurleri, on_delete=models.CASCADE, related_name="dersler", verbose_name="Bağlı Olduğu Sınav Türü", blank=True, null=True)
+    alt_tur = models.ForeignKey(SinavAltTur, on_delete=models.CASCADE, related_name="dersler", verbose_name="Bağlı Olduğu Alt Tür", blank=True, null=True)
+    ad = models.CharField(max_length=100, verbose_name="Ders Adı")
+    kod = models.CharField(max_length=20, verbose_name="Ders Kodu")
+    aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
+    ikon = models.CharField(max_length=50, blank=True, null=True, verbose_name="İkon Kodu") 
+    aktif = models.BooleanField(default=True, verbose_name="Aktif")
+    
+    def __str__(self):
+        if self.alt_tur:
+            return f"{self.alt_tur.kod} - {self.ad}"
+        elif self.sinav_turu:
+            return f"{self.sinav_turu.kod} - {self.ad}"
+        else:
+            return self.ad
+    
+    class Meta:
+        verbose_name = "Ders"
+        verbose_name_plural = "Dersler"
+        unique_together = [('alt_tur', 'kod')]
+        
+    def clean(self):
+        # Bir ders ya bir sınav türüne ya da bir alt türe bağlı olmalıdır, ikisi birden veya hiçbiri olamaz
+        from django.core.exceptions import ValidationError
+        
+        if self.sinav_turu and self.alt_tur:
+            raise ValidationError("Bir ders aynı anda hem sınav türüne hem de alt türe bağlı olamaz.")
+        elif not self.sinav_turu and not self.alt_tur:
+            raise ValidationError("Bir ders ya bir sınav türüne ya da bir alt türe bağlı olmalıdır.")
+            
+        # Eğer alt türe bağlıysa, sinav_turu'nu otomatik olarak alt türün bağlı olduğu sınav türü yap
+        if self.alt_tur and not self.sinav_turu:
+            self.sinav_turu = self.alt_tur.sinav_turu

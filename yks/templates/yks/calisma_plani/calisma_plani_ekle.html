@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Yeni Çalışma Planı - YKS Hazırlık{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- YKS Hazırlık Navigasyon Menüsü -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <nav class="nav nav-pills nav-fill">
+                        <a class="nav-link" href="{% url 'yks:hedef_listesi' %}">
+                            <i class="bi bi-bullseye me-2"></i> Hedeflerim
+                        </a>
+                        <a class="nav-link active" href="{% url 'yks:calisma_plani_listesi' %}">
+                            <i class="bi bi-calendar3-week me-2"></i> Çalışma Planı
+                        </a>
+                        <a class="nav-link" href="{% url 'yks:gorev_listesi' %}">
+                            <i class="bi bi-check2-square me-2"></i> Görevlerim
+                        </a>
+                        <a class="nav-link" href="{% url 'yks:hatirlatici_listesi' %}">
+                            <i class="bi bi-bell me-2"></i> Hatırlatıcılar
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sol Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="d-grid gap-3">
+                <!-- Tarih Kartı -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-calendar3-plus me-2"></i> Yeni Plan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-4 mx-auto mb-3" style="width: 100px; height: 100px;">
+                                <i class="bi bi-calendar-plus-fill text-primary fs-1"></i>
+                            </div>
+                            <h5>Çalışma Planı Oluştur</h5>
+                            <p class="text-muted small">Günlük çalışma planı oluşturabilirsiniz</p>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Bilgi:</strong> Çalışma planı oluşturduktan sonra, plan detay sayfasından çalışma oturumları ekleyebilirsiniz.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hızlı Erişim Menüsü -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i> Hızlı Erişim</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            <a href="{% url 'yks:calisma_plani_listesi' %}" class="list-group-item list-group-item-action py-3">
+                                <i class="bi bi-arrow-left-circle-fill text-primary me-2"></i> Plan Listesine Dön
+                            </a>
+                            <a href="{% url 'yks:hedef_listesi' %}" class="list-group-item list-group-item-action py-3">
+                                <i class="bi bi-bullseye-fill text-primary me-2"></i> Hedeflerim
+                            </a>
+                            <a href="{% url 'yks:gorev_listesi' %}" class="list-group-item list-group-item-action py-3">
+                                <i class="bi bi-check2-square me-2"></i> Görevlerim
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- İpuçları Kartı -->
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="bi bi-lightbulb me-2"></i> Plan İpuçları</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-transparent px-0">
+                                <i class="bi bi-check2-circle text-success me-2"></i> Her gün için düzenli çalışma planı oluşturun
+                            </li>
+                            <li class="list-group-item bg-transparent px-0">
+                                <i class="bi bi-check2-circle text-success me-2"></i> Farklı dersler için ayrı oturumlar planlayın
+                            </li>
+                            <li class="list-group-item bg-transparent px-0">
+                                <i class="bi bi-check2-circle text-success me-2"></i> Molalar için de zaman ayırın
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ana İçerik Alanı - Form -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h1 class="h3 mb-0"><i class="bi bi-plus-circle me-2"></i> Yeni Çalışma Planı Oluştur</h1>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.tarih.id_for_label }}" class="form-label">Plan Tarihi *</label>
+                                {{ form.tarih }}
+                                {% if form.tarih.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.tarih.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Planın uygulanacağı tarihi seçin.</div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="{{ form.notlar.id_for_label }}" class="form-label">Notlar</label>
+                                {{ form.notlar }}
+                                {% if form.notlar.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.notlar.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Plan hakkında genel notlar veya hatırlatıcılar yazabilirsiniz.</div>
+                            </div>
+                            
+                            <div class="col-12 mt-4">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    Planı oluşturduktan sonra, plan detay sayfasından çalışma oturumları ekleyebilirsiniz.
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 mt-2">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'yks:calisma_plani_listesi' %}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-2"></i> İptal
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-plus-circle me-2"></i> Planı Oluştur
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // DatePicker için flatpickr gibi bir kütüphane eklenmişse burada konfigürasyonu yapılabilir
+        if (typeof flatpickr !== 'undefined') {
+            flatpickr("input[type=date]", {
+                dateFormat: "Y-m-d",
+                locale: {
+                    firstDayOfWeek: 1
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

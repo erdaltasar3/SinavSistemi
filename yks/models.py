@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from core.models import Ders, Konu
+from django.urls import reverse
 
 # Create your models here.
 
@@ -69,5 +70,186 @@ class KonuTakip(models.Model):
         verbose_name_plural = "Konu Takipleri"
         ordering = ['-tamamlanma_tarihi']
         unique_together = ('kullanici', 'konu')  # Bir kullanıcı bir konuyu yalnızca bir kez tamamlayabilir
+
+
+# Hedef Belirleme ve Takip Modelleri
+class HedefTuru(models.Model):
+    """Hedef türleri (günlük, haftalık, aylık, özel)"""
+    
+    GUNLUK = 'Günlük'
+    HAFTALIK = 'Haftalık'
+    AYLIK = 'Aylık'
+    OZEL = 'Özel'
+    
+    TUR_CHOICES = [
+        (GUNLUK, 'Günlük'),
+        (HAFTALIK, 'Haftalık'),
+        (AYLIK, 'Aylık'),
+        (OZEL, 'Özel')
+    ]
+    
+    ad = models.CharField(max_length=20, choices=TUR_CHOICES, default=GUNLUK, verbose_name="Hedef Türü")
+    aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
+    
+    def __str__(self):
+        return self.ad
+    
+    class Meta:
+        verbose_name = "Hedef Türü"
+        verbose_name_plural = "Hedef Türleri"
+
+
+class Hedef(models.Model):
+    """Kullanıcının belirlediği çalışma hedefleri"""
+    
+    DURUM_AKTIF = 'Aktif'
+    DURUM_TAMAMLANDI = 'Tamamlandı'
+    DURUM_IPTAL = 'İptal'
+    
+    DURUM_CHOICES = [
+        (DURUM_AKTIF, 'Aktif'),
+        (DURUM_TAMAMLANDI, 'Tamamlandı'),
+        (DURUM_IPTAL, 'İptal')
+    ]
+    
+    ONCELIK_DUSUK = 'Düşük'
+    ONCELIK_ORTA = 'Orta'
+    ONCELIK_YUKSEK = 'Yüksek'
+    
+    ONCELIK_CHOICES = [
+        (ONCELIK_DUSUK, 'Düşük'),
+        (ONCELIK_ORTA, 'Orta'),
+        (ONCELIK_YUKSEK, 'Yüksek')
+    ]
+    
+    kullanici = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hedefler', verbose_name="Kullanıcı")
+    baslik = models.CharField(max_length=200, verbose_name="Hedef Başlığı")
+    aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
+    tur = models.ForeignKey(HedefTuru, on_delete=models.CASCADE, related_name='hedefler', verbose_name="Hedef Türü")
+    baslangic_tarihi = models.DateField(verbose_name="Başlangıç Tarihi", default=timezone.now)
+    bitis_tarihi = models.DateField(verbose_name="Bitiş Tarihi", blank=True, null=True)
+    durum = models.CharField(max_length=20, choices=DURUM_CHOICES, default=DURUM_AKTIF, verbose_name="Durum")
+    oncelik = models.CharField(max_length=10, choices=ONCELIK_CHOICES, default=ONCELIK_ORTA, verbose_name="Öncelik")
+    tamamlanma_orani = models.IntegerField(default=0, verbose_name="Tamamlanma Oranı (%)")
+    ders = models.ForeignKey(Ders, on_delete=models.SET_NULL, blank=True, null=True, related_name='hedefler', verbose_name="İlgili Ders")
+    olusturma_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturma Tarihi")
+    guncelleme_tarihi = models.DateTimeField(auto_now=True, verbose_name="Güncelleme Tarihi")
+    
+    def __str__(self):
+        return f"{self.kullanici.username} - {self.baslik}"
+    
+    class Meta:
+        verbose_name = "Hedef"
+        verbose_name_plural = "Hedefler"
+        ordering = ['-olusturma_tarihi']
+
+
+class CalismaPlanı(models.Model):
+    """Günlük çalışma planları"""
+    
+    kullanici = models.ForeignKey(User, on_delete=models.CASCADE, related_name='calisma_planlari', verbose_name="Kullanıcı")
+    tarih = models.DateField(verbose_name="Çalışma Tarihi", default=timezone.now)
+    toplam_calisma_suresi = models.PositiveIntegerField(default=0, verbose_name="Toplam Çalışma Süresi (dakika)")
+    notlar = models.TextField(blank=True, null=True, verbose_name="Notlar")
+    olusturma_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturma Tarihi")
+    guncelleme_tarihi = models.DateTimeField(auto_now=True, verbose_name="Güncelleme Tarihi")
+    
+    def __str__(self):
+        return f"{self.kullanici.username} - {self.tarih}"
+    
+    def get_absolute_url(self):
+        return reverse('yks:calisma_plani_detay', kwargs={'plan_id': self.pk})
+    
+    class Meta:
+        verbose_name = "Çalışma Planı"
+        verbose_name_plural = "Çalışma Planları"
+        ordering = ['-tarih']
+        unique_together = ('kullanici', 'tarih')  # Bir kullanıcı bir gün için tek bir plan oluşturabilir
+
+
+class CalismaOturumu(models.Model):
+    """Çalışma planına bağlı oturumlar"""
+    
+    plan = models.ForeignKey(CalismaPlanı, on_delete=models.CASCADE, related_name='oturumlar', verbose_name="Çalışma Planı")
+    ders = models.ForeignKey(Ders, on_delete=models.CASCADE, related_name='calisma_oturumlari', verbose_name="Ders")
+    konu = models.ForeignKey(Konu, on_delete=models.SET_NULL, blank=True, null=True, related_name='calisma_oturumlari', verbose_name="Konu")
+    baslangic_saati = models.TimeField(verbose_name="Başlangıç Saati")
+    bitis_saati = models.TimeField(verbose_name="Bitiş Saati")
+    sure = models.PositiveIntegerField(verbose_name="Süre (dakika)")
+    tamamlandi = models.BooleanField(default=False, verbose_name="Tamamlandı")
+    notlar = models.TextField(blank=True, null=True, verbose_name="Notlar")
+    
+    def __str__(self):
+        return f"{self.ders.ad} - {self.baslangic_saati} - {self.bitis_saati}"
+    
+    class Meta:
+        verbose_name = "Çalışma Oturumu"
+        verbose_name_plural = "Çalışma Oturumları"
+        ordering = ['baslangic_saati']
+
+
+class Gorev(models.Model):
+    """Yapılacaklar listesi görevleri"""
+    
+    DURUM_BEKLIYOR = 'Bekliyor'
+    DURUM_TAMAMLANDI = 'Tamamlandı'
+    DURUM_ERTELENDI = 'Ertelendi'
+    DURUM_IPTAL = 'İptal'
+    
+    DURUM_CHOICES = [
+        (DURUM_BEKLIYOR, 'Bekliyor'),
+        (DURUM_TAMAMLANDI, 'Tamamlandı'),
+        (DURUM_ERTELENDI, 'Ertelendi'),
+        (DURUM_IPTAL, 'İptal')
+    ]
+    
+    ONCELIK_DUSUK = 'Düşük'
+    ONCELIK_ORTA = 'Orta'
+    ONCELIK_YUKSEK = 'Yüksek'
+    
+    ONCELIK_CHOICES = [
+        (ONCELIK_DUSUK, 'Düşük'),
+        (ONCELIK_ORTA, 'Orta'),
+        (ONCELIK_YUKSEK, 'Yüksek')
+    ]
+    
+    kullanici = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gorevler', verbose_name="Kullanıcı")
+    baslik = models.CharField(max_length=200, verbose_name="Görev Başlığı")
+    aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
+    son_tarih = models.DateField(blank=True, null=True, verbose_name="Son Tarih")
+    durum = models.CharField(max_length=20, choices=DURUM_CHOICES, default=DURUM_BEKLIYOR, verbose_name="Durum")
+    oncelik = models.CharField(max_length=10, choices=ONCELIK_CHOICES, default=ONCELIK_ORTA, verbose_name="Öncelik")
+    olusturma_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturma Tarihi")
+    guncelleme_tarihi = models.DateTimeField(auto_now=True, verbose_name="Güncelleme Tarihi")
+    
+    def __str__(self):
+        return f"{self.kullanici.username} - {self.baslik}"
+    
+    class Meta:
+        verbose_name = "Görev"
+        verbose_name_plural = "Görevler"
+        ordering = ['son_tarih', 'oncelik']
+
+
+class Hatirlatici(models.Model):
+    """Çalışma hatırlatıcıları"""
+    
+    kullanici = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hatirlaticilar', verbose_name="Kullanıcı")
+    baslik = models.CharField(max_length=200, verbose_name="Hatırlatıcı Başlığı")
+    aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
+    hatirlatma_tarihi = models.DateTimeField(verbose_name="Hatırlatma Tarihi ve Saati")
+    tekrar = models.BooleanField(default=False, verbose_name="Tekrarla")
+    tekrar_periyodu = models.CharField(max_length=20, blank=True, null=True, verbose_name="Tekrar Periyodu")
+    aktif = models.BooleanField(default=True, verbose_name="Aktif")
+    olusturma_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturma Tarihi")
+    guncelleme_tarihi = models.DateTimeField(auto_now=True, verbose_name="Güncelleme Tarihi")
+    
+    def __str__(self):
+        return f"{self.kullanici.username} - {self.baslik}"
+    
+    class Meta:
+        verbose_name = "Hatırlatıcı"
+        verbose_name_plural = "Hatırlatıcılar"
+        ordering = ['hatirlatma_tarihi']
 
 

@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+
+{% block title %}Hatırlatıcı Düzenle - YKS Hazırlık{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- YKS Hazırlık Navigasyon Menüsü -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <nav class="nav nav-pills nav-fill">
+                        <a class="nav-link" href="{% url 'yks:hedef_listesi' %}">
+                            <i class="bi bi-bullseye me-2"></i> Hedeflerim
+                        </a>
+                        <a class="nav-link" href="{% url 'yks:calisma_plani_listesi' %}">
+                            <i class="bi bi-calendar3-week me-2"></i> Çalışma Planı
+                        </a>
+                        <a class="nav-link" href="{% url 'yks:gorev_listesi' %}">
+                            <i class="bi bi-check2-square me-2"></i> Görevlerim
+                        </a>
+                        <a class="nav-link active" href="{% url 'yks:hatirlatici_listesi' %}">
+                            <i class="bi bi-bell me-2"></i> Hatırlatıcılar
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Sol Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="d-grid gap-3">
+                <!-- Hatırlatıcı Kartı -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-warning text-dark py-3">
+                        <h5 class="mb-0"><i class="bi bi-bell-fill me-2"></i> Hatırlatıcı Düzenle</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-4 mx-auto mb-3" style="width: 100px; height: 100px;">
+                                <i class="bi bi-pencil-square text-warning fs-1"></i>
+                            </div>
+                            <h5>{{ hatirlatici.baslik }}</h5>
+                            <span class="badge bg-light text-dark mb-2">
+                                <i class="bi bi-calendar3 text-primary me-1"></i> {{ hatirlatici.hatirlatma_tarihi|date:"d.m.Y" }}
+                            </span>
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-clock me-1"></i> {{ hatirlatici.hatirlatma_tarihi|time:"H:i" }}
+                            </span>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Düzenleme:</strong> Hatırlatıcı bilgilerini güncelleyebilirsiniz.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hızlı Erişim Menüsü -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i> Hızlı Erişim</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            <a href="{% url 'yks:hatirlatici_listesi' %}" class="list-group-item list-group-item-action py-3">
+                                <i class="bi bi-arrow-left-circle-fill text-primary me-2"></i> Hatırlatıcı Listesine Dön
+                            </a>
+                            <a href="{% url 'yks:hatirlatici_ekle' %}" class="list-group-item list-group-item-action py-3">
+                                <i class="bi bi-plus-circle-fill text-success me-2"></i> Yeni Hatırlatıcı Ekle
+                            </a>
+                            <form method="POST" action="{% url 'yks:hatirlatici_durum_guncelle' hatirlatici.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="aktif" value="{% if hatirlatici.aktif %}false{% else %}true{% endif %}">
+                                <button type="submit" class="list-group-item list-group-item-action py-3 text-start w-100 border-0">
+                                    <i class="bi bi-{% if hatirlatici.aktif %}pause-fill text-warning{% else %}play-fill text-success{% endif %} me-2"></i>
+                                    {% if hatirlatici.aktif %}Hatırlatıcıyı Devre Dışı Bırak{% else %}Hatırlatıcıyı Aktifleştir{% endif %}
+                                </button>
+                            </form>
+                            <a href="{% url 'yks:hatirlatici_sil' hatirlatici.id %}" class="list-group-item list-group-item-action py-3 text-danger">
+                                <i class="bi bi-trash-fill me-2"></i> Hatırlatıcıyı Sil
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Durum Kartı -->
+                <div class="card border-0 shadow-sm bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="bi bi-info-circle me-2"></i> Hatırlatıcı Durumu</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0">
+                                <span>Durum</span>
+                                <span class="badge bg-{% if hatirlatici.aktif %}success{% else %}secondary{% endif %}">
+                                    {% if hatirlatici.aktif %}Aktif{% else %}Pasif{% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0">
+                                <span>Tekrar</span>
+                                <span class="badge bg-{% if hatirlatici.tekrar %}info{% else %}secondary{% endif %} text-dark">
+                                    {% if hatirlatici.tekrar %}{{ hatirlatici.tekrar_periyodu|default:"Tekrarlı" }}{% else %}Tek Seferlik{% endif %}
+                                </span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0">
+                                <span>Oluşturulma</span>
+                                <span class="badge bg-light text-dark">{{ hatirlatici.olusturma_tarihi|date:"d.m.Y H:i" }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0">
+                                <span>Son Güncelleme</span>
+                                <span class="badge bg-light text-dark">{{ hatirlatici.guncelleme_tarihi|date:"d.m.Y H:i" }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ana İçerik Alanı - Form -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0"><i class="bi bi-pencil-square me-2"></i> Hatırlatıcı Düzenle</h1>
+                    <span class="badge bg-{% if hatirlatici.aktif %}success{% else %}secondary{% endif %} fs-6">
+                        {% if hatirlatici.aktif %}Aktif{% else %}Pasif{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <label for="{{ form.baslik.id_for_label }}" class="form-label">Hatırlatıcı Başlığı *</label>
+                                {{ form.baslik }}
+                                {% if form.baslik.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.baslik.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Hatırlatıcınız için kısa ve açıklayıcı bir başlık girin.</div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="{{ form.aciklama.id_for_label }}" class="form-label">Açıklama</label>
+                                {{ form.aciklama }}
+                                {% if form.aciklama.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.aciklama.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Hatırlatıcı ile ilgili detaylı açıklama yazabilirsiniz.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.hatirlatma_tarihi.id_for_label }}" class="form-label">Hatırlatma Tarihi ve Saati *</label>
+                                {{ form.hatirlatma_tarihi }}
+                                {% if form.hatirlatma_tarihi.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.hatirlatma_tarihi.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Hatırlatıcının gösterileceği tarih ve saat.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mt-4">
+                                    {{ form.tekrar }}
+                                    <label class="form-check-label" for="{{ form.tekrar.id_for_label }}">
+                                        Hatırlatıcıyı Tekrarla
+                                    </label>
+                                </div>
+                                {% if form.tekrar.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.tekrar.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Hatırlatıcının belirli periyotlarla tekrarlanmasını istiyorsanız seçin.</div>
+                                
+                                <div id="tekrarDetay" class="mt-3" style="display: {% if form.tekrar.value %}block{% else %}none{% endif %};">
+                                    <label for="{{ form.tekrar_periyodu.id_for_label }}" class="form-label">Tekrar Periyodu</label>
+                                    {{ form.tekrar_periyodu }}
+                                    {% if form.tekrar_periyodu.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.tekrar_periyodu.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Hatırlatıcının hangi sıklıkla tekrarlanacağını seçin.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    {{ form.aktif }}
+                                    <label class="form-check-label" for="{{ form.aktif.id_for_label }}">
+                                        Hatırlatıcı Aktif
+                                    </label>
+                                </div>
+                                {% if form.aktif.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.aktif.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Hatırlatıcıyı devre dışı bırakmak için kapatın.</div>
+                            </div>
+                            
+                            <div class="col-12 mt-4">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <a href="{% url 'yks:hatirlatici_listesi' %}" class="btn btn-outline-secondary me-2">
+                                            <i class="bi bi-x-circle me-2"></i> İptal
+                                        </a>
+                                        <a href="{% url 'yks:hatirlatici_sil' hatirlatici.id %}" class="btn btn-outline-danger">
+                                            <i class="bi bi-trash me-2"></i> Sil
+                                        </a>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-check2-circle me-2"></i> Değişiklikleri Kaydet
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Geçmiş Kartı -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i> Hatırlatıcı Geçmişi</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i> Hatırlatıcı üzerinde yapılan değişiklikler burada görüntülenecektir. Bu özellik yakında eklenecektir.
+                    </div>
+                    <div class="p-4 text-center bg-light rounded">
+                        <i class="bi bi-hourglass text-muted display-1 mb-3"></i>
+                        <h5>Yakında Burada</h5>
+                        <p class="text-muted">Hatırlatıcı geçmişi ve istatistikler burada görünecek.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tekrar checkbox değişikliklerini izle
+        const tekrarCheckbox = document.getElementById('{{ form.tekrar.id_for_label }}');
+        const tekrarDetay = document.getElementById('tekrarDetay');
+        
+        // Değişiklikleri dinle
+        tekrarCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                tekrarDetay.style.display = 'block';
+            } else {
+                tekrarDetay.style.display = 'none';
+            }
+        });
+        
+        // DateTimePicker için flatpickr gibi bir kütüphane eklenmişse burada konfigürasyonu yapılabilir
+    });
+</script>
+{% endblock %} 

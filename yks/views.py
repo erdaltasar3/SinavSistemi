@@ -8,7 +8,25 @@ from django.views.decorators.csrf import csrf_exempt
 from core.models import (
     SinavAltTur, Ders, Unite, Konu, SinavTurleri
 )
-from .models import YKSOturum, KonuTakip
+from .models import (
+    YKSOturum, 
+    KonuTakip, 
+    Hedef, 
+    HedefTuru, 
+    CalismaPlanı, 
+    CalismaOturumu, 
+    Gorev, 
+    Hatirlatici
+)
+from .forms import (
+    HedefForm,
+    HedefDuzenleForm,
+    CalismaPlanForm,
+    CalismaOturumuForm,
+    GorevForm,
+    GorevDuzenleForm,
+    HatirlaticiForm
+)
 from datetime import date, timedelta
 
 def index(request):
@@ -263,3 +281,571 @@ def ders_konulari_api(request, ders_id):
     """Belirli bir derse ait konuları JSON formatında döndürür"""
     konular = Konu.objects.filter(unite__ders_id=ders_id).values('id', 'ad')
     return JsonResponse(list(konular), safe=False)
+
+# Hedef Belirleme ve Takip Görünümleri
+@login_required
+def hedef_listesi(request):
+    """Kullanıcının hedeflerini listeler"""
+    # Aktif hedefler
+    aktif_hedefler = Hedef.objects.filter(
+        kullanici=request.user,
+        durum=Hedef.DURUM_AKTIF
+    ).order_by('bitis_tarihi', '-oncelik')
+    
+    # Tamamlanan hedefler
+    tamamlanan_hedefler = Hedef.objects.filter(
+        kullanici=request.user,
+        durum=Hedef.DURUM_TAMAMLANDI
+    ).order_by('-guncelleme_tarihi')[:5]  # Son 5 tamamlanan hedef
+    
+    # İstatistikler
+    toplam_hedef = Hedef.objects.filter(kullanici=request.user).count()
+    tamamlanan_sayisi = Hedef.objects.filter(
+        kullanici=request.user, 
+        durum=Hedef.DURUM_TAMAMLANDI
+    ).count()
+    
+    tamamlanma_yuzdesi = 0
+    if toplam_hedef > 0:
+        tamamlanma_yuzdesi = (tamamlanan_sayisi / toplam_hedef) * 100
+    
+    context = {
+        'aktif_hedefler': aktif_hedefler,
+        'tamamlanan_hedefler': tamamlanan_hedefler,
+        'toplam_hedef': toplam_hedef,
+        'tamamlanan_sayisi': tamamlanan_sayisi,
+        'tamamlanma_yuzdesi': tamamlanma_yuzdesi,
+    }
+    
+    return render(request, 'yks/hedef_belirleme/hedef_listesi.html', context)
+
+@login_required
+def hedef_ekle(request):
+    """Yeni hedef ekleme görünümü"""
+    if request.method == 'POST':
+        form = HedefForm(request.POST)
+        if form.is_valid():
+            hedef = form.save(commit=False)
+            hedef.kullanici = request.user
+            hedef.save()
+            messages.success(request, 'Hedef başarıyla eklendi.')
+            return redirect('yks:hedef_listesi')
+    else:
+        form = HedefForm()
+    
+    # Hedef türlerini kontrol et, yoksa oluştur
+    tur_sayisi = HedefTuru.objects.count()
+    if tur_sayisi == 0:
+        # Varsayılan türleri oluştur
+        HedefTuru.objects.create(ad=HedefTuru.GUNLUK, aciklama="Günlük hedefler")
+        HedefTuru.objects.create(ad=HedefTuru.HAFTALIK, aciklama="Haftalık hedefler")
+        HedefTuru.objects.create(ad=HedefTuru.AYLIK, aciklama="Aylık hedefler")
+        HedefTuru.objects.create(ad=HedefTuru.OZEL, aciklama="Özel hedefler")
+    
+    context = {
+        'form': form,
+    }
+    
+    return render(request, 'yks/hedef_belirleme/hedef_ekle.html', context)
+
+@login_required
+def hedef_duzenle(request, hedef_id):
+    """Hedef düzenleme görünümü"""
+    hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
+    
+    if request.method == 'POST':
+        form = HedefDuzenleForm(request.POST, instance=hedef)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Hedef başarıyla güncellendi.')
+            return redirect('yks:hedef_listesi')
+    else:
+        form = HedefDuzenleForm(instance=hedef)
+    
+    context = {
+        'form': form,
+        'hedef': hedef,
+    }
+    
+    return render(request, 'yks/hedef_belirleme/hedef_duzenle.html', context)
+
+@login_required
+def hedef_sil(request, hedef_id):
+    """Hedef silme görünümü"""
+    hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
+    
+    if request.method == 'POST':
+        hedef.delete()
+        messages.success(request, 'Hedef başarıyla silindi.')
+        return redirect('yks:hedef_listesi')
+    
+    context = {
+        'hedef': hedef,
+    }
+    
+    return render(request, 'yks/hedef_belirleme/hedef_sil.html', context)
+
+@login_required
+def hedef_durum_guncelle(request, hedef_id):
+    """AJAX ile hedef durumunu güncelleme"""
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
+        
+        yeni_durum = request.POST.get('durum')
+        yeni_oran = request.POST.get('tamamlanma_orani')
+        
+        if yeni_durum:
+            hedef.durum = yeni_durum
+        
+        if yeni_oran:
+            try:
+                oran = int(yeni_oran)
+                if 0 <= oran <= 100:
+                    hedef.tamamlanma_orani = oran
+                    
+                    # Eğer oran 100 ise otomatik olarak tamamlandı olarak işaretle
+                    if oran == 100:
+                        hedef.durum = Hedef.DURUM_TAMAMLANDI
+            except ValueError:
+                pass
+        
+        hedef.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Hedef durumu güncellendi.'
+        })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Geçersiz istek.'
+    }, status=400)
+
+# Çalışma Planı Görünümleri
+@login_required
+def calisma_plani_listesi(request):
+    """Kullanıcının çalışma planlarını listeler"""
+    
+    # Bugünün tarihi
+    bugun = timezone.localdate()
+    
+    # Bugünün planını getir (yoksa None)
+    bugunun_plani = CalismaPlanı.objects.filter(
+        kullanici=request.user,
+        tarih=bugun
+    ).first()
+    
+    # Son 7 günün planlarını getir
+    son_planlar = CalismaPlanı.objects.filter(
+        kullanici=request.user,
+        tarih__gte=bugun - timedelta(days=7),
+        tarih__lt=bugun
+    ).order_by('-tarih')
+    
+    # Gelecek planlar
+    gelecek_planlar = CalismaPlanı.objects.filter(
+        kullanici=request.user,
+        tarih__gt=bugun
+    ).order_by('tarih')
+    
+    # Son planlar için tamamlanma bilgilerini hesapla
+    for plan in son_planlar:
+        plan.toplam_oturum = plan.oturumlar.count()
+        if plan.toplam_oturum > 0:
+            plan.tamamlanan_oturum = plan.oturumlar.filter(tamamlandi=True).count()
+            plan.tamamlanma_yuzdesi = (plan.tamamlanan_oturum / plan.toplam_oturum) * 100
+        else:
+            plan.tamamlanan_oturum = 0
+            plan.tamamlanma_yuzdesi = 0
+    
+    context = {
+        'bugun': bugun,
+        'bugunun_plani': bugunun_plani,
+        'son_planlar': son_planlar,
+        'gelecek_planlar': gelecek_planlar,
+    }
+    
+    return render(request, 'yks/calisma_plani/calisma_plani_listesi.html', context)
+
+@login_required
+def calisma_plani_detay(request, plan_id):
+    """Çalışma planı detaylarını gösterir"""
+    plan = get_object_or_404(CalismaPlanı, id=plan_id, kullanici=request.user)
+    oturumlar = CalismaOturumu.objects.filter(plan=plan).order_by('baslangic_saati')
+    
+    # Tamamlanan oturum sayısını hesapla
+    tamamlanan_count = oturumlar.filter(tamamlandi=True).count()
+    oturumlar.tamamlanan_count = tamamlanan_count
+    
+    # Yeni oturum ekleme
+    if request.method == 'POST':
+        form = CalismaOturumuForm(request.POST)
+        if form.is_valid():
+            oturum = form.save(commit=False)
+            oturum.plan = plan
+            
+            # Form'un clean() metodunda hesaplanan sure değerini kullan
+            oturum.sure = form.cleaned_data['sure']
+            
+            oturum.save()
+            
+            # Toplam çalışma süresini güncelle
+            plan.toplam_calisma_suresi = CalismaOturumu.objects.filter(
+                plan=plan
+            ).aggregate(Sum('sure'))['sure__sum'] or 0
+            plan.save()
+            
+            messages.success(request, 'Çalışma oturumu başarıyla eklendi.')
+            return redirect('yks:calisma_plani_detay', plan_id=plan.id)
+    else:
+        form = CalismaOturumuForm()
+    
+    context = {
+        'plan': plan,
+        'oturumlar': oturumlar,
+        'form': form,
+    }
+    
+    return render(request, 'yks/calisma_plani/calisma_plani_detay.html', context)
+
+@login_required
+def calisma_plani_ekle(request):
+    """Yeni çalışma planı ekleme görünümü"""
+    
+    # Bugün için zaten plan var mı kontrol et
+    bugun = timezone.localdate()
+    mevcut_plan = CalismaPlanı.objects.filter(
+        kullanici=request.user,
+        tarih=bugun
+    ).first()
+    
+    if mevcut_plan:
+        messages.info(request, f"Bugün için zaten bir çalışma planınız var. <a href='{mevcut_plan.get_absolute_url()}'>Görüntüle</a>")
+        return redirect('yks:calisma_plani_listesi')
+    
+    if request.method == 'POST':
+        form = CalismaPlanForm(request.POST)
+        if form.is_valid():
+            plan = form.save(commit=False)
+            plan.kullanici = request.user
+            plan.save()
+            messages.success(request, 'Çalışma planı başarıyla oluşturuldu.')
+            return redirect('yks:calisma_plani_detay', plan_id=plan.id)
+    else:
+        form = CalismaPlanForm()
+    
+    context = {
+        'form': form,
+    }
+    
+    return render(request, 'yks/calisma_plani/calisma_plani_ekle.html', context)
+
+@login_required
+def oturum_sil(request, oturum_id):
+    """Çalışma oturumu silme"""
+    oturum = get_object_or_404(CalismaOturumu, id=oturum_id, plan__kullanici=request.user)
+    plan_id = oturum.plan.id
+    
+    if request.method == 'POST':
+        oturum.delete()
+        
+        # Planın toplam süresini güncelle
+        plan = oturum.plan
+        plan.toplam_calisma_suresi = CalismaOturumu.objects.filter(
+            plan=plan
+        ).aggregate(Sum('sure'))['sure__sum'] or 0
+        plan.save()
+        
+        messages.success(request, 'Çalışma oturumu başarıyla silindi.')
+        return redirect('yks:calisma_plani_detay', plan_id=plan_id)
+    
+    context = {
+        'oturum': oturum,
+    }
+    
+    return render(request, 'yks/calisma_plani/oturum_sil.html', context)
+
+@login_required
+def dersler_json(request):
+    """AJAX için dersleri JSON formatında döndürür"""
+    dersler = Ders.objects.filter(aktif=True).order_by('alt_tur', 'ad')
+    
+    data = [
+        {
+            'id': ders.id,
+            'ad': ders.ad,
+            'kod': ders.kod,
+            'alt_tur': ders.alt_tur.ad if ders.alt_tur else None
+        }
+        for ders in dersler
+    ]
+    
+    return JsonResponse(data, safe=False)
+
+@login_required
+def konular_json(request, ders_id):
+    """AJAX için belirli bir derse ait konuları JSON formatında döndürür"""
+    ders = get_object_or_404(Ders, id=ders_id)
+    uniteler = Unite.objects.filter(ders=ders).order_by('sira_no')
+    
+    data = []
+    
+    for unite in uniteler:
+        konular = Konu.objects.filter(unite=unite).order_by('sira_no')
+        
+        for konu in konular:
+            data.append({
+                'id': konu.id,
+                'ad': konu.ad,
+                'unite': unite.ad
+            })
+    
+    return JsonResponse(data, safe=False)
+
+# Görev (To-Do) Yönetimi Görünümleri
+@login_required
+def gorev_listesi(request):
+    """Kullanıcının görevlerini listeler"""
+    # Bekleyen görevler
+    bekleyen_gorevler = Gorev.objects.filter(
+        kullanici=request.user,
+        durum=Gorev.DURUM_BEKLIYOR
+    ).order_by('son_tarih', '-oncelik')
+    
+    # Tamamlanan görevler
+    tamamlanan_gorevler = Gorev.objects.filter(
+        kullanici=request.user,
+        durum=Gorev.DURUM_TAMAMLANDI
+    ).order_by('-guncelleme_tarihi')[:10]  # Son 10 tamamlanan görev
+    
+    # Ertelenen görevler
+    ertelenen_gorevler = Gorev.objects.filter(
+        kullanici=request.user,
+        durum=Gorev.DURUM_ERTELENDI
+    ).order_by('son_tarih')
+    
+    # İstatistikler
+    toplam_gorev = Gorev.objects.filter(kullanici=request.user).count()
+    tamamlanan_sayisi = Gorev.objects.filter(
+        kullanici=request.user,
+        durum=Gorev.DURUM_TAMAMLANDI
+    ).count()
+    
+    tamamlanma_yuzdesi = 0
+    if toplam_gorev > 0:
+        tamamlanma_yuzdesi = (tamamlanan_sayisi / toplam_gorev) * 100
+    
+    context = {
+        'bekleyen_gorevler': bekleyen_gorevler,
+        'tamamlanan_gorevler': tamamlanan_gorevler,
+        'ertelenen_gorevler': ertelenen_gorevler,
+        'toplam_gorev': toplam_gorev,
+        'tamamlanan_sayisi': tamamlanan_sayisi,
+        'tamamlanma_yuzdesi': tamamlanma_yuzdesi,
+    }
+    
+    return render(request, 'yks/gorevler/gorev_listesi.html', context)
+
+@login_required
+def gorev_ekle(request):
+    """Yeni görev ekleme görünümü"""
+    if request.method == 'POST':
+        form = GorevForm(request.POST)
+        if form.is_valid():
+            gorev = form.save(commit=False)
+            gorev.kullanici = request.user
+            gorev.save()
+            messages.success(request, 'Görev başarıyla eklendi.')
+            return redirect('yks:gorev_listesi')
+    else:
+        form = GorevForm()
+    
+    context = {
+        'form': form,
+    }
+    
+    return render(request, 'yks/gorevler/gorev_ekle.html', context)
+
+@login_required
+def gorev_duzenle(request, gorev_id):
+    """Görev düzenleme görünümü"""
+    gorev = get_object_or_404(Gorev, id=gorev_id, kullanici=request.user)
+    
+    if request.method == 'POST':
+        form = GorevDuzenleForm(request.POST, instance=gorev)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Görev başarıyla güncellendi.')
+            return redirect('yks:gorev_listesi')
+    else:
+        form = GorevDuzenleForm(instance=gorev)
+    
+    context = {
+        'form': form,
+        'gorev': gorev,
+    }
+    
+    return render(request, 'yks/gorevler/gorev_duzenle.html', context)
+
+@login_required
+def gorev_sil(request, gorev_id):
+    """Görev silme görünümü"""
+    gorev = get_object_or_404(Gorev, id=gorev_id, kullanici=request.user)
+    
+    if request.method == 'POST':
+        gorev.delete()
+        messages.success(request, 'Görev başarıyla silindi.')
+        return redirect('yks:gorev_listesi')
+    
+    context = {
+        'gorev': gorev,
+    }
+    
+    return render(request, 'yks/gorevler/gorev_sil.html', context)
+
+@login_required
+def gorev_durum_guncelle(request, gorev_id):
+    """AJAX ile görev durumunu güncelleme"""
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        gorev = get_object_or_404(Gorev, id=gorev_id, kullanici=request.user)
+        
+        yeni_durum = request.POST.get('durum')
+        
+        if yeni_durum:
+            gorev.durum = yeni_durum
+            gorev.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Görev durumu güncellendi.'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Geçersiz istek.'
+    }, status=400)
+
+# Hatırlatıcı Görünümleri
+@login_required
+def hatirlatici_listesi(request):
+    """Kullanıcının hatırlatıcılarını listeler"""
+    # Aktif hatırlatıcılar
+    aktif_hatirlaticilar = Hatirlatici.objects.filter(
+        kullanici=request.user,
+        aktif=True,
+        hatirlatma_tarihi__gte=timezone.now()
+    ).order_by('hatirlatma_tarihi')
+    
+    # Yaklaşan hatırlatıcılar (bugün ve yakın gelecek)
+    bugun = timezone.now()
+    yaklasan_hatirlaticilar = Hatirlatici.objects.filter(
+        kullanici=request.user,
+        aktif=True,
+        hatirlatma_tarihi__date=bugun.date()
+    ).order_by('hatirlatma_tarihi')
+    
+    # Geçmiş hatırlatıcılar
+    gecmis_hatirlaticilar = Hatirlatici.objects.filter(
+        kullanici=request.user,
+        hatirlatma_tarihi__lt=bugun
+    ).order_by('-hatirlatma_tarihi')[:10]  # Son 10 geçmiş hatırlatıcı
+    
+    context = {
+        'aktif_hatirlaticilar': aktif_hatirlaticilar,
+        'yaklasan_hatirlaticilar': yaklasan_hatirlaticilar,
+        'gecmis_hatirlaticilar': gecmis_hatirlaticilar,
+    }
+    
+    return render(request, 'yks/hatirlaticilar/hatirlatici_listesi.html', context)
+
+@login_required
+def hatirlatici_ekle(request):
+    """Yeni hatırlatıcı ekleme görünümü"""
+    if request.method == 'POST':
+        form = HatirlaticiForm(request.POST)
+        if form.is_valid():
+            hatirlatici = form.save(commit=False)
+            hatirlatici.kullanici = request.user
+            hatirlatici.save()
+            messages.success(request, 'Hatırlatıcı başarıyla eklendi.')
+            return redirect('yks:hatirlatici_listesi')
+    else:
+        form = HatirlaticiForm()
+    
+    context = {
+        'form': form,
+    }
+    
+    return render(request, 'yks/hatirlaticilar/hatirlatici_ekle.html', context)
+
+@login_required
+def hatirlatici_duzenle(request, hatirlatici_id):
+    """Hatırlatıcı düzenleme görünümü"""
+    hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id, kullanici=request.user)
+    
+    if request.method == 'POST':
+        form = HatirlaticiForm(request.POST, instance=hatirlatici)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Hatırlatıcı başarıyla güncellendi.')
+            return redirect('yks:hatirlatici_listesi')
+    else:
+        form = HatirlaticiForm(instance=hatirlatici)
+    
+    context = {
+        'form': form,
+        'hatirlatici': hatirlatici,
+    }
+    
+    return render(request, 'yks/hatirlaticilar/hatirlatici_duzenle.html', context)
+
+@login_required
+def hatirlatici_sil(request, hatirlatici_id):
+    """Hatırlatıcı silme görünümü"""
+    hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id, kullanici=request.user)
+    
+    if request.method == 'POST':
+        hatirlatici.delete()
+        messages.success(request, 'Hatırlatıcı başarıyla silindi.')
+        return redirect('yks:hatirlatici_listesi')
+    
+    context = {
+        'hatirlatici': hatirlatici,
+    }
+    
+    return render(request, 'yks/hatirlaticilar/hatirlatici_sil.html', context)
+
+@login_required
+def hatirlatici_durum_guncelle(request, hatirlatici_id):
+    """Hatırlatıcı durumunu güncelleme (AJAX veya normal form)"""
+    hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id, kullanici=request.user)
+    
+    if request.method == 'POST':
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        # İstek AJAX veya normal form olabilir
+        if 'aktif' in request.POST:
+            aktif_value = request.POST.get('aktif')
+            # String 'true' veya 'false' değerini bool'a çevir
+            aktif = aktif_value.lower() == 'true'
+            hatirlatici.aktif = aktif
+            hatirlatici.save()
+            
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Hatırlatıcı durumu güncellendi.'
+                })
+            else:
+                status_text = "aktifleştirildi" if aktif else "devre dışı bırakıldı"
+                messages.success(request, f'Hatırlatıcı başarıyla {status_text}.')
+                return redirect('yks:hatirlatici_listesi')
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': False,
+            'message': 'Geçersiz istek.'
+        }, status=400)
+    else:
+        messages.error(request, 'Geçersiz istek.')
+        return redirect('yks:hatirlatici_listesi')

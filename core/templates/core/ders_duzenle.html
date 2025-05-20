@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ders.ad }} - Düzenleme Paneli</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    {% load static %}
+    {% load custom_filters %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            color: #fff;
+        }
+        .sidebar-sticky {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 0.75rem 1rem;
+        }
+        .sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+        .main-content {
+            padding: 2rem;
+        }
+        .dashboard-header {
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+        .header-icon {
+            font-size: 2.5rem;
+            margin-right: 1rem;
+            color: #3a53a8;
+        }
+        .breadcrumb a {
+            text-decoration: none;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: rgba(58, 83, 168, 0.1);
+            color: #3a53a8;
+        }
+        .konu-item {
+            border-left: 3px solid #3a53a8;
+            padding: 0.5rem 0.75rem;
+            margin: 0.5rem 0;
+            background-color: #f8f9fa;
+        }
+        .konu-item:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="sidebar-sticky">
+                    <div class="py-4 px-3 mb-4">
+                        <h5 class="text-light">Sınav Sistemi</h5>
+                        <div class="font-weight-light">Yetkili Paneli</div>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:yetkili_panel' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-person"></i> Kullanıcılar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-journal-check"></i> Sınavlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'core:oturumlar' %}">
+                                <i class="bi bi-card-list"></i> Oturumlar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:oturum_ekle' %}">
+                                <i class="bi bi-plus-circle"></i> Oturum Ekle
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-bar-chart"></i> İstatistikler
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-gear"></i> Ayarlar
+                            </a>
+                        </li>
+                        <li class="nav-item mt-5">
+                            <a class="nav-link" href="{% url 'index' %}">
+                                <i class="bi bi-arrow-left"></i> Siteye Dön
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:cikis' %}">
+                                <i class="bi bi-box-arrow-right"></i> Çıkış Yap
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mt-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'core:oturumlar' %}">Oturumlar</a></li>
+                        {% if ders.alt_tur %}
+                            <li class="breadcrumb-item"><a href="{% url 'core:oturum_detay' ders.alt_tur.sinav_turu.kod %}">{{ ders.alt_tur.sinav_turu.ad }}</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'core:oturum_alt_tur_detay' ders.alt_tur.sinav_turu.kod ders.alt_tur.kod %}">{{ ders.alt_tur.ad }}</a></li>
+                        {% else %}
+                            <li class="breadcrumb-item"><a href="{% url 'core:oturum_detay' ders.sinav_turu.kod %}">{{ ders.sinav_turu.ad }}</a></li>
+                        {% endif %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ ders.ad }}</li>
+                    </ol>
+                </nav>
+                
+                <div class="dashboard-header d-flex justify-content-between flex-wrap">
+                    <div class="d-flex align-items-center">
+                        <div class="header-icon">
+                            <i class="bi bi-{% if ders.ikon %}{{ ders.ikon }}{% else %}book{% endif %}"></i>
+                        </div>
+                        <div>
+                            <h2>{{ ders.ad }}</h2>
+                            <div class="text-muted">{{ ders.kod }}</div>
+                        </div>
+                    </div>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            {% if ders.alt_tur %}
+                                <a href="{% url 'core:oturum_alt_tur_detay' ders.alt_tur.sinav_turu.kod ders.alt_tur.kod %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Geri Dön
+                                </a>
+                            {% else %}
+                                <a href="{% url 'core:oturum_detay' ders.sinav_turu.kod %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Geri Dön
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Ders Açıklaması -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Ders Açıklaması</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if ders.aciklama %}
+                            <p>{{ ders.aciklama }}</p>
+                        {% else %}
+                            <p class="text-muted">Bu ders için açıklama bulunmamaktadır.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Üniteler ve Konular -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Üniteler ve Konular</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uniteEkleModal">
+                            <i class="bi bi-plus-circle"></i> Ünite Ekle
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {% if uniteler %}
+                            <div class="accordion" id="uniteAccordion">
+                                {% for unite in uniteler %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="unite-heading-{{ unite.id }}">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                                data-bs-target="#unite-collapse-{{ unite.id }}" aria-expanded="false"
+                                                aria-controls="unite-collapse-{{ unite.id }}">
+                                                <div class="d-flex justify-content-between w-100 me-3">
+                                                    <span><strong>{{ unite.sira_no }}.</strong> {{ unite.ad }}</span>
+                                                    <div class="text-end">
+                                                        <span class="badge rounded-pill bg-primary">{{ unite.konular.count }} Konu</span>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="unite-collapse-{{ unite.id }}" class="accordion-collapse collapse"
+                                            aria-labelledby="unite-heading-{{ unite.id }}" data-bs-parent="#uniteAccordion">
+                                            <div class="accordion-body">
+                                                <div class="d-flex justify-content-between mb-3">
+                                                    <div>
+                                                        {% if unite.aciklama %}
+                                                            <p>{{ unite.aciklama }}</p>
+                                                        {% else %}
+                                                            <p class="text-muted">Bu ünite için açıklama bulunmamaktadır.</p>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button" class="btn btn-outline-primary unite-duzenle-btn"
+                                                                data-unite-id="{{ unite.id }}" data-unite-ad="{{ unite.ad }}"
+                                                                data-unite-sira="{{ unite.sira_no }}" data-unite-aciklama="{{ unite.aciklama|default:'' }}">
+                                                                <i class="bi bi-pencil"></i> Düzenle
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-danger unite-sil-btn"
+                                                                data-unite-id="{{ unite.id }}" data-unite-ad="{{ unite.ad }}">
+                                                                <i class="bi bi-trash"></i> Sil
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <button type="button" class="btn btn-sm btn-outline-success konu-ekle-btn"
+                                                        data-unite-id="{{ unite.id }}">
+                                                        <i class="bi bi-plus-circle"></i> Konu Ekle
+                                                    </button>
+                                                </div>
+                                                
+                                                <div class="konular-listesi" id="konular-{{ unite.id }}">
+                                                    {% for konu in unite_konular|get_item:unite.id %}
+                                                        <div class="konu-item d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <strong>{{ konu.sira_no }}.</strong> {{ konu.ad }}
+                                                                {% if konu.aciklama %}
+                                                                    <p class="text-muted small mb-0">{{ konu.aciklama|truncatechars:100 }}</p>
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="btn-group btn-group-sm">
+                                                                <button type="button" class="btn btn-sm btn-outline-primary konu-duzenle-btn"
+                                                                    data-konu-id="{{ konu.id }}" data-konu-ad="{{ konu.ad }}"
+                                                                    data-konu-sira="{{ konu.sira_no }}" data-konu-aciklama="{{ konu.aciklama|default:'' }}">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-sm btn-outline-danger konu-sil-btn"
+                                                                    data-konu-id="{{ konu.id }}" data-konu-ad="{{ konu.ad }}">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    {% empty %}
+                                                        <p class="text-muted text-center">
+                                                            <i class="bi bi-exclamation-circle"></i> Bu üniteye ait konu bulunmamaktadır.
+                                                        </p>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <div class="mb-4">
+                                    <i class="bi bi-journal-bookmark" style="font-size: 3rem; color: #adb5bd;"></i>
+                                </div>
+                                <h5 class="text-muted">Bu derse ait ünite bulunmamaktadır.</h5>
+                                <p class="text-muted">Ders içeriğini düzenlemek için ünite ekleyin.</p>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uniteEkleModal">
+                                    <i class="bi bi-plus-circle"></i> Ünite Ekle
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Ünite Ekleme Modal -->
+    <div class="modal fade" id="uniteEkleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Ünite Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uniteEkleForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="ders_id" value="{{ ders.id }}">
+                        
+                        <div class="mb-3">
+                            <label for="uniteAd" class="form-label">Ünite Adı</label>
+                            <input type="text" class="form-control" id="uniteAd" name="ad" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="uniteSiraNo" class="form-label">Sıra Numarası</label>
+                            <input type="number" class="form-control" id="uniteSiraNo" name="sira_no" min="1" value="1">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="uniteAciklama" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="uniteAciklama" name="aciklama" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="uniteEkleButton">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ünite Düzenleme Modal -->
+    <div class="modal fade" id="uniteDuzenleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ünite Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uniteDuzenleForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="unite_id" id="duzenlenenUniteId">
+                        
+                        <div class="mb-3">
+                            <label for="duzenleUniteAd" class="form-label">Ünite Adı</label>
+                            <input type="text" class="form-control" id="duzenleUniteAd" name="ad" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="duzenleUniteSiraNo" class="form-label">Sıra Numarası</label>
+                            <input type="number" class="form-control" id="duzenleUniteSiraNo" name="sira_no" min="1">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="duzenleUniteAciklama" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="duzenleUniteAciklama" name="aciklama" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="uniteDuzenleButton">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Konu Ekleme Modal -->
+    <div class="modal fade" id="konuEkleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yeni Konu Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="konuEkleForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="unite_id" id="konuEkleUniteId">
+                        
+                        <div class="mb-3">
+                            <label for="konuAd" class="form-label">Konu Adı</label>
+                            <input type="text" class="form-control" id="konuAd" name="ad" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="konuSiraNo" class="form-label">Sıra Numarası</label>
+                            <input type="number" class="form-control" id="konuSiraNo" name="sira_no" min="1" value="1">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="konuAciklama" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="konuAciklama" name="aciklama" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="konuEkleButton">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Konu Düzenleme Modal -->
+    <div class="modal fade" id="konuDuzenleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Konu Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="konuDuzenleForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="konu_id" id="duzenlenenKonuId">
+                        
+                        <div class="mb-3">
+                            <label for="duzenleKonuAd" class="form-label">Konu Adı</label>
+                            <input type="text" class="form-control" id="duzenleKonuAd" name="ad" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="duzenleKonuSiraNo" class="form-label">Sıra Numarası</label>
+                            <input type="number" class="form-control" id="duzenleKonuSiraNo" name="sira_no" min="1">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="duzenleKonuAciklama" class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="duzenleKonuAciklama" name="aciklama" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="konuDuzenleButton">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Silme Onay Modal -->
+    <div class="modal fade" id="silmeOnayModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Silme İşlemini Onaylayın</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="silmeOnayMesaji"></p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Bu işlem geri alınamaz!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-danger" id="silmeOnayButton">Evet, Sil</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '5';
+            document.body.appendChild(toastContainer);
+            
+            function showToast(message, type = 'success') {
+                const toastEl = document.createElement('div');
+                toastEl.className = `toast align-items-center text-white bg-${type}`;
+                toastEl.setAttribute('role', 'alert');
+                toastEl.setAttribute('aria-live', 'assertive');
+                toastEl.setAttribute('aria-atomic', 'true');
+                
+                const toastContent = `
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                `;
+                toastEl.innerHTML = toastContent;
+                
+                toastContainer.appendChild(toastEl);
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+                
+                toastEl.addEventListener('hidden.bs.toast', function() {
+                    toastEl.remove();
+                });
+            }
+            
+            // Ünite ekleme
+            const uniteEkleForm = document.getElementById('uniteEkleForm');
+            const uniteEkleButton = document.getElementById('uniteEkleButton');
+            const uniteEkleModalElement = document.getElementById('uniteEkleModal');
+            const uniteEkleModal = new bootstrap.Modal(uniteEkleModalElement);
+            
+            // Ünite ekleme modalı açıldığında sıra numarasını güncelle
+            uniteEkleModalElement.addEventListener('show.bs.modal', function(event) {
+                // Ders ID'sini al
+                const dersId = '{{ ders.id }}';
+                
+                // Son ünite sıra numarasını getir
+                fetch(`/yetkili/ders/${dersId}/uniteler-son-sira/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('uniteSiraNo').value = data.next_sira_no;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Sıra numarası çekilirken hata:', error);
+                        document.getElementById('uniteSiraNo').value = "1"; // Varsayılan 1
+                    });
+            });
+            
+            uniteEkleButton.addEventListener('click', function() {
+                const formData = new FormData(uniteEkleForm);
+                const currentSiraNo = document.getElementById('uniteSiraNo').value;
+                
+                fetch('{% url "core:unite_ekle" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Sayfayı yenilemeden üniteyi ekle
+                        const uniteHtml = `
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="unite-heading-${data.unite.id}">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#unite-collapse-${data.unite.id}" aria-expanded="false"
+                                        aria-controls="unite-collapse-${data.unite.id}">
+                                        <div class="d-flex justify-content-between w-100 me-3">
+                                            <span><strong>${data.unite.sira_no}.</strong> ${data.unite.ad}</span>
+                                            <div class="text-end">
+                                                <span class="badge rounded-pill bg-primary">0 Konu</span>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="unite-collapse-${data.unite.id}" class="accordion-collapse collapse"
+                                    aria-labelledby="unite-heading-${data.unite.id}" data-bs-parent="#uniteAccordion">
+                                    <div class="accordion-body">
+                                        <div class="d-flex justify-content-between mb-3">
+                                            <div>
+                                                ${data.unite.aciklama ? `<p>${data.unite.aciklama}</p>` : '<p class="text-muted">Bu ünite için açıklama bulunmamaktadır.</p>'}
+                                            </div>
+                                            <div>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button type="button" class="btn btn-outline-primary unite-duzenle-btn"
+                                                        data-unite-id="${data.unite.id}" data-unite-ad="${data.unite.ad}"
+                                                        data-unite-sira="${data.unite.sira_no}" data-unite-aciklama="${data.unite.aciklama || ''}">
+                                                        <i class="bi bi-pencil"></i> Düzenle
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger unite-sil-btn"
+                                                        data-unite-id="${data.unite.id}" data-unite-ad="${data.unite.ad}">
+                                                        <i class="bi bi-trash"></i> Sil
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-outline-success konu-ekle-btn"
+                                                data-unite-id="${data.unite.id}">
+                                                <i class="bi bi-plus-circle"></i> Konu Ekle
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="konular-listesi" id="konular-${data.unite.id}">
+                                            <p class="text-muted text-center">
+                                                <i class="bi bi-exclamation-circle"></i> Bu üniteye ait konu bulunmamaktadır.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Üniteler listesini bul ve yeni üniteyi ekle
+                        const uniteAccordion = document.getElementById('uniteAccordion');
+                        if (uniteAccordion) {
+                            // Eğer "ünite bulunmamaktadır" mesajı varsa kaldır
+                            const noUniteMsg = document.querySelector('.text-center.py-5');
+                            if (noUniteMsg) {
+                                noUniteMsg.remove();
+                                
+                                // Boş bir accordion oluştur
+                                const accordionDiv = document.createElement('div');
+                                accordionDiv.id = 'uniteAccordion';
+                                accordionDiv.className = 'accordion';
+                                document.querySelector('.card-body').appendChild(accordionDiv);
+                            }
+                            
+                            // Yeni ünite elementini ekle
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = uniteHtml;
+                            uniteAccordion.appendChild(tempDiv.firstElementChild);
+                            
+                            // Yeni eklenen butonlara olay dinleyicisi ekle
+                            const yeniDuzenleBtn = document.querySelector(`[data-unite-id="${data.unite.id}"].unite-duzenle-btn`);
+                            const yeniSilBtn = document.querySelector(`[data-unite-id="${data.unite.id}"].unite-sil-btn`);
+                            const yeniKonuEkleBtn = document.querySelector(`[data-unite-id="${data.unite.id}"].konu-ekle-btn`);
+                            
+                            if (yeniDuzenleBtn) {
+                                yeniDuzenleBtn.addEventListener('click', function() {
+                                    const uniteId = this.dataset.uniteId;
+                                    const uniteAd = this.dataset.uniteAd;
+                                    const uniteSira = this.dataset.uniteSira;
+                                    const uniteAciklama = this.dataset.uniteAciklama;
+                                    
+                                    document.getElementById('duzenlenenUniteId').value = uniteId;
+                                    document.getElementById('duzenleUniteAd').value = uniteAd;
+                                    document.getElementById('duzenleUniteSiraNo').value = uniteSira;
+                                    document.getElementById('duzenleUniteAciklama').value = uniteAciklama;
+                                    
+                                    uniteDuzenleModal.show();
+                                });
+                            }
+                            
+                            if (yeniSilBtn) {
+                                yeniSilBtn.addEventListener('click', function() {
+                                    const uniteId = this.dataset.uniteId;
+                                    const uniteAd = this.dataset.uniteAd;
+                                    
+                                    silmeOnayMesaji.innerHTML = `"<strong>${uniteAd}</strong>" ünitesini silmek istediğinize emin misiniz?`;
+                                    silmeOnayButton.dataset.type = 'unite';
+                                    silmeOnayButton.dataset.id = uniteId;
+                                    
+                                    silmeOnayModal.show();
+                                });
+                            }
+                            
+                            if (yeniKonuEkleBtn) {
+                                yeniKonuEkleBtn.addEventListener('click', function() {
+                                    const uniteId = this.dataset.uniteId;
+                                    document.getElementById('konuEkleUniteId').value = uniteId;
+                                    
+                                    // Son konu sıra numarasını al
+                                    fetch(`/yetkili/unite/${uniteId}/konular-son-sira/`)
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                document.getElementById('konuSiraNo').value = data.next_sira_no;
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Sıra numarası çekilirken hata:', error);
+                                            document.getElementById('konuSiraNo').value = "1"; // Varsayılan 1
+                                        });
+                                    
+                                    konuEkleModal.show();
+                                });
+                            }
+                        }
+                        
+                        // Form temizle
+                        document.getElementById('uniteAd').value = '';
+                        document.getElementById('uniteAciklama').value = '';
+                        
+                        // Sıra numarasını bir artır
+                        let nextSiraNo = parseInt(currentSiraNo) + 1;
+                        document.getElementById('uniteSiraNo').value = nextSiraNo;
+                        
+                        // Başarı mesajı göster
+                        showToast(data.message, 'success');
+                        
+                    } else {
+                        showToast(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showToast('Bir hata oluştu: ' + error, 'danger');
+                });
+            });
+            
+            // Ünite düzenleme
+            const uniteDuzenleButtons = document.querySelectorAll('.unite-duzenle-btn');
+            const uniteDuzenleForm = document.getElementById('uniteDuzenleForm');
+            const uniteDuzenleButton = document.getElementById('uniteDuzenleButton');
+            const uniteDuzenleModal = new bootstrap.Modal(document.getElementById('uniteDuzenleModal'));
+            
+            uniteDuzenleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const uniteId = button.dataset.uniteId;
+                    const uniteAd = button.dataset.uniteAd;
+                    const uniteSira = button.dataset.uniteSira;
+                    const uniteAciklama = button.dataset.uniteAciklama;
+                    
+                    document.getElementById('duzenlenenUniteId').value = uniteId;
+                    document.getElementById('duzenleUniteAd').value = uniteAd;
+                    document.getElementById('duzenleUniteSiraNo').value = uniteSira;
+                    document.getElementById('duzenleUniteAciklama').value = uniteAciklama;
+                    
+                    uniteDuzenleModal.show();
+                });
+            });
+            
+            uniteDuzenleButton.addEventListener('click', function() {
+                const formData = new FormData(uniteDuzenleForm);
+                const uniteId = document.getElementById('duzenlenenUniteId').value;
+                
+                fetch(`/yetkili/unite/${uniteId}/duzenle/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Sayfayı yenile
+                        location.reload();
+                    } else {
+                        showToast(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showToast('Bir hata oluştu: ' + error, 'danger');
+                });
+            });
+            
+            // Ünite silme
+            const uniteSilButtons = document.querySelectorAll('.unite-sil-btn');
+            const silmeOnayModal = new bootstrap.Modal(document.getElementById('silmeOnayModal'));
+            const silmeOnayMesaji = document.getElementById('silmeOnayMesaji');
+            const silmeOnayButton = document.getElementById('silmeOnayButton');
+            
+            uniteSilButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const uniteId = button.dataset.uniteId;
+                    const uniteAd = button.dataset.uniteAd;
+                    
+                    silmeOnayMesaji.innerHTML = `"<strong>${uniteAd}</strong>" ünitesini silmek istediğinize emin misiniz?`;
+                    silmeOnayButton.dataset.type = 'unite';
+                    silmeOnayButton.dataset.id = uniteId;
+                    
+                    silmeOnayModal.show();
+                });
+            });
+            
+            // Konu ekleme
+            const konuEkleButtons = document.querySelectorAll('.konu-ekle-btn');
+            const konuEkleForm = document.getElementById('konuEkleForm');
+            const konuEkleButton = document.getElementById('konuEkleButton');
+            const konuEkleModal = new bootstrap.Modal(document.getElementById('konuEkleModal'));
+            
+            konuEkleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const uniteId = button.dataset.uniteId;
+                    document.getElementById('konuEkleUniteId').value = uniteId;
+                    
+                    // Yeni eklenen konunun sıra numarasının bir sonraki numara olarak ayarlanması
+                    fetch(`/yetkili/unite/${uniteId}/konular-son-sira/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('konuSiraNo').value = data.next_sira_no;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Sıra numarası çekilirken hata:', error);
+                            document.getElementById('konuSiraNo').value = "1"; // Varsayılan 1
+                        });
+                    
+                    konuEkleModal.show();
+                });
+            });
+            
+            konuEkleButton.addEventListener('click', function() {
+                const formData = new FormData(konuEkleForm);
+                const uniteId = document.getElementById('konuEkleUniteId').value;
+                const currentSiraNo = document.getElementById('konuSiraNo').value;
+                
+                fetch('{% url "core:konu_ekle" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Tabloya yeni konu ekle ama sayfayı yenileme
+                        const konuHtml = `
+                            <div class="konu-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${data.konu.sira_no}.</strong> ${data.konu.ad}
+                                    ${data.konu.aciklama ? `<p class="text-muted small mb-0">${data.konu.aciklama.length > 100 ? data.konu.aciklama.substring(0, 97) + '...' : data.konu.aciklama}</p>` : ''}
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-sm btn-outline-primary konu-duzenle-btn"
+                                        data-konu-id="${data.konu.id}" data-konu-ad="${data.konu.ad}"
+                                        data-konu-sira="${data.konu.sira_no}" data-konu-aciklama="${data.konu.aciklama || ''}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger konu-sil-btn"
+                                        data-konu-id="${data.konu.id}" data-konu-ad="${data.konu.ad}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Ünite içerisindeki konular listesini bul
+                        const konularListesi = document.getElementById(`konular-${uniteId}`);
+                        if (konularListesi) {
+                            // Eğer "konu bulunmamaktadır" mesajı varsa kaldır
+                            const noKonuMsg = konularListesi.querySelector('.text-muted.text-center');
+                            if (noKonuMsg) {
+                                noKonuMsg.remove();
+                            }
+                            
+                            // Yeni konu elementini listeye ekle
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = konuHtml;
+                            konularListesi.appendChild(tempDiv.firstElementChild);
+                            
+                            // Yeni eklenen butona olay dinleyicisi ekle
+                            const yeniDuzenleBtn = konularListesi.querySelector(`[data-konu-id="${data.konu.id}"].konu-duzenle-btn`);
+                            const yeniSilBtn = konularListesi.querySelector(`[data-konu-id="${data.konu.id}"].konu-sil-btn`);
+                            
+                            if (yeniDuzenleBtn) {
+                                yeniDuzenleBtn.addEventListener('click', function() {
+                                    const konuId = this.dataset.konuId;
+                                    const konuAd = this.dataset.konuAd;
+                                    const konuSira = this.dataset.konuSira;
+                                    const konuAciklama = this.dataset.konuAciklama;
+                                    
+                                    document.getElementById('duzenlenenKonuId').value = konuId;
+                                    document.getElementById('duzenleKonuAd').value = konuAd;
+                                    document.getElementById('duzenleKonuSiraNo').value = konuSira;
+                                    document.getElementById('duzenleKonuAciklama').value = konuAciklama;
+                                    
+                                    konuDuzenleModal.show();
+                                });
+                            }
+                            
+                            if (yeniSilBtn) {
+                                yeniSilBtn.addEventListener('click', function() {
+                                    const konuId = this.dataset.konuId;
+                                    const konuAd = this.dataset.konuAd;
+                                    
+                                    silmeOnayMesaji.innerHTML = `"<strong>${konuAd}</strong>" konusunu silmek istediğinize emin misiniz?`;
+                                    silmeOnayButton.dataset.type = 'konu';
+                                    silmeOnayButton.dataset.id = konuId;
+                                    
+                                    silmeOnayModal.show();
+                                });
+                            }
+                        }
+                        
+                        // Form temizle
+                        document.getElementById('konuAd').value = '';
+                        document.getElementById('konuAciklama').value = '';
+                        
+                        // Sıra numarasını bir artır
+                        let nextSiraNo = parseInt(currentSiraNo) + 1;
+                        document.getElementById('konuSiraNo').value = nextSiraNo;
+                        
+                        // Başarı mesajı göster
+                        showToast(data.message, 'success');
+                        
+                    } else {
+                        showToast(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showToast('Bir hata oluştu: ' + error, 'danger');
+                });
+            });
+            
+            // Konu düzenleme
+            const konuDuzenleButtons = document.querySelectorAll('.konu-duzenle-btn');
+            const konuDuzenleForm = document.getElementById('konuDuzenleForm');
+            const konuDuzenleButton = document.getElementById('konuDuzenleButton');
+            const konuDuzenleModal = new bootstrap.Modal(document.getElementById('konuDuzenleModal'));
+            
+            konuDuzenleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const konuId = button.dataset.konuId;
+                    const konuAd = button.dataset.konuAd;
+                    const konuSira = button.dataset.konuSira;
+                    const konuAciklama = button.dataset.konuAciklama;
+                    
+                    document.getElementById('duzenlenenKonuId').value = konuId;
+                    document.getElementById('duzenleKonuAd').value = konuAd;
+                    document.getElementById('duzenleKonuSiraNo').value = konuSira;
+                    document.getElementById('duzenleKonuAciklama').value = konuAciklama;
+                    
+                    konuDuzenleModal.show();
+                });
+            });
+            
+            konuDuzenleButton.addEventListener('click', function() {
+                const formData = new FormData(konuDuzenleForm);
+                const konuId = document.getElementById('duzenlenenKonuId').value;
+                
+                fetch(`/yetkili/konu/${konuId}/duzenle/`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Sayfayı yenile
+                        location.reload();
+                    } else {
+                        showToast(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showToast('Bir hata oluştu: ' + error, 'danger');
+                });
+            });
+            
+            // Konu silme
+            const konuSilButtons = document.querySelectorAll('.konu-sil-btn');
+            
+            konuSilButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const konuId = button.dataset.konuId;
+                    const konuAd = button.dataset.konuAd;
+                    
+                    silmeOnayMesaji.innerHTML = `"<strong>${konuAd}</strong>" konusunu silmek istediğinize emin misiniz?`;
+                    silmeOnayButton.dataset.type = 'konu';
+                    silmeOnayButton.dataset.id = konuId;
+                    
+                    silmeOnayModal.show();
+                });
+            });
+            
+            // Silme onay butonu
+            silmeOnayButton.addEventListener('click', function() {
+                const type = silmeOnayButton.dataset.type;
+                const id = silmeOnayButton.dataset.id;
+                let url = '';
+                
+                if (type === 'unite') {
+                    url = `/yetkili/unite/${id}/sil/`;
+                } else if (type === 'konu') {
+                    url = `/yetkili/konu/${id}/sil/`;
+                }
+                
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        showToast(data.message, 'danger');
+                        silmeOnayModal.hide();
+                    }
+                })
+                .catch(error => {
+                    showToast('Bir hata oluştu: ' + error, 'danger');
+                    silmeOnayModal.hide();
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

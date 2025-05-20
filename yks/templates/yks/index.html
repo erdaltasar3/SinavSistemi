@@ -14,7 +14,8 @@
             <div class="row g-4">
                 {% for oturum in oturumlar %}
                     <div class="col-md-4">
-                        <div class="card h-100">
+                        <a href="{% url 'yks:oturum_dersleri' oturum.kod %}" class="text-decoration-none text-dark">
+                        <div class="card h-100 hover-shadow">
                             <div class="card-body">
                                 <h3 class="card-title">{{ oturum.ad }}</h3>
                                 <h5 class="card-subtitle mb-2 text-muted">{{ oturum.kod }} - {{ oturum.yil }}</h5>
@@ -26,10 +27,9 @@
                                         <span class="ms-2">{{ oturum.sinav_tarihi|date:"d F Y, H:i" }}</span>
                                     </div>
                                 {% endif %}
-                                
-                                
                             </div>
                         </div>
+                        </a>
                     </div>
                 {% endfor %}
             </div>
@@ -41,8 +41,72 @@
     </div>
 </div>
 
-<!-- Features Section -->
+<!-- YKS Araçları Section -->
 <div class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">YKS Hazırlık Araçları</h2>
+        <div class="row g-4">
+            <!-- Deneme Sınavları -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-clipboard-check text-primary" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h3 class="card-title h4">Deneme Sınavları</h3>
+                        <p class="card-text">TYT, AYT ve YDT için güncel deneme sınavlarını çözün ve performansınızı ölçün.</p>
+                        <a href="#" class="btn btn-primary mt-3">Denemelere Git</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sınav Sonuçları & Analiz -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-bar-chart-line text-success" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h3 class="card-title h4">Sınav Sonuçları & Analiz</h3>
+                        <p class="card-text">Sınav sonuçlarınızı analiz edin, güçlü ve zayıf yönlerinizi belirleyin.</p>
+                        <a href="#" class="btn btn-success mt-3">Analizlere Git</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Konu Takip Sistemi -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-journal-check text-info" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h3 class="card-title h4">Konu Takip Sistemi</h3>
+                        <p class="card-text">Çalıştığınız konuları işaretleyin, eksik ve tamamladığınız konuları kolayca görün.</p>
+                        <a href="{% url 'yks:konu_takip_sinav_secim' %}" class="btn btn-info mt-3 text-white">Konuları Takip Et</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hedef Belirleme -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-calendar-event text-danger" style="font-size: 2.5rem;"></i>
+                        </div>
+                        <h3 class="card-title h4">Hedef Belirleme</h3>
+                        <p class="card-text">Günlük, haftalık ve aylık çalışma hedeflerinizi belirleyin ve takip edin.</p>
+                        <a href="#" class="btn btn-danger mt-3">Hedeflere Git</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="py-5">
     <div class="container">
         <h2 class="text-center mb-5">YKS Hakkında</h2>
         <div class="row g-4">

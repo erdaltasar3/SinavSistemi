@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ ders.ad }} - Konular{% endblock %}
+
+{% block extra_css %}
+<style>
+    .konu-item {
+        border-left: 4px solid #dee2e6;
+        padding-left: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        border-radius: 0 8px 8px 0;
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .konu-item:hover {
+        border-left-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .konu-item.tamamlandi {
+        border-left-color: #198754;
+    }
+    
+    .konu-item.tamamlandi:hover {
+        background-color: rgba(25, 135, 84, 0.05);
+    }
+    
+    .unite-card {
+        margin-bottom: 15px;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .unite-card:hover {
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+    
+    .unite-header {
+        background: linear-gradient(120deg, #0d6efd, #0a58ca);
+        color: white;
+        padding: 15px 20px;
+        cursor: pointer;
+    }
+    
+    .unite-header:hover {
+        background: linear-gradient(120deg, #0a58ca, #084298);
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) inset;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, #198754, #20c997);
+        transition: width 0.8s ease-in-out;
+    }
+    
+    .form-check-input.konu-durum-toggle {
+        width: 3rem;
+        height: 1.5rem;
+        cursor: pointer;
+    }
+    
+    .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+    
+    .back-button {
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        z-index: 1000;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .back-button:hover {
+        transform: scale(1.1);
+        background-color: #0a58ca;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    .back-button i {
+        font-size: 1.6rem;
+        color: white;
+    }
+    
+    .collapse-icon {
+        transition: transform 0.3s ease;
+    }
+    
+    .collapsed .collapse-icon {
+        transform: rotate(-90deg);
+    }
+    
+    .ders-overview {
+        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .ders-overview h3 {
+        margin-bottom: 20px;
+        color: #212529;
+    }
+    
+    .ders-stats {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0d6efd;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    /* Animasyonlar */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideInUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .unite-card {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .konu-item {
+        opacity: 0;
+        animation: slideInUp 0.4s ease forwards;
+    }
+    
+    .konu-title {
+        display: flex;
+        align-items: center;
+    }
+    
+    .konu-number {
+        min-width: 30px;
+        height: 30px;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin-right: 10px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        color: #495057;
+    }
+    
+    .konu-item.tamamlandi .konu-number {
+        background-color: #198754;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- CSRF token için gizli form -->
+{% csrf_token %}
+
+<!-- Geri Dön Butonu -->
+<a href="{% url 'yks:konu_takip_dersler' ders.alt_tur.kod %}" class="back-button">
+    <i class="bi bi-arrow-left"></i>
+</a>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ ders.ad }} <span class="badge bg-primary">{{ ders.kod }}</span></h2>
+    </div>
+    
+    <!-- Ders Genel Bakış -->
+    <div class="ders-overview">
+        <h3>Genel İlerleme Durumu</h3>
+        
+        <div class="ders-stats">
+            <div class="stat-item">
+                <div class="stat-value">
+                    <span id="tamamlanan-konu-sayisi">{{ toplam_tamamlanan }}</span> / <span id="toplam-konu-sayisi">{{ toplam_konular }}</span>
+                </div>
+                <div class="stat-label">Tamamlanan Konu</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-value">
+                    %<span id="tamamlanma-yuzdesi">{{ genel_yuzde|floatformat:0 }}</span>
+                </div>
+                <div class="stat-label">Tamamlanma Yüzdesi</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-value">{{ uniteler|length }}</div>
+                <div class="stat-label">Ünite Sayısı</div>
+            </div>
+        </div>
+        
+        <div class="progress" style="height: 10px;">
+            <div class="progress-bar bg-success" id="genel-ilerleme-cubugu" role="progressbar" 
+                 style="width: {{ genel_yuzde|floatformat:0 }}%;" 
+                 aria-valuenow="{{ genel_yuzde|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+    </div>
+    
+    <!-- Üniteler ve Konular -->
+    {% if uniteler %}
+        {% for unite_data in uniteler %}
+            <div class="card unite-card mb-4" id="unite-{{ unite_data.unite.id }}">
+                <div class="unite-header" data-bs-toggle="collapse" data-bs-target="#konular-{{ unite_data.unite.id }}" 
+                     aria-expanded="true" aria-controls="konular-{{ unite_data.unite.id }}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">{{ unite_data.unite.ad }}</h4>
+                            <p class="mb-0 opacity-75 small">{{ unite_data.tamamlanan_konu }} / {{ unite_data.toplam_konu }} konu tamamlandı</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div style="width: 80px;" class="text-center">
+                                <span class="d-block fw-bold">%{{ unite_data.tamamlanma_yuzdesi|floatformat:0 }}</span>
+                                <span class="d-block small">Tamamlandı</span>
+                            </div>
+                            <i class="bi bi-chevron-down collapse-icon fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="collapse show" id="konular-{{ unite_data.unite.id }}">
+                    <div class="card-body bg-light p-4">
+                        <div class="mb-3">
+                            <div class="progress mb-4" style="height: 6px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ unite_data.tamamlanma_yuzdesi|floatformat:0 }}%;" 
+                                     aria-valuenow="{{ unite_data.tamamlanma_yuzdesi|floatformat:0 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="konu-list">
+                            {% for konu in unite_data.konular %}
+                                <div class="konu-item p-3 mb-3{% if konu.tamamlandi %} tamamlandi{% endif %}" 
+                                     data-konu-id="{{ konu.id }}" 
+                                     style="animation-delay: {{ forloop.counter0|floatformat:1 }}s;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="konu-title">
+                                            <div class="konu-number">{{ forloop.counter }}</div>
+                                            <span>{{ konu.ad }}</span>
+                                        </div>
+                                        
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input konu-durum-toggle" type="checkbox" role="switch" 
+                                                   id="konu-durum-{{ konu.id }}" 
+                                                   {% if konu.tamamlandi %}checked{% endif %}
+                                                   data-konu-id="{{ konu.id }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <div class="alert alert-light">Bu ünite için henüz konu tanımlanmamış.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill me-2"></i> Bu ders için henüz ünite ve konu tanımlanmamış.
+        </div>
+    {% endif %}
+    
+    <div class="mt-5 d-flex justify-content-center">
+        <a href="{% url 'yks:konu_takip_dersler' ders.alt_tur.kod %}" class="btn btn-outline-primary me-2">
+            <i class="bi bi-arrow-left me-1"></i> Derslere Dön
+        </a>
+        <a href="{% url 'yks:index' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-house me-1"></i> Ana Sayfaya Dön
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sayfa yüklendiğinde istatistikleri hesapla
+        updateSayfaIstatistikleri();
+        
+        // Ünite başlıklarına tıklama işlevi
+        const uniteHeaders = document.querySelectorAll('.unite-header');
+        
+        uniteHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const icon = this.querySelector('.collapse-icon');
+                
+                // Collapse durumuna göre ikonun dönüşünü ayarla
+                setTimeout(() => {
+                    const isOpen = !this.parentElement.querySelector('.collapse').classList.contains('show');
+                    if (isOpen) {
+                        icon.classList.add('collapsed');
+                    } else {
+                        icon.classList.remove('collapsed');
+                    }
+                }, 350);
+            });
+        });
+        
+        // Konu durumu değiştirme
+        const konuDurumToggles = document.querySelectorAll('.konu-durum-toggle');
+        
+        konuDurumToggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const konuId = this.dataset.konuId;
+                const konuItem = document.querySelector(`.konu-item[data-konu-id="${konuId}"]`);
+                const tamamlandi = this.checked;
+                
+                // UI güncellemesi
+                if (tamamlandi) {
+                    konuItem.classList.add('tamamlandi');
+                } else {
+                    konuItem.classList.remove('tamamlandi');
+                }
+                
+                // Durumu veritabanına kaydet (AJAX ile)
+                updateKonuDurum(konuId, tamamlandi);
+            });
+        });
+        
+        // AJAX ile konu durumunu güncelleme fonksiyonu
+        function updateKonuDurum(konuId, tamamlandi) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // Form verisi oluştur
+            const formData = new FormData();
+            formData.append('konu_id', konuId);
+            formData.append('tamamlandi', tamamlandi);
+            
+            // AJAX isteği gönder
+            fetch('{% url "yks:konu_durum_guncelle" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Sunucu yanıt hatası: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    console.log(`Konu #${konuId} durumu güncellendi: ${tamamlandi ? 'Tamamlandı' : 'Tamamlanmadı'}`);
+                    
+                    // Sayfadaki toplam istatistikleri güncelle
+                    updateSayfaIstatistikleri();
+                } else {
+                    console.error('Hata:', data.error);
+                    alert('Durum güncellenirken bir hata oluştu: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('İstek hatası:', error);
+                // Yalnızca gerçek bir hata durumunda uyarı göster
+                // alert('Durum güncellenirken bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.');
+            });
+        }
+        
+        // Sayfadaki toplam istatistikleri güncelleme
+        function updateSayfaIstatistikleri() {
+            // Tüm üniteleri dön ve istatistikleri hesapla
+            let toplamKonu = 0;
+            let toplamTamamlanan = 0;
+            
+            // Her ünite için hesapla
+            document.querySelectorAll('.unite-card').forEach(uniteCard => {
+                const uniteId = uniteCard.id.split('-')[1];
+                
+                // Bu üniteye ait konuları hesapla
+                const konuItems = uniteCard.querySelectorAll('.konu-item');
+                const tamamlananKonular = uniteCard.querySelectorAll('.konu-item.tamamlandi');
+                
+                // Ünite istatistiklerini güncelle
+                const uniteToplam = konuItems.length;
+                const uniteTamamlanan = tamamlananKonular.length;
+                const uniteTamamlanmaYuzdesi = uniteToplam > 0 ? (uniteTamamlanan / uniteToplam) * 100 : 0;
+                
+                // Ünite başlığındaki istatistikleri güncelle
+                const uniteInfo = uniteCard.querySelector('.unite-header p');
+                uniteInfo.textContent = `${uniteTamamlanan} / ${uniteToplam} konu tamamlandı`;
+                
+                // Ünite yüzdesini güncelle
+                const uniteYuzde = uniteCard.querySelector('.fw-bold');
+                uniteYuzde.textContent = `%${Math.round(uniteTamamlanmaYuzdesi)}`;
+                
+                // Ünite ilerlemesini güncelle
+                const uniteProgressBar = uniteCard.querySelector('.progress-bar');
+                uniteProgressBar.style.width = `${uniteTamamlanmaYuzdesi}%`;
+                uniteProgressBar.setAttribute('aria-valuenow', Math.round(uniteTamamlanmaYuzdesi));
+                
+                // Genel toplamları güncelle
+                toplamKonu += uniteToplam;
+                toplamTamamlanan += uniteTamamlanan;
+            });
+            
+            // Genel istatistikleri güncelle
+            const genelTamamlanmaYuzdesi = toplamKonu > 0 ? (toplamTamamlanan / toplamKonu) * 100 : 0;
+            
+            // Genel başlıkta göster
+            const tamamlananElement = document.getElementById('tamamlanan-konu-sayisi');
+            const toplamElement = document.getElementById('toplam-konu-sayisi');
+            if (tamamlananElement && toplamElement) {
+                tamamlananElement.textContent = toplamTamamlanan;
+                toplamElement.textContent = toplamKonu;
+            }
+            
+            // Genel yüzdeyi güncelle
+            const genelYuzdeElement = document.getElementById('tamamlanma-yuzdesi');
+            if (genelYuzdeElement) {
+                genelYuzdeElement.textContent = Math.round(genelTamamlanmaYuzdesi);
+            }
+            
+            // Genel ilerleme çubuğunu güncelle
+            const genelProgressBar = document.getElementById('genel-ilerleme-cubugu');
+            if (genelProgressBar) {
+                genelProgressBar.style.width = `${genelTamamlanmaYuzdesi}%`;
+                genelProgressBar.setAttribute('aria-valuenow', Math.round(genelTamamlanmaYuzdesi));
+            }
+        }
+    });
+</script>
+{% endblock %} 

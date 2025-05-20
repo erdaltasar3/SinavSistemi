@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Konu Takip - Dersler{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Card Tasarımı */
+    .ders-card {
+        border-radius: 15px;
+        border: none;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        background: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        z-index: 1;
+    }
+    
+    .ders-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, rgba(var(--bs-primary-rgb), 0.7), rgba(var(--bs-info-rgb), 0.5));
+        clip-path: circle(0% at 0% 0%);
+        transition: clip-path 0.6s ease-in-out;
+        z-index: -1;
+    }
+    
+    .ders-card:hover::before {
+        clip-path: circle(150% at 0% 0%);
+    }
+    
+    .ders-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .ders-card:hover .card-title,
+    .ders-card:hover .text-dark,
+    .ders-card:hover .text-muted {
+        color: white !important;
+    }
+    
+    .progress-ring {
+        width: 80px;
+        height: 80px;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring__circle {
+        stroke-dasharray: 251.2;
+        stroke-dashoffset: 0;
+        transform-origin: center;
+        stroke: #e9ecef;
+        fill: transparent;
+    }
+    
+    .progress-ring__circle-progress {
+        stroke: #198754;
+        transition: stroke-dashoffset 0.8s ease-in-out;
+    }
+    
+    .progress-percentage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(90deg);
+        font-weight: bold;
+        font-size: 1rem;
+        color: #198754;
+    }
+    
+    .ders-card:hover .progress-percentage {
+        color: white;
+    }
+    
+    .ders-card:hover .progress-ring__circle-progress {
+        stroke: white;
+    }
+    
+    .card-link {
+        position: relative;
+        color: #007bff;
+        text-decoration: none;
+        transition: all 0.3s;
+        overflow: hidden;
+        display: inline-block;
+    }
+    
+    .card-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: #007bff;
+        transform: scaleX(0);
+        transform-origin: bottom right;
+        transition: transform 0.3s;
+    }
+    
+    .card-link:hover::after {
+        transform: scaleX(1);
+        transform-origin: bottom left;
+    }
+    
+    .alt-tur-title {
+        display: inline-block;
+        margin-bottom: 30px;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    
+    .alt-tur-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+        border-radius: 3px;
+    }
+    
+    .back-button {
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        z-index: 1000;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .back-button:hover {
+        transform: scale(1.1);
+        background-color: #0a58ca;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    .back-button i {
+        font-size: 1.6rem;
+        color: white;
+    }
+    
+    /* Animasyon */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 40px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+    
+    .animate-card {
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+    }
+    
+    .animate-delay-1 { animation-delay: 0.1s; }
+    .animate-delay-2 { animation-delay: 0.2s; }
+    .animate-delay-3 { animation-delay: 0.3s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Geri Dön Butonu -->
+<a href="{% url 'yks:konu_takip_sinav_secim' %}" class="back-button">
+    <i class="bi bi-arrow-left"></i>
+</a>
+
+<div class="container py-5">
+    <h2 class="text-center mb-3">Konu Takip Sistemi</h2>
+    <p class="text-center text-muted mb-5">{{ sinav_kodu }} sınavı ders listesi</p>
+    
+    {% for alt_tur_data in alt_tur_dersler %}
+        <div class="mb-5">
+            <h3 class="alt-tur-title"><i class="bi bi-book me-2 text-primary"></i>{{ alt_tur_data.alt_tur.ad }}</h3>
+            <div class="row g-4">
+                {% for ders_data in alt_tur_data.dersler %}
+                    <div class="col-md-4 animate-card animate-delay-{{ forloop.counter|divisibleby:3|yesno:'3,1,2' }}">
+                        <div class="card ders-card h-100">
+                            <div class="card-body p-4">
+                                <h4 class="card-title h5 mb-4">{{ ders_data.ders.ad }}</h4>
+                                
+                                <!-- Progress Ring -->
+                                <div class="progress-ring">
+                                    <svg width="80" height="80">
+                                        <circle class="progress-ring__circle" cx="40" cy="40" r="36" stroke-width="4"></circle>
+                                        <circle class="progress-ring__circle progress-ring__circle-progress" cx="40" cy="40" r="36" stroke-width="4" 
+                                               data-progress="{{ ders_data.ilerleme_yuzdesi }}"
+                                               stroke-dashoffset="251.2"></circle>
+                                    </svg>
+                                    <div class="progress-percentage">
+                                        %{{ ders_data.ilerleme_yuzdesi|floatformat:0 }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4 mt-2">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="fw-bold text-dark">İlerleme Durumu</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ ders_data.ilerleme_yuzdesi|floatformat:0 }}%;" 
+                                             aria-valuenow="{{ ders_data.ilerleme_yuzdesi|floatformat:0 }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <span class="text-muted">
+                                        <i class="bi bi-check-circle-fill text-success me-1"></i> 
+                                        <strong>{{ ders_data.tamamlanan_konu }}</strong> / {{ ders_data.toplam_konu }} konu
+                                    </span>
+                                    
+                                    <span class="badge bg-light text-dark">
+                                        {{ ders_data.ders.kod }}
+                                    </span>
+                                </div>
+                                
+                                <div class="text-center mt-auto">
+                                    <a href="{% url 'yks:konu_takip_konular' ders_data.ders.id %}" class="btn btn-outline-primary btn-lg rounded-pill w-100">
+                                        Konuları Görüntüle <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="alert alert-info text-center p-5 shadow-sm">
+            <div class="mb-4">
+                <i class="bi bi-info-circle-fill text-primary" style="font-size: 4rem;"></i>
+            </div>
+            <h3 class="mb-3">Bu sınav türü için henüz ders bulunmamaktadır.</h3>
+            <p class="lead mb-4">Seçtiğiniz {{ sinav_kodu }} oturumu için henüz ders tanımlanmamış olabilir veya veritabanı ayarları eksik olabilir.</p>
+            
+            <!-- Admin sekme -->
+            <div class="card mt-5 mb-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Yöneticiler İçin</h5>
+                </div>
+                <div class="card-body">
+                    <p>Veritabanında aşağıdaki adımları tamamladığınızdan emin olun:</p>
+                    <ol class="text-start">
+                        <li>SinavTurleri tablosunda YKS bulunmalıdır</li>
+                        <li>SinavAltTur tablosunda {{ sinav_kodu }} kod ile kayıt yapılmalıdır (örn. TYT, AYT, YDT)</li> 
+                        <li>Ders tablosunda ilgili alt türe bağlı dersler tanımlanmalıdır</li>
+                    </ol>
+                    <a href="/admin/core/sinavalttur/" class="btn btn-outline-primary mt-2">Sınav Alt Türlerini Yönet</a>
+                    <a href="/admin/core/ders/" class="btn btn-outline-success mt-2 ms-2">Dersleri Yönet</a>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{% url 'yks:konu_takip_sinav_secim' %}" class="btn btn-primary btn-lg rounded-pill">
+                    <i class="bi bi-arrow-left me-2"></i> Oturum Seçimine Dön
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+    
+    <div class="mt-5 d-flex justify-content-center">
+        <a href="{% url 'yks:index' %}" class="btn btn-secondary btn-lg rounded-pill">
+            <i class="bi bi-house me-1"></i> Ana Sayfaya Dön
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // SVG Progress Circle Animation
+        const progressRings = document.querySelectorAll('.progress-ring__circle-progress');
+        
+        setTimeout(() => {
+            progressRings.forEach(circle => {
+                // İlerlemeyi hesapla (0-100 arası)
+                const progress = parseFloat(circle.getAttribute('data-progress'));
+                // Toplam çevre uzunluğu (2*PI*r)
+                const circumference = 2 * Math.PI * 36;
+                // İlerleme oranına göre çemberin görünür kısmını hesapla
+                const dashoffset = circumference - (progress / 100) * circumference;
+                // Hesaplanan değeri uygula
+                circle.style.strokeDasharray = circumference;
+                circle.style.strokeDashoffset = dashoffset;
+            });
+        }, 300);
+    });
+</script>
+{% endblock %} 

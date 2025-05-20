@@ -1,5 +1,7 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.utils import timezone
+from core.models import Ders, Konu
 
 # Create your models here.
 
@@ -47,3 +49,23 @@ class YKSOturum(models.Model):
         verbose_name = "YKS Oturum"
         verbose_name_plural = "YKS Oturumları"
         unique_together = ('kod', 'yil')  # Aynı yılda aynı kod tekrar edemez
+
+
+class KonuTakip(models.Model):
+    """Kullanıcının tamamladığı konuları takip etmek için kullanılır"""
+    
+    kullanici = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tamamlanan_konular', verbose_name="Kullanıcı")
+    konu = models.ForeignKey(Konu, on_delete=models.CASCADE, related_name='tamamlayanlar', verbose_name="Konu")
+    tamamlandi = models.BooleanField(default=True, verbose_name="Tamamlandı")
+    tamamlanma_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Tamamlanma Tarihi")
+    guncelleme_tarihi = models.DateTimeField(auto_now=True, verbose_name="Güncelleme Tarihi")
+    notlar = models.TextField(blank=True, null=True, verbose_name="Notlar")
+    
+    def __str__(self):
+        return f"{self.kullanici.username} - {self.konu}"
+    
+    class Meta:
+        verbose_name = "Konu Takip"
+        verbose_name_plural = "Konu Takipleri"
+        ordering = ['-tamamlanma_tarihi']
+        unique_together = ('kullanici', 'konu')  # Bir kullanıcı bir konuyu yalnızca bir kez tamamlayabilir

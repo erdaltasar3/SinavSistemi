@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Konu Takip - YKS Oturum Seçimi{% endblock %}
+
+{% block extra_css %}
+<style>
+    .oturum-card {
+        transition: all 0.4s ease;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        position: relative;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        border: none;
+    }
+    
+    .oturum-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+    
+    .oturum-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.3));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .oturum-card:hover::before {
+        opacity: 1;
+    }
+    
+    .oturum-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        color: #0d6efd;
+        transition: all 0.3s ease;
+    }
+    
+    .oturum-card:hover .oturum-icon {
+        transform: scale(1.2);
+    }
+    
+    .oturum-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .oturum-description {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+    
+    .header-title {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .header-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+        border-radius: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-5 header-title">Konu Takip Sistemi</h2>
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-5">
+                <h3 class="mb-4">YKS Oturum Seçimi</h3>
+                <p class="lead text-muted">Hangi sınav oturumuna ait dersleri ve konuları takip etmek istediğinizi seçin.</p>
+            </div>
+            
+            
+            <div class="row g-4 justify-content-center">
+                {% for alt_tur in alt_turler %}
+                <div class="col-md-4">
+                    <a href="{% url 'yks:konu_takip_dersler' alt_tur.kod %}" class="text-decoration-none">
+                        <div class="card oturum-card h-100">
+                            <div class="card-body text-center py-5">
+                                <div class="oturum-icon">
+                                    {% if alt_tur.kod == 'TYT' %}
+                                    <i class="bi bi-journals"></i>
+                                    {% elif alt_tur.kod == 'AYT' %}
+                                    <i class="bi bi-book"></i>
+                                    {% elif alt_tur.kod == 'YDT' %}
+                                    <i class="bi bi-translate"></i>
+                                    {% else %}
+                                    <i class="bi bi-bank"></i>
+                                    {% endif %}
+                                </div>
+                                <h3 class="oturum-title">{{ alt_tur.ad }}</h3>
+                                <p class="oturum-description mb-4">
+                                    {% if alt_tur.kod == 'TYT' %}
+                                    Temel Yeterlilik Testi: Türkçe, Matematik, Fen Bilimleri ve Sosyal Bilimler
+                                    {% elif alt_tur.kod == 'AYT' %}
+                                    Alan Yeterlilik Testi: Matematik, Fen Bilimleri ve Sosyal Bilimler
+                                    {% elif alt_tur.kod == 'YDT' %}
+                                    Yabancı Dil Testi: Dil sınavlarına yönelik yabancı dil dersleri
+                                    {% else %}
+                                    {{ alt_tur.aciklama|default:"Açıklama bulunmuyor." }}
+                                    {% endif %}
+                                </p>
+                                <div class="mt-4">
+                                    <span class="btn btn-primary btn-lg rounded-pill">
+                                        <i class="bi bi-arrow-right me-2"></i> Derslere Git
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i> Henüz YKS sınav oturumu tanımlanmamış.
+                    </div>
+                    
+                    <!-- YKS Alt Tür Butonları - Tanımlı veri yokken manuel erişim için -->
+                    <div class="mt-4 text-center">
+                        <h5 class="mb-3">YKS Oturumları için Hızlı Erişim</h5>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'yks:konu_takip_dersler' 'TYT' %}" class="btn btn-primary">
+                                TYT Dersleri
+                            </a>
+                            <a href="{% url 'yks:konu_takip_dersler' 'AYT' %}" class="btn btn-success">
+                                AYT Dersleri
+                            </a>
+                            <a href="{% url 'yks:konu_takip_dersler' 'YDT' %}" class="btn btn-info text-white">
+                                YDT Dersleri
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center mt-5">
+                <a href="{% url 'yks:index' %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="bi bi-house-door me-2"></i> Ana Sayfaya Dön
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

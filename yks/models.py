@@ -69,3 +69,5 @@ class KonuTakip(models.Model):
         verbose_name_plural = "Konu Takipleri"
         ordering = ['-tamamlanma_tarihi']
         unique_together = ('kullanici', 'konu')  # Bir kullanıcı bir konuyu yalnızca bir kez tamamlayabilir
+
+

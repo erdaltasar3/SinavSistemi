@@ -9,13 +9,13 @@ from django.db.models import Count, Avg, Q
 import json
 from .forms import (
     KayitFormu, GirisFormu, 
-    CalismaHedefiForm, CalismaPlaniForm, HatirlaticiForm, YapilacakListesiForm, PlanTamamlamaForm
+    DersForm, UniteForm, KonuForm
 )
 from django.contrib.auth.models import User
 from .models import (
-    SinavTurleri, SinavAltTur, Ders, Unite, Konu,
-    CalismaHedefi, CalismaPlani, Hatirlatici, YapilacakListesi
+    SinavTurleri, SinavAltTur, Ders, Unite, Konu
 )
+from datetime import timedelta, date, datetime
 
 def giris_view(request):
     """Kullanıcı girişi"""
@@ -620,12 +620,14 @@ def ders_uniteler_son_sira_api(request, ders_id):
 
 # Hedef Belirleme ve Takip view fonksiyonları
 
+"""
+# Hedefler ile ilgili görünümler devre dışı bırakıldı
 @login_required
 def hedef_listesi(request):
-    """Kullanıcının çalışma hedeflerini listeler"""
+    # Hedef listesi görünümü
     hedefler = CalismaHedefi.objects.filter(kullanici=request.user).order_by('-olusturulma_tarihi')
     
-    # Aktif, tamamlanan ve iptal edilen hedefleri ayır
+    # Duruma göre filtreleme
     aktif_hedefler = hedefler.filter(durum=CalismaHedefi.DURUM_AKTIF)
     tamamlanan_hedefler = hedefler.filter(durum=CalismaHedefi.DURUM_TAMAMLANDI)
     iptal_edilen_hedefler = hedefler.filter(durum=CalismaHedefi.DURUM_IPTAL)
@@ -633,451 +635,412 @@ def hedef_listesi(request):
     context = {
         'aktif_hedefler': aktif_hedefler,
         'tamamlanan_hedefler': tamamlanan_hedefler,
-        'iptal_edilen_hedefler': iptal_edilen_hedefler,
+        'iptal_edilen_hedefler': iptal_edilen_hedefler
     }
+    
     return render(request, 'core/hedefler/hedef_listesi.html', context)
 
 @login_required
 def hedef_ekle(request):
-    """Yeni çalışma hedefi ekleme"""
+    # Hedef ekleme görünümü
     if request.method == 'POST':
         form = CalismaHedefiForm(request.POST)
         if form.is_valid():
             hedef = form.save(commit=False)
             hedef.kullanici = request.user
             hedef.save()
-            messages.success(request, "Yeni hedef başarıyla oluşturuldu.")
+            messages.success(request, 'Hedef başarıyla oluşturuldu.')
             return redirect('core:hedef_detay', hedef_id=hedef.id)
     else:
         form = CalismaHedefiForm()
     
-    return render(request, 'core/hedefler/hedef_form.html', {'form': form, 'baslik': 'Yeni Hedef Ekle'})
+    return render(request, 'core/hedefler/hedef_form.html', {'form': form, 'baslik': 'Yeni Hedef'})
 
 @login_required
 def hedef_detay(request, hedef_id):
-    """Çalışma hedefi detayları ve ilişkili çalışma planları"""
+    # Hedef detay görünümü
     hedef = get_object_or_404(CalismaHedefi, id=hedef_id)
     
-    # Yetki kontrolü
+    # Sadece hedef sahibi görebilir
     if hedef.kullanici != request.user:
-        raise PermissionDenied("Bu hedefi görüntüleme yetkiniz yok.")
+        raise PermissionDenied
     
-    # Hedefin çalışma planlarını al
-    planlar = hedef.calisma_planlari.all().order_by('planlanan_tarih')
+    # Hedefle ilgili planları getir
+    planlar = CalismaPlani.objects.filter(hedef=hedef).order_by('planlanan_tarih')
     
-    # Durum ve tarihe göre planları ayır
-    bugun = timezone.now().date()
-    
-    bekleyen_planlar = planlar.filter(durum=CalismaPlani.DURUM_BEKLIYOR)
-    gecmis_planlar = bekleyen_planlar.filter(planlanan_tarih__lt=bugun)
-    bugunun_planlari = bekleyen_planlar.filter(planlanan_tarih=bugun)
-    gelecek_planlar = bekleyen_planlar.filter(planlanan_tarih__gt=bugun)
-    tamamlanan_planlar = planlar.filter(durum=CalismaPlani.DURUM_TAMAMLANDI)
-    iptal_edilen_planlar = planlar.filter(durum=CalismaPlani.DURUM_IPTAL)
+    # Planların durumlarına göre istatistikler
+    tamamlanan_planlar = planlar.filter(durum=CalismaPlani.DURUM_TAMAMLANDI).count()
+    toplam_plan = planlar.count()
+    tamamlanma_orani = 0
+    if toplam_plan > 0:
+        tamamlanma_orani = (tamamlanan_planlar / toplam_plan) * 100
     
     context = {
         'hedef': hedef,
-        'gecmis_planlar': gecmis_planlar,
-        'bugunun_planlari': bugunun_planlari,
-        'gelecek_planlar': gelecek_planlar,
+        'planlar': planlar,
         'tamamlanan_planlar': tamamlanan_planlar,
-        'iptal_edilen_planlar': iptal_edilen_planlar,
+        'toplam_plan': toplam_plan,
+        'tamamlanma_orani': tamamlanma_orani
     }
+    
     return render(request, 'core/hedefler/hedef_detay.html', context)
 
 @login_required
 def hedef_duzenle(request, hedef_id):
-    """Çalışma hedefi düzenleme"""
+    # Hedef düzenleme görünümü
     hedef = get_object_or_404(CalismaHedefi, id=hedef_id)
     
-    # Yetki kontrolü
+    # Sadece hedef sahibi düzenleyebilir
     if hedef.kullanici != request.user:
-        raise PermissionDenied("Bu hedefi düzenleme yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
         form = CalismaHedefiForm(request.POST, instance=hedef)
         if form.is_valid():
             form.save()
-            messages.success(request, "Hedef başarıyla güncellendi.")
+            messages.success(request, 'Hedef başarıyla güncellendi.')
             return redirect('core:hedef_detay', hedef_id=hedef.id)
     else:
         form = CalismaHedefiForm(instance=hedef)
     
-    return render(request, 'core/hedefler/hedef_form.html', 
-                 {'form': form, 'baslik': 'Hedef Düzenle', 'hedef': hedef})
+    return render(request, 'core/hedefler/hedef_form.html', {'form': form, 'baslik': 'Hedef Düzenle'})
 
 @login_required
 def hedef_sil(request, hedef_id):
-    """Çalışma hedefi silme"""
+    # Hedef silme görünümü (durum iptal olarak değiştirilecek)
     hedef = get_object_or_404(CalismaHedefi, id=hedef_id)
     
-    # Yetki kontrolü
+    # Sadece hedef sahibi silebilir
     if hedef.kullanici != request.user:
-        raise PermissionDenied("Bu hedefi silme yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
-        # Hedefi iptal et (silme yerine durumunu güncelle)
+        # Hedefi iptal et
         hedef.durum = CalismaHedefi.DURUM_IPTAL
         hedef.save()
-        messages.success(request, "Hedef iptal edildi.")
+        messages.success(request, 'Hedef iptal edildi.')
         return redirect('core:hedef_listesi')
     
     return render(request, 'core/hedefler/hedef_sil.html', {'hedef': hedef})
 
 @login_required
 def plan_ekle(request, hedef_id):
-    """Çalışma planı ekleme"""
+    # Plan ekleme görünümü
     hedef = get_object_or_404(CalismaHedefi, id=hedef_id)
     
-    # Yetki kontrolü
+    # Sadece hedef sahibi plan ekleyebilir
     if hedef.kullanici != request.user:
-        raise PermissionDenied("Bu hedefe plan ekleme yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
         form = CalismaPlaniForm(request.POST, user=request.user, hedef_id=hedef_id)
         if form.is_valid():
             plan = form.save(commit=False)
-            # Formda hedef alanı varsa, otomatik olarak atanır
-            if not hasattr(plan, 'hedef') or not plan.hedef:
-                plan.hedef = hedef
+            plan.hedef = hedef
             plan.save()
-            messages.success(request, "Çalışma planı başarıyla oluşturuldu.")
+            messages.success(request, 'Plan başarıyla oluşturuldu.')
             return redirect('core:hedef_detay', hedef_id=hedef.id)
     else:
         form = CalismaPlaniForm(user=request.user, hedef_id=hedef_id)
     
-    # Dersler ve konular için veri hazırla (JavaScript ile dinamik olarak doldurulacak)
-    dersler = Ders.objects.filter(aktif=True)
-    
-    return render(request, 'core/planlar/plan_form.html', {
-        'form': form, 
-        'baslik': 'Yeni Çalışma Planı', 
-        'hedef': hedef,
-        'dersler': dersler,
-    })
+    return render(request, 'core/planlar/plan_form.html', {'form': form, 'baslik': 'Yeni Plan', 'hedef': hedef})
 
 @login_required
 def plan_detay(request, plan_id):
-    """Çalışma planı detayları"""
+    # Plan detay görünümü
     plan = get_object_or_404(CalismaPlani, id=plan_id)
     
-    # Yetki kontrolü
+    # Sadece plan sahibi görebilir
     if plan.hedef.kullanici != request.user:
-        raise PermissionDenied("Bu planı görüntüleme yetkiniz yok.")
+        raise PermissionDenied
     
     return render(request, 'core/planlar/plan_detay.html', {'plan': plan})
 
 @login_required
 def plan_duzenle(request, plan_id):
-    """Çalışma planı düzenleme"""
+    # Plan düzenleme görünümü
     plan = get_object_or_404(CalismaPlani, id=plan_id)
     
-    # Yetki kontrolü
+    # Sadece plan sahibi düzenleyebilir
     if plan.hedef.kullanici != request.user:
-        raise PermissionDenied("Bu planı düzenleme yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
         form = CalismaPlaniForm(request.POST, instance=plan, user=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, "Çalışma planı başarıyla güncellendi.")
+            messages.success(request, 'Plan başarıyla güncellendi.')
             return redirect('core:plan_detay', plan_id=plan.id)
     else:
         form = CalismaPlaniForm(instance=plan, user=request.user)
     
-    # Dersler ve konular için veri hazırla
-    dersler = Ders.objects.filter(aktif=True)
-    
     return render(request, 'core/planlar/plan_form.html', {
         'form': form, 
-        'baslik': 'Çalışma Planı Düzenle', 
-        'plan': plan,
-        'hedef': plan.hedef,
-        'dersler': dersler,
+        'baslik': 'Plan Düzenle',
+        'hedef': plan.hedef
     })
 
 @login_required
 def plan_sil(request, plan_id):
-    """Çalışma planı silme"""
+    # Plan silme görünümü
     plan = get_object_or_404(CalismaPlani, id=plan_id)
     
-    # Yetki kontrolü
+    # Sadece plan sahibi silebilir
     if plan.hedef.kullanici != request.user:
-        raise PermissionDenied("Bu planı silme yetkiniz yok.")
+        raise PermissionDenied
     
     hedef_id = plan.hedef.id
     
     if request.method == 'POST':
-        # Planı iptal et (silme yerine durumunu güncelle)
-        plan.durum = CalismaPlani.DURUM_IPTAL
-        plan.save()
-        messages.success(request, "Çalışma planı iptal edildi.")
+        plan.delete()
+        messages.success(request, 'Plan silindi.')
         return redirect('core:hedef_detay', hedef_id=hedef_id)
     
     return render(request, 'core/planlar/plan_sil.html', {'plan': plan})
 
 @login_required
 def plan_tamamla(request, plan_id):
-    """Çalışma planı tamamlama"""
+    # Plan tamamlama görünümü
     plan = get_object_or_404(CalismaPlani, id=plan_id)
     
-    # Yetki kontrolü
+    # Sadece plan sahibi tamamlayabilir
     if plan.hedef.kullanici != request.user:
-        raise PermissionDenied("Bu planı tamamlama yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
         form = PlanTamamlamaForm(request.POST, instance=plan)
         if form.is_valid():
             form.save()
-            messages.success(request, "Çalışma planı durumu güncellendi.")
+            messages.success(request, 'Plan tamamlandı.')
             return redirect('core:hedef_detay', hedef_id=plan.hedef.id)
     else:
-        # Önceden gerceklesen_sure yoksa planlanan süreyi öner
-        if plan.gerceklesen_sure == 0:
-            plan.gerceklesen_sure = plan.planlanan_sure
-        
         form = PlanTamamlamaForm(instance=plan)
     
     return render(request, 'core/planlar/plan_tamamla.html', {'form': form, 'plan': plan})
 
 @login_required
 def hatirlatici_listesi(request):
-    """Kullanıcının hatırlatıcı listesi"""
+    # Hatırlatıcı listesi görünümü
+    hatirlaticilar = Hatirlatici.objects.filter(kullanici=request.user).order_by('tarih', 'saat')
+    
+    # Bugünkü, gelecek ve geçmiş hatırlatıcılar
     bugun = timezone.now().date()
+    bugunku_hatirlaticilar = hatirlaticilar.filter(tarih=bugun)
+    gelecek_hatirlaticilar = hatirlaticilar.filter(tarih__gt=bugun)
+    gecmis_hatirlaticilar = hatirlaticilar.filter(tarih__lt=bugun)
     
-    # Aktif hatırlatıcıları al
-    aktif_hatirlaticilar = Hatirlatici.objects.filter(
-        kullanici=request.user, 
-        durum=Hatirlatici.DURUM_AKTIF
-    ).order_by('tarih', 'saat')
-    
-    # Tarihe göre grupla
-    gecmis_hatirlaticilar = aktif_hatirlaticilar.filter(tarih__lt=bugun)
-    bugunun_hatirlaticilari = aktif_hatirlaticilar.filter(tarih=bugun)
-    gelecek_hatirlaticilar = aktif_hatirlaticilar.filter(tarih__gt=bugun)
-    
-    # Tamamlanan ve iptal edilen hatırlatıcılar
-    tamamlanan_hatirlaticilar = Hatirlatici.objects.filter(
-        kullanici=request.user, 
-        durum=Hatirlatici.DURUM_TAMAMLANDI
-    ).order_by('-guncelleme_tarihi')
-    
-    iptal_edilen_hatirlaticilar = Hatirlatici.objects.filter(
-        kullanici=request.user, 
-        durum=Hatirlatici.DURUM_IPTAL
-    ).order_by('-guncelleme_tarihi')
+    # Duruma göre filtreleme
+    aktif_hatirlaticilar = hatirlaticilar.filter(durum=Hatirlatici.DURUM_AKTIF)
+    tamamlanan_hatirlaticilar = hatirlaticilar.filter(durum=Hatirlatici.DURUM_TAMAMLANDI)
     
     context = {
-        'gecmis_hatirlaticilar': gecmis_hatirlaticilar,
-        'bugunun_hatirlaticilari': bugunun_hatirlaticilari,
+        'bugunku_hatirlaticilar': bugunku_hatirlaticilar,
         'gelecek_hatirlaticilar': gelecek_hatirlaticilar,
-        'tamamlanan_hatirlaticilar': tamamlanan_hatirlaticilar,
-        'iptal_edilen_hatirlaticilar': iptal_edilen_hatirlaticilar,
+        'gecmis_hatirlaticilar': gecmis_hatirlaticilar,
+        'aktif_hatirlaticilar': aktif_hatirlaticilar,
+        'tamamlanan_hatirlaticilar': tamamlanan_hatirlaticilar
     }
+    
     return render(request, 'core/hatirlaticilar/hatirlatici_listesi.html', context)
 
 @login_required
 def hatirlatici_ekle(request):
-    """Yeni hatırlatıcı ekleme"""
+    # Hatırlatıcı ekleme görünümü
     if request.method == 'POST':
         form = HatirlaticiForm(request.POST)
         if form.is_valid():
             hatirlatici = form.save(commit=False)
             hatirlatici.kullanici = request.user
             hatirlatici.save()
-            messages.success(request, "Hatırlatıcı başarıyla oluşturuldu.")
+            messages.success(request, 'Hatırlatıcı başarıyla oluşturuldu.')
             return redirect('core:hatirlatici_listesi')
     else:
         form = HatirlaticiForm()
     
-    return render(request, 'core/hatirlaticilar/hatirlatici_form.html', 
-                 {'form': form, 'baslik': 'Yeni Hatırlatıcı Ekle'})
+    return render(request, 'core/hatirlaticilar/hatirlatici_form.html', {'form': form, 'baslik': 'Yeni Hatırlatıcı'})
 
 @login_required
 def hatirlatici_detay(request, hatirlatici_id):
-    """Hatırlatıcı detayları"""
+    # Hatırlatıcı detay görünümü
     hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id)
     
-    # Yetki kontrolü
+    # Sadece hatırlatıcı sahibi görebilir
     if hatirlatici.kullanici != request.user:
-        raise PermissionDenied("Bu hatırlatıcıyı görüntüleme yetkiniz yok.")
+        raise PermissionDenied
     
     return render(request, 'core/hatirlaticilar/hatirlatici_detay.html', {'hatirlatici': hatirlatici})
 
 @login_required
 def hatirlatici_duzenle(request, hatirlatici_id):
-    """Hatırlatıcı düzenleme"""
+    # Hatırlatıcı düzenleme görünümü
     hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id)
     
-    # Yetki kontrolü
+    # Sadece hatırlatıcı sahibi düzenleyebilir
     if hatirlatici.kullanici != request.user:
-        raise PermissionDenied("Bu hatırlatıcıyı düzenleme yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
         form = HatirlaticiForm(request.POST, instance=hatirlatici)
         if form.is_valid():
             form.save()
-            messages.success(request, "Hatırlatıcı başarıyla güncellendi.")
+            messages.success(request, 'Hatırlatıcı başarıyla güncellendi.')
             return redirect('core:hatirlatici_detay', hatirlatici_id=hatirlatici.id)
     else:
         form = HatirlaticiForm(instance=hatirlatici)
     
-    return render(request, 'core/hatirlaticilar/hatirlatici_form.html', 
-                 {'form': form, 'baslik': 'Hatırlatıcı Düzenle', 'hatirlatici': hatirlatici})
+    return render(request, 'core/hatirlaticilar/hatirlatici_form.html', {'form': form, 'baslik': 'Hatırlatıcı Düzenle'})
 
 @login_required
 def hatirlatici_sil(request, hatirlatici_id):
-    """Hatırlatıcı silme"""
+    # Hatırlatıcı silme görünümü
     hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id)
     
-    # Yetki kontrolü
+    # Sadece hatırlatıcı sahibi silebilir
     if hatirlatici.kullanici != request.user:
-        raise PermissionDenied("Bu hatırlatıcıyı silme yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
-        # Hatırlatıcıyı iptal et (silme yerine durumunu güncelle)
-        hatirlatici.durum = Hatirlatici.DURUM_IPTAL
-        hatirlatici.save()
-        messages.success(request, "Hatırlatıcı iptal edildi.")
+        hatirlatici.delete()
+        messages.success(request, 'Hatırlatıcı silindi.')
         return redirect('core:hatirlatici_listesi')
     
     return render(request, 'core/hatirlaticilar/hatirlatici_sil.html', {'hatirlatici': hatirlatici})
 
 @login_required
 def hatirlatici_tamamla(request, hatirlatici_id):
-    """Hatırlatıcı tamamlama"""
+    # Hatırlatıcı tamamlama görünümü
     hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id)
     
-    # Yetki kontrolü
+    # Sadece hatırlatıcı sahibi tamamlayabilir
     if hatirlatici.kullanici != request.user:
-        raise PermissionDenied("Bu hatırlatıcıyı tamamlama yetkiniz yok.")
+        raise PermissionDenied
     
-    # Hatırlatıcıyı tamamla
-    hatirlatici.durum = Hatirlatici.DURUM_TAMAMLANDI
-    hatirlatici.save()
+    if request.method == 'POST':
+        # Hatırlatıcıyı tamamlandı olarak işaretle
+        hatirlatici.durum = Hatirlatici.DURUM_TAMAMLANDI
+        hatirlatici.save()
+        messages.success(request, 'Hatırlatıcı tamamlandı olarak işaretlendi.')
+        return redirect('core:hatirlatici_listesi')
     
-    messages.success(request, "Hatırlatıcı tamamlandı.")
-    
-    # AJAX isteği mi kontrol et
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'status': 'success'})
-    
-    return redirect('core:hatirlatici_listesi')
+    return render(request, 'core/hatirlaticilar/hatirlatici_sil.html', {
+        'hatirlatici': hatirlatici,
+        'baslik': 'Hatırlatıcıyı Tamamla',
+        'mesaj': 'Bu hatırlatıcıyı tamamlandı olarak işaretlemek istediğinize emin misiniz?'
+    })
 
 @login_required
 def yapilacak_listesi(request):
-    """Kullanıcının yapılacaklar listesi"""
-    # Aktif yapılacaklar
-    aktif_yapilacaklar = YapilacakListesi.objects.filter(
-        kullanici=request.user, 
-        durum=YapilacakListesi.DURUM_AKTIF
-    ).order_by('oncelik', 'son_tarih', 'olusturulma_tarihi')
+    # Yapılacaklar listesi görünümü
+    yapilacaklar = YapilacakListesi.objects.filter(kullanici=request.user).order_by('son_tarih')
     
-    # Tamamlanan ve iptal edilen yapılacaklar
-    tamamlanan_yapilacaklar = YapilacakListesi.objects.filter(
-        kullanici=request.user, 
-        durum=YapilacakListesi.DURUM_TAMAMLANDI
-    ).order_by('-guncelleme_tarihi')
+    # Bugün, gelecek ve geçmiş yapılacaklar
+    bugun = timezone.now().date()
+    bugunku_yapilacaklar = yapilacaklar.filter(son_tarih=bugun)
+    gelecek_yapilacaklar = yapilacaklar.filter(son_tarih__gt=bugun)
+    gecmis_yapilacaklar = yapilacaklar.filter(son_tarih__lt=bugun, son_tarih__isnull=False)
+    tarihi_olmayanlar = yapilacaklar.filter(son_tarih__isnull=True)
     
-    iptal_edilen_yapilacaklar = YapilacakListesi.objects.filter(
-        kullanici=request.user, 
-        durum=YapilacakListesi.DURUM_IPTAL
-    ).order_by('-guncelleme_tarihi')
+    # Duruma göre filtreleme
+    aktif_yapilacaklar = yapilacaklar.filter(durum=YapilacakListesi.DURUM_AKTIF)
+    tamamlanan_yapilacaklar = yapilacaklar.filter(durum=YapilacakListesi.DURUM_TAMAMLANDI)
     
     context = {
+        'bugunku_yapilacaklar': bugunku_yapilacaklar,
+        'gelecek_yapilacaklar': gelecek_yapilacaklar,
+        'gecmis_yapilacaklar': gecmis_yapilacaklar,
+        'tarihi_olmayanlar': tarihi_olmayanlar,
         'aktif_yapilacaklar': aktif_yapilacaklar,
-        'tamamlanan_yapilacaklar': tamamlanan_yapilacaklar,
-        'iptal_edilen_yapilacaklar': iptal_edilen_yapilacaklar,
+        'tamamlanan_yapilacaklar': tamamlanan_yapilacaklar
     }
+    
     return render(request, 'core/yapilacaklar/yapilacak_listesi.html', context)
 
 @login_required
 def yapilacak_ekle(request):
-    """Yeni yapılacak ekleme"""
+    # Yapılacak ekleme görünümü
     if request.method == 'POST':
         form = YapilacakListesiForm(request.POST)
         if form.is_valid():
             yapilacak = form.save(commit=False)
             yapilacak.kullanici = request.user
             yapilacak.save()
-            messages.success(request, "Yapılacak görev başarıyla oluşturuldu.")
+            messages.success(request, 'Yapılacak görev başarıyla oluşturuldu.')
             return redirect('core:yapilacak_listesi')
     else:
         form = YapilacakListesiForm()
     
-    return render(request, 'core/yapilacaklar/yapilacak_form.html', 
-                 {'form': form, 'baslik': 'Yeni Yapılacak Ekle'})
+    return render(request, 'core/yapilacaklar/yapilacak_form.html', {'form': form, 'baslik': 'Yeni Görev'})
 
 @login_required
 def yapilacak_detay(request, yapilacak_id):
-    """Yapılacak detayları"""
+    # Yapılacak detay görünümü
     yapilacak = get_object_or_404(YapilacakListesi, id=yapilacak_id)
     
-    # Yetki kontrolü
+    # Sadece görev sahibi görebilir
     if yapilacak.kullanici != request.user:
-        raise PermissionDenied("Bu görevi görüntüleme yetkiniz yok.")
+        raise PermissionDenied
     
     return render(request, 'core/yapilacaklar/yapilacak_detay.html', {'yapilacak': yapilacak})
 
 @login_required
 def yapilacak_duzenle(request, yapilacak_id):
-    """Yapılacak düzenleme"""
+    # Yapılacak düzenleme görünümü
     yapilacak = get_object_or_404(YapilacakListesi, id=yapilacak_id)
     
-    # Yetki kontrolü
+    # Sadece görev sahibi düzenleyebilir
     if yapilacak.kullanici != request.user:
-        raise PermissionDenied("Bu görevi düzenleme yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
         form = YapilacakListesiForm(request.POST, instance=yapilacak)
         if form.is_valid():
             form.save()
-            messages.success(request, "Görev başarıyla güncellendi.")
+            messages.success(request, 'Görev başarıyla güncellendi.')
             return redirect('core:yapilacak_detay', yapilacak_id=yapilacak.id)
     else:
         form = YapilacakListesiForm(instance=yapilacak)
     
-    return render(request, 'core/yapilacaklar/yapilacak_form.html', 
-                 {'form': form, 'baslik': 'Görevi Düzenle', 'yapilacak': yapilacak})
+    return render(request, 'core/yapilacaklar/yapilacak_form.html', {'form': form, 'baslik': 'Görev Düzenle'})
 
 @login_required
 def yapilacak_sil(request, yapilacak_id):
-    """Yapılacak silme"""
+    # Yapılacak silme görünümü
     yapilacak = get_object_or_404(YapilacakListesi, id=yapilacak_id)
     
-    # Yetki kontrolü
+    # Sadece görev sahibi silebilir
     if yapilacak.kullanici != request.user:
-        raise PermissionDenied("Bu görevi silme yetkiniz yok.")
+        raise PermissionDenied
     
     if request.method == 'POST':
-        # Görevi iptal et (silme yerine durumunu güncelle)
-        yapilacak.durum = YapilacakListesi.DURUM_IPTAL
-        yapilacak.save()
-        messages.success(request, "Görev iptal edildi.")
+        yapilacak.delete()
+        messages.success(request, 'Görev silindi.')
         return redirect('core:yapilacak_listesi')
     
     return render(request, 'core/yapilacaklar/yapilacak_sil.html', {'yapilacak': yapilacak})
 
 @login_required
 def yapilacak_tamamla(request, yapilacak_id):
-    """Yapılacak tamamlama"""
+    # Yapılacak tamamlama görünümü
     yapilacak = get_object_or_404(YapilacakListesi, id=yapilacak_id)
     
-    # Yetki kontrolü
+    # Sadece görev sahibi tamamlayabilir
     if yapilacak.kullanici != request.user:
-        raise PermissionDenied("Bu görevi tamamlama yetkiniz yok.")
+        raise PermissionDenied
     
-    # Görevi tamamla
-    yapilacak.durum = YapilacakListesi.DURUM_TAMAMLANDI
-    yapilacak.save()
+    if request.method == 'POST':
+        # Görevi tamamlandı olarak işaretle
+        yapilacak.durum = YapilacakListesi.DURUM_TAMAMLANDI
+        yapilacak.tamamlanma_tarihi = timezone.now()
+        yapilacak.save()
+        messages.success(request, 'Görev tamamlandı olarak işaretlendi.')
+        return redirect('core:yapilacak_listesi')
     
-    messages.success(request, "Görev tamamlandı.")
-    
-    # AJAX isteği mi kontrol et
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'status': 'success'})
-    
-    return redirect('core:yapilacak_listesi')
+    return render(request, 'core/yapilacaklar/yapilacak_sil.html', {
+        'yapilacak': yapilacak,
+        'baslik': 'Görevi Tamamla',
+        'mesaj': 'Bu görevi tamamlandı olarak işaretlemek istediğinize emin misiniz?'
+    })
+"""
 
 # Hata sayfaları
 def hata_403(request, exception=None):
@@ -1091,5 +1054,101 @@ def hata_404(request, exception=None):
 def hata_500(request):
     """500 Hata Sayfası"""
     return render(request, 'core/hatalar/500.html', status=500)
+
+# Create your views here.
+def index(request):
+    """Ana sayfa görünümü"""
+    # Kullanıcı oturum açmışsa
+    if request.user.is_authenticated:
+        # Sınav türlerini getir
+        sinav_turleri = SinavTurleri.objects.filter(aktif=True)
+        
+        context = {
+            'sinav_turleri': sinav_turleri
+        }
+        
+        return render(request, 'core/index.html', context)
+    
+    # Oturum açmamışsa
+    return render(request, 'core/index.html')
+
+# Ders, Ünite ve Konu modülleri için görünümler
+@login_required
+def ders_listesi(request):
+    """Ders listesi görünümü"""
+    dersler = Ders.objects.filter(aktif=True)
+    
+    context = {
+        'dersler': dersler
+    }
+    
+    return render(request, 'core/dersler/ders_listesi.html', context)
+
+@login_required
+def ders_detay(request, ders_id):
+    """Ders detay görünümü"""
+    ders = get_object_or_404(Ders, id=ders_id)
+    uniteler = Unite.objects.filter(ders=ders, aktif=True)
+    
+    # Her ünite için konu sayısını al
+    for unite in uniteler:
+        unite.konu_sayisi = Konu.objects.filter(unite=unite, aktif=True).count()
+    
+    context = {
+        'ders': ders,
+        'uniteler': uniteler
+    }
+    
+    return render(request, 'core/dersler/ders_detay.html', context)
+
+@login_required
+def unite_listesi(request, ders_id):
+    """Ünite listesi görünümü"""
+    ders = get_object_or_404(Ders, id=ders_id)
+    uniteler = Unite.objects.filter(ders=ders, aktif=True)
+    
+    context = {
+        'ders': ders,
+        'uniteler': uniteler
+    }
+    
+    return render(request, 'core/uniteler/unite_listesi.html', context)
+
+@login_required
+def unite_detay(request, unite_id):
+    """Ünite detay görünümü"""
+    unite = get_object_or_404(Unite, id=unite_id)
+    konular = Konu.objects.filter(unite=unite, aktif=True)
+    
+    context = {
+        'unite': unite,
+        'konular': konular
+    }
+    
+    return render(request, 'core/uniteler/unite_detay.html', context)
+
+@login_required
+def konu_listesi(request, unite_id):
+    """Konu listesi görünümü"""
+    unite = get_object_or_404(Unite, id=unite_id)
+    konular = Konu.objects.filter(unite=unite, aktif=True)
+    
+    context = {
+        'unite': unite,
+        'konular': konular
+    }
+    
+    return render(request, 'core/konular/konu_listesi.html', context)
+
+@login_required
+def konu_detay(request, konu_id):
+    """Konu detay görünümü"""
+    konu = get_object_or_404(Konu, id=konu_id)
+    
+    context = {
+        'konu': konu
+    }
+    
+    return render(request, 'core/konular/konu_detay.html', context)
 
 

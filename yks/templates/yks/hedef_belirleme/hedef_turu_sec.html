@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Hedef Türü Seç{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="mb-4">Hedef Türü Seç</h1>
+            <div class="d-flex justify-content-center gap-4">
+                <a href="{% url 'yks:soru_cozum_hedef_ekle' %}" class="btn btn-lg btn-gradient-primary shadow rounded-pill px-5 py-4" style="background: linear-gradient(90deg, #4e54c8, #8f94fb); color: white; font-size: 1.5rem;">
+                    <i class="bi bi-journal-text me-2"></i> Soru Çözümü
+                </a>
+                <a href="{% url 'yks:konu_takip_hedef_ekle' %}" class="btn btn-lg btn-gradient-success shadow rounded-pill px-5 py-4" style="background: linear-gradient(90deg, #43cea2, #185a9d); color: white; font-size: 1.5rem;">
+                    <i class="bi bi-list-check me-2"></i> Konu Takibi
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

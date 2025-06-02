@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Soru Çözümü Hedefi Ekle{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Soru Çözümü Hedefi Ekle</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="ders" class="form-label">Ders</label>
+                            <select name="ders" id="ders" class="form-select" required>
+                                <option value="">Ders Seçin</option>
+                                {% for ders in dersler %}
+                                <option value="{{ ders.id }}">{{ ders.ad }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="toplam_soru" class="form-label">Toplam Soru Hedefi</label>
+                            <input type="number" name="toplam_soru" id="toplam_soru" class="form-control" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="baslangic_tarihi" class="form-label">Başlangıç Tarihi</label>
+                            <input type="date" name="baslangic_tarihi" id="baslangic_tarihi" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bitis_tarihi" class="form-label">Bitiş Tarihi</label>
+                            <input type="date" name="bitis_tarihi" id="bitis_tarihi" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="aciklama" class="form-label">Açıklama</label>
+                            <textarea name="aciklama" id="aciklama" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Hedefi Kaydet</button>
+                            <a href="{% url 'yks:hedef_listesi' %}" class="btn btn-secondary">İptal</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

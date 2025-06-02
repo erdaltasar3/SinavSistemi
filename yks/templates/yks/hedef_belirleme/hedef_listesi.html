@@ -160,260 +160,332 @@
                 <div class="card-header bg-white p-0">
                     <ul class="nav nav-tabs card-header-tabs" id="hedefTab" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="aktif-tab" data-bs-toggle="tab" data-bs-target="#aktif" 
-                                    type="button" role="tab" aria-controls="aktif" aria-selected="true">
+                            <a class="nav-link {% if sekme == 'aktif' %}active{% endif %}" href="?sekme=aktif&tur={{ tur|default:'Günlük' }}">
                                 <i class="bi bi-hourglass-split me-2"></i> Aktif Hedefler
-                            </button>
+                            </a>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="tamamlanan-tab" data-bs-toggle="tab" data-bs-target="#tamamlanan" 
-                                    type="button" role="tab" aria-controls="tamamlanan" aria-selected="false">
+                            <a class="nav-link {% if sekme == 'tamamlanan' %}active{% endif %}" href="?sekme=tamamlanan&tur={{ tur|default:'Günlük' }}">
                                 <i class="bi bi-check-circle me-2"></i> Tamamlananlar
-                            </button>
+                            </a>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="gunluk-tab" data-bs-toggle="tab" data-bs-target="#gunluk" 
-                                    type="button" role="tab" aria-controls="gunluk" aria-selected="false">
-                                <i class="bi bi-calendar-day me-2"></i> Günlük Hedefler
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="haftalik-tab" data-bs-toggle="tab" data-bs-target="#haftalik" 
-                                    type="button" role="tab" aria-controls="haftalik" aria-selected="false">
-                                <i class="bi bi-calendar-week me-2"></i> Haftalık Hedefler
-                            </button>
+                            <a class="nav-link {% if sekme == 'tamamlanmayan' %}active{% endif %}" href="?sekme=tamamlanmayan&tur={{ tur|default:'Günlük' }}">
+                                <i class="bi bi-x-circle me-2"></i> Tamamlanmayanlar
+                            </a>
                         </li>
                     </ul>
                 </div>
                 <div class="card-body p-0">
-                    <div class="tab-content" id="hedefTabContent">
-                        <!-- Aktif Hedefler Sekmesi -->
-                        <div class="tab-pane fade show active" id="aktif" role="tabpanel" aria-labelledby="aktif-tab">
-                            {% if aktif_hedefler %}
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-hover mb-0">
-                                        <thead class="table-light">
+                    <!-- Alt Filtre Butonları -->
+                    <div class="d-flex gap-2 p-3 border-bottom bg-light">
+                        <a href="?sekme={{ sekme }}&tur=Günlük" class="btn btn-sm {% if tur == 'Günlük' %}btn-primary text-white{% else %}btn-outline-primary{% endif %}">Günlük</a>
+                        <a href="?sekme={{ sekme }}&tur=Haftalık" class="btn btn-sm {% if tur == 'Haftalık' %}btn-primary text-white{% else %}btn-outline-primary{% endif %}">Haftalık</a>
+                        <a href="?sekme={{ sekme }}&tur=Özel" class="btn btn-sm {% if tur == 'Özel' %}btn-primary text-white{% else %}btn-outline-primary{% endif %}">Özel</a>
+                    </div>
+
+                    {% if sekme == 'aktif' %}
+                        {% if hedefler %}
+                            <div class="table-responsive">
+                                <table class="table align-middle table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col" style="width: 40%">Hedef</th>
+                                            <th scope="col">Tür</th>
+                                            <th scope="col">Öncelik</th>
+                                            <th scope="col">İlerleme</th>
+                                            <th scope="col" style="width: 15%">Tarih</th>
+                                            <th scope="col" style="width: 15%">İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for hedef in hedefler %}
                                             <tr>
-                                                <th scope="col" style="width: 40%">Hedef</th>
-                                                <th scope="col">Tür</th>
-                                                <th scope="col">Öncelik</th>
-                                                <th scope="col">İlerleme</th>
-                                                <th scope="col" style="width: 15%">Tarih</th>
-                                                <th scope="col" style="width: 15%">İşlemler</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for hedef in aktif_hedefler %}
-                                                <tr>
-                                                    <td>
-                                                        <div class="fw-bold">{{ hedef.baslik }}</div>
-                                                        {% if hedef.aciklama %}
-                                                            <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.aciklama }}</small>
-                                                        {% endif %}
-                                                        {% if hedef.ders %}
-                                                            <span class="badge bg-dark text-white">{{ hedef.ders }}</span>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge bg-primary rounded-pill">{{ hedef.tur.ad }}</span>
-                                                    </td>
-                                                    <td>
-                                                        {% if hedef.oncelik == 'Yüksek' %}
-                                                            <span class="badge bg-danger">Yüksek</span>
-                                                        {% elif hedef.oncelik == 'Orta' %}
-                                                            <span class="badge bg-warning text-dark">Orta</span>
-                                                        {% else %}
-                                                            <span class="badge bg-info text-dark">Düşük</span>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="progress flex-grow-1 me-2" style="height: 10px;">
-                                                                <div class="progress-bar {% if hedef.tamamlanma_orani > 70 %}bg-success{% elif hedef.tamamlanma_orani > 30 %}bg-info{% else %}bg-warning{% endif %}" 
-                                                                    role="progressbar" 
-                                                                    style="width: {{ hedef.tamamlanma_orani }}%;" 
-                                                                    aria-valuenow="{{ hedef.tamamlanma_orani }}" 
-                                                                    aria-valuemin="0" aria-valuemax="100">
-                                                                </div>
-                                                            </div>
-                                                            <span class="text-muted small">{{ hedef.tamamlanma_orani }}%</span>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="d-flex flex-column">
-                                                            <span class="badge bg-light text-dark mb-1">
-                                                                <i class="bi bi-calendar3 text-primary me-1"></i> {{ hedef.baslangic_tarihi|date:"d.m.Y" }}
-                                                            </span>
-                                                            {% if hedef.bitis_tarihi %}
-                                                                <span class="badge bg-light text-dark">
-                                                                    <i class="bi bi-calendar3-event text-danger me-1"></i> {{ hedef.bitis_tarihi|date:"d.m.Y" }}
-                                                                </span>
-                                                            {% endif %}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <div class="d-flex justify-content-end">
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    İşlemler
-                                                                </button>
-                                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                                    <li>
-                                                                        <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.id %}">
-                                                                            <i class="bi bi-pencil-square text-primary me-2"></i> Düzenle
-                                                                        </a>
-                                                                    </li>
-                                                                    <li>
-                                                                        <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.id }}">
-                                                                            <i class="bi bi-check-lg text-success me-2"></i> Tamamlandı
-                                                                        </button>
-                                                                    </li>
-                                                                    <li><hr class="dropdown-divider"></li>
-                                                                    <li>
-                                                                        <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.id %}">
-                                                                            <i class="bi bi-trash text-danger me-2"></i> Sil
-                                                                        </a>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% else %}
-                                <div class="text-center py-5">
-                                    <div class="mb-3">
-                                        <img src="https://cdn.lordicon.com/nocovwne.json" width="120" height="120" alt="Empty">
-                                    </div>
-                                    <h4 class="text-muted mb-3">Henüz aktif hedefin bulunmuyor</h4>
-                                    <p class="text-muted mb-4">Hemen yeni bir hedef ekleyerek çalışma planını oluşturmaya başla!</p>
-                                    <a href="{% url 'yks:hedef_ekle' %}" class="btn btn-primary">
-                                        <i class="bi bi-plus-circle me-2"></i> Yeni Hedef Ekle
-                                    </a>
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Tamamlanan Hedefler Sekmesi -->
-                        <div class="tab-pane fade" id="tamamlanan" role="tabpanel" aria-labelledby="tamamlanan-tab">
-                            {% if tamamlanan_hedefler %}
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th scope="col">Hedef</th>
-                                                <th scope="col">Tür</th>
-                                                <th scope="col">Tamamlanma Tarihi</th>
-                                                <th scope="col">İşlemler</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for hedef in tamamlanan_hedefler %}
-                                                <tr>
-                                                    <td>
-                                                        <div class="fw-bold">{{ hedef.baslik }}</div>
-                                                        {% if hedef.aciklama %}
-                                                            <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.aciklama }}</small>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge bg-primary rounded-pill">{{ hedef.tur.ad }}</span>
-                                                    </td>
-                                                    <td>
-                                                        <i class="bi bi-calendar-check text-success me-1"></i> {{ hedef.guncelleme_tarihi|date:"d.m.Y H:i" }}
-                                                    </td>
-                                                    <td>
-                                                        <div class="d-flex justify-content-end">
-                                                            <a href="{% url 'yks:hedef_duzenle' hedef.id %}" class="btn btn-sm btn-outline-primary me-2">
-                                                                <i class="bi bi-pencil-square"></i>
-                                                            </a>
-                                                            <a href="{% url 'yks:hedef_sil' hedef.id %}" class="btn btn-sm btn-outline-danger">
-                                                                <i class="bi bi-trash"></i>
-                                                            </a>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% else %}
-                                <div class="text-center py-5">
-                                    <div class="mb-3">
-                                        <i class="bi bi-clipboard-check text-muted" style="font-size: 4rem;"></i>
-                                    </div>
-                                    <h4 class="text-muted mb-3">Henüz tamamlanan hedefin bulunmuyor</h4>
-                                    <p class="text-muted">Hedeflerini tamamladıkça burada görüntülenecekler.</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Günlük Hedefler Sekmesi -->
-                        <div class="tab-pane fade" id="gunluk" role="tabpanel" aria-labelledby="gunluk-tab">
-                            {% with gunluk_hedefler=aktif_hedefler|dictsort:"tur.ad" %}
-                                {% if gunluk_hedefler %}
-                                    <div class="table-responsive">
-                                        <table class="table align-middle table-hover mb-0">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th scope="col">Hedef</th>
-                                                    <th scope="col">Öncelik</th>
-                                                    <th scope="col">İlerleme</th>
-                                                    <th scope="col">Tarih</th>
-                                                    <th scope="col">İşlemler</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for hedef in gunluk_hedefler %}
-                                                    {% if hedef.tur.ad == "Günlük" %}
-                                                    <!-- Günlük hedef tablosu aynı aktif hedefler gibi -->
-                                                    <tr>
-                                                        <td>{{ hedef.baslik }}</td>
-                                                        <td>{{ hedef.oncelik }}</td>
-                                                        <td>{{ hedef.tamamlanma_orani }}%</td>
-                                                        <td>{{ hedef.baslangic_tarihi|date:"d.m.Y" }}</td>
-                                                        <td>
-                                                            <div class="d-flex justify-content-end">
-                                                                <a href="{% url 'yks:hedef_duzenle' hedef.id %}" class="btn btn-sm btn-outline-primary me-2">
-                                                                    <i class="bi bi-pencil-square"></i>
-                                                                </a>
-                                                                <a href="{% url 'yks:hedef_sil' hedef.id %}" class="btn btn-sm btn-outline-danger">
-                                                                    <i class="bi bi-trash"></i>
-                                                                </a>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
+                                                <td>
+                                                    <div class="fw-bold">{{ hedef.baslik }}</div>
+                                                    {% if hedef.aciklama %}
+                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.aciklama }}</small>
                                                     {% endif %}
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                {% else %}
-                                    <div class="text-center py-5">
-                                        <i class="bi bi-calendar-day text-muted" style="font-size: 4rem;"></i>
-                                        <h4 class="text-muted mb-3">Henüz günlük hedefin bulunmuyor</h4>
-                                        <a href="{% url 'yks:hedef_ekle' %}" class="btn btn-primary">
-                                            <i class="bi bi-plus-circle me-2"></i> Günlük Hedef Ekle
-                                        </a>
-                                    </div>
-                                {% endif %}
-                            {% endwith %}
-                        </div>
-                        
-                        <!-- Haftalık Hedefler Sekmesi -->
-                        <div class="tab-pane fade" id="haftalik" role="tabpanel" aria-labelledby="haftalik-tab">
+                                                    {% if hedef.ders %}
+                                                        <span class="badge bg-dark text-white">{{ hedef.ders }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary rounded-pill">{{ hedef.tur.ad }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if hedef.oncelik == 'Yüksek' %}
+                                                        <span class="badge bg-danger">Yüksek</span>
+                                                    {% elif hedef.oncelik == 'Orta' %}
+                                                        <span class="badge bg-warning text-dark">Orta</span>
+                                                    {% else %}
+                                                        <span class="badge bg-info text-dark">Düşük</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="progress flex-grow-1 me-2" style="height: 10px;">
+                                                            <div class="progress-bar {% if hedef.tamamlanma_orani > 70 %}bg-success{% elif hedef.tamamlanma_orani > 30 %}bg-info{% else %}bg-warning{% endif %}" 
+                                                                role="progressbar" 
+                                                                style="width: {{ hedef.tamamlanma_orani }}%;" 
+                                                                aria-valuenow="{{ hedef.tamamlanma_orani }}" 
+                                                                aria-valuemin="0" aria-valuemax="100">
+                                                            </div>
+                                                        </div>
+                                                        <span class="text-muted small">{{ hedef.tamamlanma_orani }}%</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex flex-column">
+                                                        <span class="badge bg-light text-dark mb-1">
+                                                            <i class="bi bi-calendar3 text-primary me-1"></i> {{ hedef.baslangic_tarihi|date:"d.m.Y" }}
+                                                        </span>
+                                                        {% if hedef.bitis_tarihi %}
+                                                            <span class="badge bg-light text-dark">
+                                                                <i class="bi bi-calendar3-event text-danger me-1"></i> {{ hedef.bitis_tarihi|date:"d.m.Y" }}
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-end">
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                İşlemler
+                                                            </button>
+                                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                                <li>
+                                                                    {% if hedef.id %}
+                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.id %}">
+                                                                        <i class="bi bi-pencil-square text-primary me-2"></i> Düzenle
+                                                                    </a>
+                                                                    {% else %}
+                                                                    <span class="dropdown-item text-muted">
+                                                                        <i class="bi bi-pencil-square text-muted me-2"></i> Düzenle
+                                                                    </span>
+                                                                    {% endif %}
+                                                                </li>
+                                                                <li>
+                                                                    {% if hedef.id %}
+                                                                    <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.id }}">
+                                                                        <i class="bi bi-check-lg text-success me-2"></i> Tamamlandı
+                                                                    </button>
+                                                                    {% else %}
+                                                                    <span class="dropdown-item text-muted">
+                                                                        <i class="bi bi-check-lg text-muted me-2"></i> Tamamlandı
+                                                                    </span>
+                                                                    {% endif %}
+                                                                </li>
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li>
+                                                                    {% if hedef.id %}
+                                                                    <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.id %}">
+                                                                        <i class="bi bi-trash text-danger me-2"></i> Sil
+                                                                    </a>
+                                                                    {% else %}
+                                                                    <span class="dropdown-item text-muted">
+                                                                        <i class="bi bi-trash text-muted me-2"></i> Sil
+                                                                    </span>
+                                                                    {% endif %}
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
                             <div class="text-center py-5">
-                                <i class="bi bi-calendar-week text-muted" style="font-size: 4rem;"></i>
-                                <h4 class="text-muted mb-3">Henüz haftalık hedefin bulunmuyor</h4>
+                                <div class="mb-3">
+                                    <img src="https://cdn.lordicon.com/nocovwne.json" width="120" height="120" alt="Empty">
+                                </div>
+                                <h4 class="text-muted mb-3">Henüz aktif hedefin bulunmuyor</h4>
+                                <p class="text-muted mb-4">Hemen yeni bir hedef ekleyerek çalışma planını oluşturmaya başla!</p>
                                 <a href="{% url 'yks:hedef_ekle' %}" class="btn btn-primary">
-                                    <i class="bi bi-plus-circle me-2"></i> Haftalık Hedef Ekle
+                                    <i class="bi bi-plus-circle me-2"></i> Yeni Hedef Ekle
                                 </a>
                             </div>
-                        </div>
-                    </div>
+                        {% endif %}
+                    {% elif sekme == 'tamamlanan' %}
+                        {% if hedefler %}
+                            <div class="table-responsive">
+                                <table class="table align-middle table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">Hedef</th>
+                                            <th scope="col">Tür</th>
+                                            <th scope="col">Tamamlanma Tarihi</th>
+                                            <th scope="col">İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for hedef in hedefler %}
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-bold">{{ hedef.baslik }}</div>
+                                                    {% if hedef.aciklama %}
+                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.aciklama }}</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary rounded-pill">{{ hedef.tur.ad }}</span>
+                                                </td>
+                                                <td>
+                                                    <i class="bi bi-calendar-check text-success me-1"></i> {{ hedef.guncelleme_tarihi|date:"d.m.Y H:i" }}
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-end">
+                                                        <a href="{% url 'yks:hedef_duzenle' hedef.id %}" class="btn btn-sm btn-outline-primary me-2">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </a>
+                                                        <a href="{% url 'yks:hedef_sil' hedef.id %}" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-trash"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <div class="mb-3">
+                                    <i class="bi bi-clipboard-check text-muted" style="font-size: 4rem;"></i>
+                                </div>
+                                <h4 class="text-muted mb-3">Henüz tamamlanan hedefin bulunmuyor</h4>
+                                <p class="text-muted">Hedeflerini tamamladıkça burada görüntülenecekler.</p>
+                            </div>
+                        {% endif %}
+                    {% elif sekme == 'tamamlanmayan' %}
+                        {% if hedefler %}
+                            <div class="table-responsive">
+                                <table class="table align-middle table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">Hedef</th>
+                                            <th scope="col">Tür</th>
+                                            <th scope="col">Öncelik</th>
+                                            <th scope="col">İlerleme</th>
+                                            <th scope="col">Tarih</th>
+                                            <th scope="col">İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for hedef in hedefler %}
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-bold">{{ hedef.baslik }}</div>
+                                                    {% if hedef.aciklama %}
+                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.aciklama }}</small>
+                                                    {% endif %}
+                                                    {% if hedef.ders %}
+                                                        <span class="badge bg-dark text-white">{{ hedef.ders }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary rounded-pill">{{ hedef.tur.ad }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if hedef.oncelik == 'Yüksek' %}
+                                                        <span class="badge bg-danger">Yüksek</span>
+                                                    {% elif hedef.oncelik == 'Orta' %}
+                                                        <span class="badge bg-warning text-dark">Orta</span>
+                                                    {% else %}
+                                                        <span class="badge bg-info text-dark">Düşük</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="progress flex-grow-1 me-2" style="height: 10px;">
+                                                            <div class="progress-bar {% if hedef.tamamlanma_orani > 70 %}bg-success{% elif hedef.tamamlanma_orani > 30 %}bg-info{% else %}bg-warning{% endif %}" 
+                                                                role="progressbar" 
+                                                                style="width: {{ hedef.tamamlanma_orani }}%;" 
+                                                                aria-valuenow="{{ hedef.tamamlanma_orani }}" 
+                                                                aria-valuemin="0" aria-valuemax="100">
+                                                            </div>
+                                                        </div>
+                                                        <span class="text-muted small">{{ hedef.tamamlanma_orani }}%</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex flex-column">
+                                                        <span class="badge bg-light text-dark mb-1">
+                                                            <i class="bi bi-calendar3 text-primary me-1"></i> {{ hedef.baslangic_tarihi|date:"d.m.Y" }}
+                                                        </span>
+                                                        {% if hedef.bitis_tarihi %}
+                                                            <span class="badge bg-light text-dark">
+                                                                <i class="bi bi-calendar3-event text-danger me-1"></i> {{ hedef.bitis_tarihi|date:"d.m.Y" }}
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-end">
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                İşlemler
+                                                            </button>
+                                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                                <li>
+                                                                    {% if hedef.id %}
+                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.id %}">
+                                                                        <i class="bi bi-pencil-square text-primary me-2"></i> Düzenle
+                                                                    </a>
+                                                                    {% else %}
+                                                                    <span class="dropdown-item text-muted">
+                                                                        <i class="bi bi-pencil-square text-muted me-2"></i> Düzenle
+                                                                    </span>
+                                                                    {% endif %}
+                                                                </li>
+                                                                <li>
+                                                                    {% if hedef.id %}
+                                                                    <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.id }}">
+                                                                        <i class="bi bi-check-lg text-success me-2"></i> Tamamlandı
+                                                                    </button>
+                                                                    {% else %}
+                                                                    <span class="dropdown-item text-muted">
+                                                                        <i class="bi bi-check-lg text-muted me-2"></i> Tamamlandı
+                                                                    </span>
+                                                                    {% endif %}
+                                                                </li>
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li>
+                                                                    {% if hedef.id %}
+                                                                    <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.id %}">
+                                                                        <i class="bi bi-trash text-danger me-2"></i> Sil
+                                                                    </a>
+                                                                    {% else %}
+                                                                    <span class="dropdown-item text-muted">
+                                                                        <i class="bi bi-trash text-muted me-2"></i> Sil
+                                                                    </span>
+                                                                    {% endif %}
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <div class="mb-3">
+                                    <img src="https://cdn.lordicon.com/nocovwne.json" width="120" height="120" alt="Empty">
+                                </div>
+                                <h4 class="text-muted mb-3">Henüz tamamlanmayan hedefin bulunmuyor</h4>
+                                <p class="text-muted mb-4">Yeni hedefler ekleyerek çalışma planını oluşturabilirsin.</p>
+                                <a href="{% url 'yks:hedef_ekle' %}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i> Yeni Hedef Ekle
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% endif %}
                 </div>
             </div>
         </div>

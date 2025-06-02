@@ -16,7 +16,10 @@ from .models import (
     CalismaPlanı, 
     CalismaOturumu, 
     Gorev, 
-    Hatirlatici
+    Hatirlatici,
+    SoruCozumHedefi,
+    KonuTakipHedefi,
+    KonuTakipHedefKonu
 )
 from .forms import (
     HedefForm,
@@ -28,6 +31,7 @@ from .forms import (
     HatirlaticiForm
 )
 from datetime import date, timedelta
+
 
 def index(request):
     """YKS ana sayfa görünümü"""
@@ -285,38 +289,79 @@ def ders_konulari_api(request, ders_id):
 # Hedef Belirleme ve Takip Görünümleri
 @login_required
 def hedef_listesi(request):
-    """Kullanıcının hedeflerini listeler"""
-    # Aktif hedefler
-    aktif_hedefler = Hedef.objects.filter(
-        kullanici=request.user,
-        durum=Hedef.DURUM_AKTIF
-    ).order_by('bitis_tarihi', '-oncelik')
-    
-    # Tamamlanan hedefler
-    tamamlanan_hedefler = Hedef.objects.filter(
-        kullanici=request.user,
-        durum=Hedef.DURUM_TAMAMLANDI
-    ).order_by('-guncelleme_tarihi')[:5]  # Son 5 tamamlanan hedef
-    
+    """
+    Kullanıcının hedeflerini sekme (aktif, tamamlanan, tamamlanmayan) ve tür (Günlük, Haftalık, Özel) filtrelerine göre listeler
+    """
+    # Parametreleri al
+    sekme = request.GET.get('sekme', 'aktif')
+    tur = request.GET.get('tur', 'Günlük')
+
+    # Temel queryset
+    hedefler = Hedef.objects.filter(kullanici=request.user)
+
+    # Sekmeye göre filtrele
+    if sekme == 'aktif':
+        hedefler = hedefler.filter(durum=Hedef.DURUM_AKTIF)
+    elif sekme == 'tamamlanan':
+        hedefler = hedefler.filter(durum=Hedef.DURUM_TAMAMLANDI)
+    elif sekme == 'tamamlanmayan':
+        hedefler = hedefler.exclude(durum=Hedef.DURUM_TAMAMLANDI)
+    else:
+        hedefler = hedefler.filter(durum=Hedef.DURUM_AKTIF)
+
+    # Tür filtresi uygula
+    hedefler = hedefler.filter(tur__ad=tur)
+
+    # Sıralama
+    hedefler = hedefler.order_by('bitis_tarihi', '-oncelik')
+
+    # Her hedef için detay bilgilerini al
+    hedef_listesi = []
+    for hedef in hedefler:
+        hedef_data = {
+            'hedef': hedef,
+            'tip': None,
+            'ilerleme': 0
+        }
+        
+        # Soru çözümü hedefi mi kontrol et
+        try:
+            soru_cozum = hedef.soru_cozum_detay
+            hedef_data['tip'] = 'soru_cozum'
+            hedef_data['ilerleme'] = soru_cozum.ilerleme_orani()
+            hedef_data['toplam_soru'] = soru_cozum.toplam_soru
+            hedef_data['cozulmus_soru'] = soru_cozum.cozulmus_soru
+        except:
+            pass
+        
+        # Konu takibi hedefi mi kontrol et
+        try:
+            konu_takip = hedef.konu_takip_detay
+            hedef_data['tip'] = 'konu_takip'
+            hedef_data['ilerleme'] = konu_takip.ilerleme_orani()
+            hedef_data['toplam_konu'] = konu_takip.konular.count()
+            hedef_data['tamamlanan_konu'] = konu_takip.konular.filter(tamamlandi=True).count()
+        except:
+            pass
+        
+        hedef_listesi.append(hedef_data)
+
     # İstatistikler
     toplam_hedef = Hedef.objects.filter(kullanici=request.user).count()
     tamamlanan_sayisi = Hedef.objects.filter(
         kullanici=request.user, 
         durum=Hedef.DURUM_TAMAMLANDI
     ).count()
-    
-    tamamlanma_yuzdesi = 0
-    if toplam_hedef > 0:
-        tamamlanma_yuzdesi = (tamamlanan_sayisi / toplam_hedef) * 100
-    
+    tamamlanma_yuzdesi = (tamamlanan_sayisi / toplam_hedef) * 100 if toplam_hedef > 0 else 0
+
     context = {
-        'aktif_hedefler': aktif_hedefler,
-        'tamamlanan_hedefler': tamamlanan_hedefler,
+        'hedefler': hedef_listesi,
+        'sekme': sekme,
+        'tur': tur,
         'toplam_hedef': toplam_hedef,
         'tamamlanan_sayisi': tamamlanan_sayisi,
         'tamamlanma_yuzdesi': tamamlanma_yuzdesi,
     }
-    
     return render(request, 'yks/hedef_belirleme/hedef_listesi.html', context)
 
 @login_required
@@ -354,20 +399,58 @@ def hedef_duzenle(request, hedef_id):
     hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
     
     if request.method == 'POST':
-        form = HedefDuzenleForm(request.POST, instance=hedef)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Hedef başarıyla güncellendi.')
+        try:
+            if hasattr(hedef, 'sorucozumhedefi'):
+                # Soru çözümü hedefi güncelleme
+                cozulmus_soru = int(request.POST.get('cozulmus_soru', 0))
+                hedef.sorucozumhedefi.cozulmus_soru = cozulmus_soru
+                hedef.sorucozumhedefi.save()
+                
+                # Hedef durumunu güncelle
+                if cozulmus_soru >= hedef.sorucozumhedefi.toplam_soru:
+                    hedef.durum = 'Tamamlandı'
+                hedef.save()
+                
+                messages.success(request, 'Soru çözümü ilerlemesi başarıyla güncellendi.')
+            elif hasattr(hedef, 'konutakiphedefi'):
+                # Konu takibi hedefi güncelleme
+                tamamlanan_konular = request.POST.getlist('tamamlanan_konular')
+                
+                # Tüm konuları tamamlanmamış olarak işaretle
+                hedef.konutakiphedefi.konutakiphedefkonu_set.all().update(tamamlandi=False)
+                
+                # Seçili konuları tamamlanmış olarak işaretle
+                if tamamlanan_konular:
+                    hedef.konutakiphedefi.konutakiphedefkonu_set.filter(konu_id__in=tamamlanan_konular).update(tamamlandi=True)
+                
+                # Hedef durumunu güncelle
+                tamamlanan_sayisi = hedef.konutakiphedefi.konutakiphedefkonu_set.filter(tamamlandi=True).count()
+                toplam_konu = hedef.konutakiphedefi.konutakiphedefkonu_set.count()
+                
+                if tamamlanan_sayisi == toplam_konu:
+                    hedef.durum = 'Tamamlandı'
+                hedef.save()
+                
+                messages.success(request, 'Konu takibi ilerlemesi başarıyla güncellendi.')
+            
             return redirect('yks:hedef_listesi')
-    else:
-        form = HedefDuzenleForm(instance=hedef)
+        except Exception as e:
+            messages.error(request, f'İlerleme güncellenirken bir hata oluştu: {str(e)}')
     
-    context = {
-        'form': form,
-        'hedef': hedef,
-    }
+    # Hedef tipini ve ilgili verileri belirle
+    if hasattr(hedef, 'sorucozumhedefi'):
+        hedef.tip = 'soru_cozum'
+        hedef.ilerleme = hedef.sorucozumhedefi.ilerleme_orani()
+        hedef.cozulmus_soru = hedef.sorucozumhedefi.cozulmus_soru
+        hedef.toplam_soru = hedef.sorucozumhedefi.toplam_soru
+    elif hasattr(hedef, 'konutakiphedefi'):
+        hedef.tip = 'konu_takip'
+        hedef.ilerleme = hedef.konutakiphedefi.ilerleme_orani()
+        hedef.konular = hedef.konutakiphedefi.konutakiphedefkonu_set.all().select_related('konu')
     
-    return render(request, 'yks/hedef_belirleme/hedef_duzenle.html', context)
+    return render(request, 'yks/hedef_belirleme/hedef_duzenle.html', {
+        'hedef': hedef
+    })
 
 @login_required
 def hedef_sil(request, hedef_id):
@@ -849,3 +932,124 @@ def hatirlatici_durum_guncelle(request, hatirlatici_id):
     else:
         messages.error(request, 'Geçersiz istek.')
         return redirect('yks:hatirlatici_listesi')
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+@login_required
+def hedef_turu_sec(request):
+    return render(request, 'yks/hedef_belirleme/hedef_turu_sec.html')
+
+@login_required
+def soru_cozum_hedef_ekle(request):
+    """Soru çözümü hedefi ekleme görünümü"""
+    if request.method == 'POST':
+        try:
+            # Ana hedef bilgilerini al
+            ders_id = request.POST.get('ders')
+            toplam_soru = request.POST.get('toplam_soru')
+            baslangic_tarihi = request.POST.get('baslangic_tarihi')
+            bitis_tarihi = request.POST.get('bitis_tarihi')
+            aciklama = request.POST.get('aciklama')
+            
+            # Ders nesnesini al
+            ders = get_object_or_404(Ders, id=ders_id)
+            
+            # Hedef türünü al (Soru Çözümü)
+            hedef_turu = HedefTuru.objects.get(ad=HedefTuru.OZEL)
+            
+            # Ana hedefi oluştur
+            hedef = Hedef.objects.create(
+                kullanici=request.user,
+                baslik=f"{ders.ad} Soru Çözümü Hedefi",
+                aciklama=aciklama,
+                tur=hedef_turu,
+                baslangic_tarihi=baslangic_tarihi,
+                bitis_tarihi=bitis_tarihi,
+                ders=ders
+            )
+            
+            # Soru çözümü detaylarını oluştur
+            SoruCozumHedefi.objects.create(
+                hedef=hedef,
+                ders=ders,
+                toplam_soru=toplam_soru,
+                baslangic_tarihi=baslangic_tarihi,
+                bitis_tarihi=bitis_tarihi
+            )
+            
+            messages.success(request, 'Soru çözümü hedefi başarıyla oluşturuldu.')
+            return redirect('yks:hedef_listesi')
+            
+        except Exception as e:
+            messages.error(request, f'Hedef oluşturulurken bir hata oluştu: {str(e)}')
+    
+    # GET isteği için dersleri getir
+    dersler = Ders.objects.filter(aktif=True).order_by('ad')
+    
+    context = {
+        'dersler': dersler,
+    }
+    
+    return render(request, 'yks/hedef_belirleme/soru_cozum_hedef_ekle.html', context)
+
+@login_required
+def konu_takip_hedef_ekle(request):
+    """Konu takibi hedefi ekleme görünümü"""
+    if request.method == 'POST':
+        try:
+            # Ana hedef bilgilerini al
+            ders_id = request.POST.get('ders')
+            konular = request.POST.getlist('konular')
+            baslangic_tarihi = request.POST.get('baslangic_tarihi')
+            bitis_tarihi = request.POST.get('bitis_tarihi')
+            aciklama = request.POST.get('aciklama')
+            
+            # Ders nesnesini al
+            ders = get_object_or_404(Ders, id=ders_id)
+            
+            # Hedef türünü al (Konu Takibi)
+            hedef_turu = HedefTuru.objects.get(ad=HedefTuru.OZEL)
+            
+            # Ana hedefi oluştur
+            hedef = Hedef.objects.create(
+                kullanici=request.user,
+                baslik=f"{ders.ad} Konu Takibi Hedefi",
+                aciklama=aciklama,
+                tur=hedef_turu,
+                baslangic_tarihi=baslangic_tarihi,
+                bitis_tarihi=bitis_tarihi,
+                ders=ders
+            )
+            
+            # Konu takibi detaylarını oluştur
+            konu_takip_hedefi = KonuTakipHedefi.objects.create(
+                hedef=hedef,
+                ders=ders,
+                baslangic_tarihi=baslangic_tarihi,
+                bitis_tarihi=bitis_tarihi
+            )
+            
+            # Seçilen konuları ekle
+            for konu_id in konular:
+                konu = get_object_or_404(Konu, id=konu_id)
+                KonuTakipHedefKonu.objects.create(
+                    konu_takip_hedefi=konu_takip_hedefi,
+                    konu=konu
+                )
+            
+            messages.success(request, 'Konu takibi hedefi başarıyla oluşturuldu.')
+            return redirect('yks:hedef_listesi')
+            
+        except Exception as e:
+            messages.error(request, f'Hedef oluşturulurken bir hata oluştu: {str(e)}')
+    
+    # GET isteği için dersleri getir
+    dersler = Ders.objects.filter(aktif=True).order_by('ad')
+    
+    context = {
+        'dersler': dersler,
+    }
+    
+    return render(request, 'yks/hedef_belirleme/konu_takip_hedef_ekle.html', context)

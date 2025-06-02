@@ -22,6 +22,9 @@ urlpatterns = [
     path('hedefler/duzenle/<int:hedef_id>/', views.hedef_duzenle, name='hedef_duzenle'),
     path('hedefler/sil/<int:hedef_id>/', views.hedef_sil, name='hedef_sil'),
     path('hedefler/durum-guncelle/<int:hedef_id>/', views.hedef_durum_guncelle, name='hedef_durum_guncelle'),
+    path('hedef-turu-sec/', views.hedef_turu_sec, name='hedef_turu_sec'),
+    path('hedefler/ekle/soru-cozumu/', views.soru_cozum_hedef_ekle, name='soru_cozum_hedef_ekle'),
+    path('hedefler/ekle/konu-takip/', views.konu_takip_hedef_ekle, name='konu_takip_hedef_ekle'),
     
     # Çalışma Planı URL'leri
     path('calisma-plani/', views.calisma_plani_listesi, name='calisma_plani_listesi'),

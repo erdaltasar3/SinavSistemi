@@ -18,10 +18,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
+from django.shortcuts import redirect
+
+def accounts_login_redirect(request):
+    """accounts/login/ URL'ini kendi giris sayfamıza yönlendir"""
+    return redirect('core:giris')
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", TemplateView.as_view(template_name="index.html"), name="index"),
     path("yks/", include("yks.urls")),
     path("", include("core.urls")),
+    path("accounts/login/", accounts_login_redirect, name="accounts_login"),
 ]

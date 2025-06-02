@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Soru Çözümü İlerleme Kaydet{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Soru Çözümü İlerleme Kaydet</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Hedef Bilgileri -->
+                    <div class="mb-4">
+                        <h5>{{ hedef.baslik }}</h5>
+                        <p class="text-muted">{{ hedef.aciklama|default:"Açıklama yok" }}</p>
+                    </div>
+
+                    <!-- İlerleme Çubuğu -->
+                    <div class="mb-4">
+                        <h6 class="text-muted">İlerleme Durumu</h6>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ ilerleme }}%;" aria-valuenow="{{ ilerleme }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ ilerleme|floatformat:1 }}%
+                            </div>
+                        </div>
+                        <p class="text-muted">Toplam Hedef: {{ detay.toplam_soru }} soru</p>
+                    </div>
+
+                    <!-- İlerleme Giriş Formu -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="cozulmus_soru" class="form-label">Çözülen Soru Sayısı</label>
+                            <input type="number" class="form-control" id="cozulmus_soru" name="cozulmus_soru" value="{{ detay.cozulmus_soru }}" min="0" max="{{ detay.toplam_soru }}" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">İlerlemeyi Kaydet</button>
+                            <a href="{% url 'yks:hedef_listesi' %}" class="btn btn-secondary">İptal</a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

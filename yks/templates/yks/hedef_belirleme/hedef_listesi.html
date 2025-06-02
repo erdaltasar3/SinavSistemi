@@ -253,17 +253,11 @@
                                                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 İşlemler
                                                             </button>
-                                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width: 180px; max-height: 250px; overflow-y: auto;">
                                                                 <li>
-                                                                    {% if hedef.hedef.id %}
-                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.hedef.id %}">
-                                                                        <i class="bi bi-pencil-square text-primary me-2"></i> Düzenle
+                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_ilerleme_kaydet' hedef.hedef.id %}">
+                                                                        <i class="bi bi-pencil-square text-primary me-2"></i> İlerleme Kaydet
                                                                     </a>
-                                                                    {% else %}
-                                                                    <span class="dropdown-item text-muted">
-                                                                        <i class="bi bi-pencil-square text-muted me-2"></i> Düzenle
-                                                                    </span>
-                                                                    {% endif %}
                                                                 </li>
                                                                 <li>
                                                                     {% if hedef.hedef.id %}
@@ -429,17 +423,11 @@
                                                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 İşlemler
                                                             </button>
-                                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width: 180px; max-height: 250px; overflow-y: auto;">
                                                                 <li>
-                                                                    {% if hedef.hedef.id %}
-                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.hedef.id %}">
-                                                                        <i class="bi bi-pencil-square text-primary me-2"></i> Düzenle
+                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_ilerleme_kaydet' hedef.hedef.id %}">
+                                                                        <i class="bi bi-pencil-square text-primary me-2"></i> İlerleme Kaydet
                                                                     </a>
-                                                                    {% else %}
-                                                                    <span class="dropdown-item text-muted">
-                                                                        <i class="bi bi-pencil-square text-muted me-2"></i> Düzenle
-                                                                    </span>
-                                                                    {% endif %}
                                                                 </li>
                                                                 <li>
                                                                     {% if hedef.hedef.id %}

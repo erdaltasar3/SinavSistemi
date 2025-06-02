@@ -1039,3 +1039,67 @@ def konu_takip_hedef_ekle(request):
         'dersler': dersler,
     }
     return render(request, 'yks/hedef_belirleme/konu_takip_hedef_ekle.html', context)
+
+@login_required
+def hedef_ilerleme_kaydet(request, hedef_id):
+    hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
+    # Soru çözüm hedefi mi?
+    if hasattr(hedef, 'soru_cozum_detay'):
+        return redirect('yks:soru_cozum_ilerleme', hedef_id=hedef.id)
+    # Konu takip hedefi mi?
+    elif hasattr(hedef, 'konu_takip_detay'):
+        return redirect('yks:konu_takip_ilerleme', hedef_id=hedef.id)
+    # Diğer türler için hedef düzenleye yönlendir
+    return redirect('yks:hedef_duzenle', hedef_id=hedef.id)
+
+@login_required
+def soru_cozum_ilerleme(request, hedef_id):
+    hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
+    try:
+        detay = hedef.soru_cozum_detay
+    except Exception:
+        messages.error(request, 'Bu hedef bir soru çözüm hedefi değildir.')
+        return redirect('yks:hedef_listesi')
+    if request.method == 'POST':
+        try:
+            cozulmus_soru = int(request.POST.get('cozulmus_soru', 0))
+            detay.cozulmus_soru = max(0, min(cozulmus_soru, detay.toplam_soru))
+            detay.save()
+            messages.success(request, 'Çözülen soru sayısı güncellendi.')
+            return redirect('yks:hedef_listesi')
+        except Exception as e:
+            messages.error(request, f'Güncelleme sırasında hata: {str(e)}')
+    ilerleme = detay.ilerleme_orani()
+    context = {
+        'hedef': hedef,
+        'detay': detay,
+        'ilerleme': ilerleme,
+    }
+    return render(request, 'yks/hedef_belirleme/soru_cozum_ilerleme.html', context)
+
+@login_required
+def konu_takip_ilerleme(request, hedef_id):
+    hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
+    try:
+        detay = hedef.konu_takip_detay
+    except Exception:
+        messages.error(request, 'Bu hedef bir konu takip hedefi değildir.')
+        return redirect('yks:hedef_listesi')
+    konular = detay.konular.all().select_related('konu')
+    if request.method == 'POST':
+        tamamlanan_konular = request.POST.getlist('tamamlanan_konular')
+        detay.konular.all().update(tamamlandi=False)
+        if tamamlanan_konular:
+            detay.konular.filter(konu_id__in=tamamlanan_konular).update(tamamlandi=True)
+        messages.success(request, 'Konu ilerlemesi güncellendi.')
+        return redirect('yks:hedef_listesi')
+    toplam = konular.count()
+    tamamlanan = konular.filter(tamamlandi=True).count()
+    ilerleme = int((tamamlanan / toplam) * 100) if toplam > 0 else 0
+    context = {
+        'hedef': hedef,
+        'detay': detay,
+        'konular': konular,
+        'ilerleme': ilerleme,
+    }
+    return render(request, 'yks/hedef_belirleme/konu_takip_ilerleme.html', context)

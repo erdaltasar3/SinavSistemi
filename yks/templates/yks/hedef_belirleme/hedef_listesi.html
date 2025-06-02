@@ -101,7 +101,7 @@
         <div class="col-lg-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h2 mb-0">Hedeflerim</h1>
-                <a href="{% url 'yks:hedef_ekle' %}" class="btn btn-primary">
+                <a href="{% url 'yks:hedef_turu_sec' %}" class="btn btn-primary">
                     <i class="bi bi-plus-circle me-2"></i> Yeni Hedef Ekle
                 </a>
             </div>
@@ -202,21 +202,21 @@
                                         {% for hedef in hedefler %}
                                             <tr>
                                                 <td>
-                                                    <div class="fw-bold">{{ hedef.baslik }}</div>
-                                                    {% if hedef.aciklama %}
-                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.aciklama }}</small>
+                                                    <div class="fw-bold">{{ hedef.hedef.baslik }}</div>
+                                                    {% if hedef.hedef.aciklama %}
+                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.hedef.aciklama }}</small>
                                                     {% endif %}
-                                                    {% if hedef.ders %}
-                                                        <span class="badge bg-dark text-white">{{ hedef.ders }}</span>
+                                                    {% if hedef.hedef.ders %}
+                                                        <span class="badge bg-dark text-white">{{ hedef.hedef.ders }}</span>
                                                     {% endif %}
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-primary rounded-pill">{{ hedef.tur.ad }}</span>
+                                                    <span class="badge bg-primary rounded-pill">{{ hedef.hedef.tur.ad }}</span>
                                                 </td>
                                                 <td>
-                                                    {% if hedef.oncelik == 'Yüksek' %}
+                                                    {% if hedef.hedef.oncelik == 'Yüksek' %}
                                                         <span class="badge bg-danger">Yüksek</span>
-                                                    {% elif hedef.oncelik == 'Orta' %}
+                                                    {% elif hedef.hedef.oncelik == 'Orta' %}
                                                         <span class="badge bg-warning text-dark">Orta</span>
                                                     {% else %}
                                                         <span class="badge bg-info text-dark">Düşük</span>
@@ -225,24 +225,24 @@
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <div class="progress flex-grow-1 me-2" style="height: 10px;">
-                                                            <div class="progress-bar {% if hedef.tamamlanma_orani > 70 %}bg-success{% elif hedef.tamamlanma_orani > 30 %}bg-info{% else %}bg-warning{% endif %}" 
-                                                                role="progressbar" 
-                                                                style="width: {{ hedef.tamamlanma_orani }}%;" 
-                                                                aria-valuenow="{{ hedef.tamamlanma_orani }}" 
+                                                            <div class="progress-bar {% if hedef.ilerleme > 70 %}bg-success{% elif hedef.ilerleme > 30 %}bg-info{% else %}bg-warning{% endif %}"
+                                                                role="progressbar"
+                                                                style="width: {{ hedef.ilerleme }}%;"
+                                                                aria-valuenow="{{ hedef.ilerleme }}"
                                                                 aria-valuemin="0" aria-valuemax="100">
                                                             </div>
                                                         </div>
-                                                        <span class="text-muted small">{{ hedef.tamamlanma_orani }}%</span>
+                                                        <span class="text-muted small">{{ hedef.ilerleme }}%</span>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div class="d-flex flex-column">
                                                         <span class="badge bg-light text-dark mb-1">
-                                                            <i class="bi bi-calendar3 text-primary me-1"></i> {{ hedef.baslangic_tarihi|date:"d.m.Y" }}
+                                                            <i class="bi bi-calendar3 text-primary me-1"></i> {{ hedef.hedef.baslangic_tarihi|date:"d.m.Y" }}
                                                         </span>
-                                                        {% if hedef.bitis_tarihi %}
+                                                        {% if hedef.hedef.bitis_tarihi %}
                                                             <span class="badge bg-light text-dark">
-                                                                <i class="bi bi-calendar3-event text-danger me-1"></i> {{ hedef.bitis_tarihi|date:"d.m.Y" }}
+                                                                <i class="bi bi-calendar3-event text-danger me-1"></i> {{ hedef.hedef.bitis_tarihi|date:"d.m.Y" }}
                                                             </span>
                                                         {% endif %}
                                                     </div>
@@ -255,8 +255,8 @@
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
                                                                 <li>
-                                                                    {% if hedef.id %}
-                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.id %}">
+                                                                    {% if hedef.hedef.id %}
+                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.hedef.id %}">
                                                                         <i class="bi bi-pencil-square text-primary me-2"></i> Düzenle
                                                                     </a>
                                                                     {% else %}
@@ -266,8 +266,8 @@
                                                                     {% endif %}
                                                                 </li>
                                                                 <li>
-                                                                    {% if hedef.id %}
-                                                                    <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.id }}">
+                                                                    {% if hedef.hedef.id %}
+                                                                    <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.hedef.id }}">
                                                                         <i class="bi bi-check-lg text-success me-2"></i> Tamamlandı
                                                                     </button>
                                                                     {% else %}
@@ -278,8 +278,8 @@
                                                                 </li>
                                                                 <li><hr class="dropdown-divider"></li>
                                                                 <li>
-                                                                    {% if hedef.id %}
-                                                                    <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.id %}">
+                                                                    {% if hedef.hedef.id %}
+                                                                    <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.hedef.id %}">
                                                                         <i class="bi bi-trash text-danger me-2"></i> Sil
                                                                     </a>
                                                                     {% else %}
@@ -325,23 +325,23 @@
                                         {% for hedef in hedefler %}
                                             <tr>
                                                 <td>
-                                                    <div class="fw-bold">{{ hedef.baslik }}</div>
-                                                    {% if hedef.aciklama %}
-                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.aciklama }}</small>
+                                                    <div class="fw-bold">{{ hedef.hedef.baslik }}</div>
+                                                    {% if hedef.hedef.aciklama %}
+                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.hedef.aciklama }}</small>
                                                     {% endif %}
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-primary rounded-pill">{{ hedef.tur.ad }}</span>
+                                                    <span class="badge bg-primary rounded-pill">{{ hedef.hedef.tur.ad }}</span>
                                                 </td>
                                                 <td>
                                                     <i class="bi bi-calendar-check text-success me-1"></i> {{ hedef.guncelleme_tarihi|date:"d.m.Y H:i" }}
                                                 </td>
                                                 <td>
                                                     <div class="d-flex justify-content-end">
-                                                        <a href="{% url 'yks:hedef_duzenle' hedef.id %}" class="btn btn-sm btn-outline-primary me-2">
+                                                        <a href="{% url 'yks:hedef_duzenle' hedef.hedef.id %}" class="btn btn-sm btn-outline-primary me-2">
                                                             <i class="bi bi-pencil-square"></i>
                                                         </a>
-                                                        <a href="{% url 'yks:hedef_sil' hedef.id %}" class="btn btn-sm btn-outline-danger">
+                                                        <a href="{% url 'yks:hedef_sil' hedef.hedef.id %}" class="btn btn-sm btn-outline-danger">
                                                             <i class="bi bi-trash"></i>
                                                         </a>
                                                     </div>
@@ -378,21 +378,21 @@
                                         {% for hedef in hedefler %}
                                             <tr>
                                                 <td>
-                                                    <div class="fw-bold">{{ hedef.baslik }}</div>
-                                                    {% if hedef.aciklama %}
-                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.aciklama }}</small>
+                                                    <div class="fw-bold">{{ hedef.hedef.baslik }}</div>
+                                                    {% if hedef.hedef.aciklama %}
+                                                        <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hedef.hedef.aciklama }}</small>
                                                     {% endif %}
-                                                    {% if hedef.ders %}
-                                                        <span class="badge bg-dark text-white">{{ hedef.ders }}</span>
+                                                    {% if hedef.hedef.ders %}
+                                                        <span class="badge bg-dark text-white">{{ hedef.hedef.ders }}</span>
                                                     {% endif %}
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-primary rounded-pill">{{ hedef.tur.ad }}</span>
+                                                    <span class="badge bg-primary rounded-pill">{{ hedef.hedef.tur.ad }}</span>
                                                 </td>
                                                 <td>
-                                                    {% if hedef.oncelik == 'Yüksek' %}
+                                                    {% if hedef.hedef.oncelik == 'Yüksek' %}
                                                         <span class="badge bg-danger">Yüksek</span>
-                                                    {% elif hedef.oncelik == 'Orta' %}
+                                                    {% elif hedef.hedef.oncelik == 'Orta' %}
                                                         <span class="badge bg-warning text-dark">Orta</span>
                                                     {% else %}
                                                         <span class="badge bg-info text-dark">Düşük</span>
@@ -401,24 +401,24 @@
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <div class="progress flex-grow-1 me-2" style="height: 10px;">
-                                                            <div class="progress-bar {% if hedef.tamamlanma_orani > 70 %}bg-success{% elif hedef.tamamlanma_orani > 30 %}bg-info{% else %}bg-warning{% endif %}" 
-                                                                role="progressbar" 
-                                                                style="width: {{ hedef.tamamlanma_orani }}%;" 
-                                                                aria-valuenow="{{ hedef.tamamlanma_orani }}" 
+                                                            <div class="progress-bar {% if hedef.ilerleme > 70 %}bg-success{% elif hedef.ilerleme > 30 %}bg-info{% else %}bg-warning{% endif %}"
+                                                                role="progressbar"
+                                                                style="width: {{ hedef.ilerleme }}%;"
+                                                                aria-valuenow="{{ hedef.ilerleme }}"
                                                                 aria-valuemin="0" aria-valuemax="100">
                                                             </div>
                                                         </div>
-                                                        <span class="text-muted small">{{ hedef.tamamlanma_orani }}%</span>
+                                                        <span class="text-muted small">{{ hedef.ilerleme }}%</span>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div class="d-flex flex-column">
                                                         <span class="badge bg-light text-dark mb-1">
-                                                            <i class="bi bi-calendar3 text-primary me-1"></i> {{ hedef.baslangic_tarihi|date:"d.m.Y" }}
+                                                            <i class="bi bi-calendar3 text-primary me-1"></i> {{ hedef.hedef.baslangic_tarihi|date:"d.m.Y" }}
                                                         </span>
-                                                        {% if hedef.bitis_tarihi %}
+                                                        {% if hedef.hedef.bitis_tarihi %}
                                                             <span class="badge bg-light text-dark">
-                                                                <i class="bi bi-calendar3-event text-danger me-1"></i> {{ hedef.bitis_tarihi|date:"d.m.Y" }}
+                                                                <i class="bi bi-calendar3-event text-danger me-1"></i> {{ hedef.hedef.bitis_tarihi|date:"d.m.Y" }}
                                                             </span>
                                                         {% endif %}
                                                     </div>
@@ -431,8 +431,8 @@
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
                                                                 <li>
-                                                                    {% if hedef.id %}
-                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.id %}">
+                                                                    {% if hedef.hedef.id %}
+                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_duzenle' hedef.hedef.id %}">
                                                                         <i class="bi bi-pencil-square text-primary me-2"></i> Düzenle
                                                                     </a>
                                                                     {% else %}
@@ -442,8 +442,8 @@
                                                                     {% endif %}
                                                                 </li>
                                                                 <li>
-                                                                    {% if hedef.id %}
-                                                                    <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.id }}">
+                                                                    {% if hedef.hedef.id %}
+                                                                    <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.hedef.id }}">
                                                                         <i class="bi bi-check-lg text-success me-2"></i> Tamamlandı
                                                                     </button>
                                                                     {% else %}
@@ -454,8 +454,8 @@
                                                                 </li>
                                                                 <li><hr class="dropdown-divider"></li>
                                                                 <li>
-                                                                    {% if hedef.id %}
-                                                                    <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.id %}">
+                                                                    {% if hedef.hedef.id %}
+                                                                    <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.hedef.id %}">
                                                                         <i class="bi bi-trash text-danger me-2"></i> Sil
                                                                     </a>
                                                                     {% else %}
@@ -492,77 +492,6 @@
     </div>
 </div>
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Lottie animasyonlarını yükle
-        if (typeof lottie !== 'undefined') {
-            lottie.loadAnimation({
-                container: document.querySelector('.empty-animation'),
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: 'https://assets3.lottiefiles.com/packages/lf20_z5azcamk.json'
-            });
-        }
-        
-        // Tamamla butonları için işleyici
-        const tamamlaButtons = document.querySelectorAll('.tamamla-btn');
-        tamamlaButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const hedefId = this.getAttribute('data-hedef-id');
-                
-                // AJAX isteği
-                fetch(`/yks/hedefler/durum-guncelle/${hedefId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: 'durum=Tamamlandı&tamamlanma_orani=100'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Başarılı bildirim göster
-                        const toast = new bootstrap.Toast(document.getElementById('successToast'));
-                        toast.show();
-                        
-                        // 1 saniye sonra sayfayı yenile
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    }
-                });
-            });
-        });
-        
-        // CSRF token alma fonksiyonu
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-        
-        // Tooltip'leri etkinleştir
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
-{% endblock %}
-
 <!-- Başarı Toast Bildirimi -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
     <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -574,4 +503,109 @@
         </div>
     </div>
 </div>
+
+<script>
+// Soru Çözümü formu için dersleri AJAX ile doldur
+function loadDerslerForSoruForm() {
+  fetch('/yks/api/dersler/')
+    .then(response => response.json())
+    .then(data => {
+      const select = document.getElementById('soru-ders');
+      select.innerHTML = '<option value="">Ders Seçin</option>';
+      data.forEach(ders => {
+        const option = document.createElement('option');
+        option.value = ders.id;
+        option.textContent = ders.ad + (ders.alt_tur ? ' (' + ders.alt_tur + ')' : '');
+        select.appendChild(option);
+      });
+    });
+}
+// Konu Takip formu için dersleri AJAX ile doldur
+function loadDerslerForKonuForm() {
+  fetch('/yks/api/dersler/')
+    .then(response => response.json())
+    .then(data => {
+      const select = document.getElementById('konu-ders');
+      select.innerHTML = '<option value="">Ders Seçin</option>';
+      data.forEach(ders => {
+        const option = document.createElement('option');
+        option.value = ders.id;
+        option.textContent = ders.ad + (ders.alt_tur ? ' (' + ders.alt_tur + ')' : '');
+        select.appendChild(option);
+      });
+    });
+}
+// Modal açıldığında dersleri yükle (hem soru hem konu için)
+const modal = document.getElementById('yeniHedefModal');
+modal.addEventListener('show.bs.modal', function () {
+  loadDerslerForSoruForm();
+  loadDerslerForKonuForm();
+});
+// Tüm formlar için event delegation ile submit yakala
+document.addEventListener('submit', function(e) {
+  // Soru Çözümü Formu
+  if (e.target && e.target.id === 'soruCozumFormForm') {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    fetch('/yks/hedefler/ekle/soru-cozumu/', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: new URLSearchParams([...formData])
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const toast = new bootstrap.Toast(document.getElementById('successToast'));
+        document.querySelector('#successToast .toast-body').innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> ' + (data.message || 'Hedef başarıyla kaydedildi!');
+        toast.show();
+        setTimeout(() => {
+          const modalInstance = bootstrap.Modal.getInstance(document.getElementById('yeniHedefModal'));
+          modalInstance.hide();
+          window.location.reload();
+        }, 1000);
+      } else {
+        alert(data.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+      }
+    })
+    .catch(() => {
+      alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+    });
+  }
+
+  // Konu Takip Formu
+  if (e.target && e.target.id === 'konuTakipFormForm') {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    fetch('/yks/hedefler/ekle/konu-takip/', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: new URLSearchParams([...formData])
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const toast = new bootstrap.Toast(document.getElementById('successToast'));
+        document.querySelector('#successToast .toast-body').innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> ' + (data.message || 'Hedef başarıyla kaydedildi!');
+        toast.show();
+        setTimeout(() => {
+          const modalInstance = bootstrap.Modal.getInstance(document.getElementById('yeniHedefModal'));
+          modalInstance.hide();
+          window.location.reload();
+        }, 1000);
+      } else {
+        alert(data.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+      }
+    })
+    .catch(() => {
+      alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+    });
+  }
+});
+</script>
 {% endblock %} 

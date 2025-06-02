@@ -612,8 +612,11 @@ def calisma_plani_ekle(request):
             plan = form.save(commit=False)
             plan.kullanici = request.user
             plan.save()
-            messages.success(request, 'Çalışma planı başarıyla oluşturuldu.')
-            return redirect('yks:calisma_plani_detay', plan_id=plan.id)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': 'Çalışma planı başarıyla oluşturuldu.'})
+            else:
+                messages.success(request, 'Çalışma planı başarıyla oluşturuldu.')
+                return redirect('yks:calisma_plani_detay', plan_id=plan.id)
     else:
         form = CalismaPlanForm()
     
@@ -946,20 +949,14 @@ def soru_cozum_hedef_ekle(request):
     """Soru çözümü hedefi ekleme görünümü"""
     if request.method == 'POST':
         try:
-            # Ana hedef bilgilerini al
             ders_id = request.POST.get('ders')
             toplam_soru = request.POST.get('toplam_soru')
             baslangic_tarihi = request.POST.get('baslangic_tarihi')
             bitis_tarihi = request.POST.get('bitis_tarihi')
             aciklama = request.POST.get('aciklama')
-            
-            # Ders nesnesini al
+            hedef_turu_ad = request.POST.get('hedef_turu')
             ders = get_object_or_404(Ders, id=ders_id)
-            
-            # Hedef türünü al (Soru Çözümü)
-            hedef_turu = HedefTuru.objects.get(ad=HedefTuru.OZEL)
-            
-            # Ana hedefi oluştur
+            hedef_turu = HedefTuru.objects.get(ad=hedef_turu_ad)
             hedef = Hedef.objects.create(
                 kullanici=request.user,
                 baslik=f"{ders.ad} Soru Çözümü Hedefi",
@@ -969,29 +966,26 @@ def soru_cozum_hedef_ekle(request):
                 bitis_tarihi=bitis_tarihi,
                 ders=ders
             )
-            
-            # Soru çözümü detaylarını oluştur
             SoruCozumHedefi.objects.create(
                 hedef=hedef,
-                ders=ders,
                 toplam_soru=toplam_soru,
                 baslangic_tarihi=baslangic_tarihi,
                 bitis_tarihi=bitis_tarihi
             )
-            
-            messages.success(request, 'Soru çözümü hedefi başarıyla oluşturuldu.')
-            return redirect('yks:hedef_listesi')
-            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': 'Soru çözümü hedefi başarıyla oluşturuldu.'})
+            else:
+                messages.success(request, 'Soru çözümü hedefi başarıyla oluşturuldu.')
+                return redirect('yks:hedef_listesi')
         except Exception as e:
-            messages.error(request, f'Hedef oluşturulurken bir hata oluştu: {str(e)}')
-    
-    # GET isteği için dersleri getir
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': str(e)}, status=400)
+            else:
+                messages.error(request, f'Hedef oluşturulurken bir hata oluştu: {str(e)}')
     dersler = Ders.objects.filter(aktif=True).order_by('ad')
-    
     context = {
         'dersler': dersler,
     }
-    
     return render(request, 'yks/hedef_belirleme/soru_cozum_hedef_ekle.html', context)
 
 @login_required
@@ -999,20 +993,16 @@ def konu_takip_hedef_ekle(request):
     """Konu takibi hedefi ekleme görünümü"""
     if request.method == 'POST':
         try:
-            # Ana hedef bilgilerini al
             ders_id = request.POST.get('ders')
             konular = request.POST.getlist('konular')
             baslangic_tarihi = request.POST.get('baslangic_tarihi')
             bitis_tarihi = request.POST.get('bitis_tarihi')
             aciklama = request.POST.get('aciklama')
-            
-            # Ders nesnesini al
+            hedef_turu_ad = request.POST.get('hedef_turu')
             ders = get_object_or_404(Ders, id=ders_id)
-            
-            # Hedef türünü al (Konu Takibi)
-            hedef_turu = HedefTuru.objects.get(ad=HedefTuru.OZEL)
-            
-            # Ana hedefi oluştur
+            print('Formdan gelen:', hedef_turu_ad)
+            print('DB:', list(HedefTuru.objects.values_list('ad', flat=True)))
+            hedef_turu = HedefTuru.objects.get(ad=hedef_turu_ad)
             hedef = Hedef.objects.create(
                 kullanici=request.user,
                 baslik=f"{ders.ad} Konu Takibi Hedefi",
@@ -1022,34 +1012,30 @@ def konu_takip_hedef_ekle(request):
                 bitis_tarihi=bitis_tarihi,
                 ders=ders
             )
-            
-            # Konu takibi detaylarını oluştur
             konu_takip_hedefi = KonuTakipHedefi.objects.create(
                 hedef=hedef,
                 ders=ders,
                 baslangic_tarihi=baslangic_tarihi,
                 bitis_tarihi=bitis_tarihi
             )
-            
-            # Seçilen konuları ekle
             for konu_id in konular:
                 konu = get_object_or_404(Konu, id=konu_id)
                 KonuTakipHedefKonu.objects.create(
                     konu_takip_hedefi=konu_takip_hedefi,
                     konu=konu
                 )
-            
-            messages.success(request, 'Konu takibi hedefi başarıyla oluşturuldu.')
-            return redirect('yks:hedef_listesi')
-            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': 'Konu takibi hedefi başarıyla oluşturuldu.'})
+            else:
+                messages.success(request, 'Konu takibi hedefi başarıyla oluşturuldu.')
+                return redirect('yks:hedef_listesi')
         except Exception as e:
-            messages.error(request, f'Hedef oluşturulurken bir hata oluştu: {str(e)}')
-    
-    # GET isteği için dersleri getir
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': str(e)}, status=400)
+            else:
+                messages.error(request, f'Hedef oluşturulurken bir hata oluştu: {str(e)}')
     dersler = Ders.objects.filter(aktif=True).order_by('ad')
-    
     context = {
         'dersler': dersler,
     }
-    
     return render(request, 'yks/hedef_belirleme/konu_takip_hedef_ekle.html', context)

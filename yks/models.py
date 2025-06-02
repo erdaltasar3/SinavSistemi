@@ -253,49 +253,61 @@ class Hatirlatici(models.Model):
         ordering = ['hatirlatma_tarihi']
 
 
+# --- Hedef Detay Modelleri (Soru Çözümü ve Konu Takip) ---
+
 class SoruCozumHedefi(models.Model):
-    """Soru çözümü hedefi için detaylar"""
-    hedef = models.OneToOneField(Hedef, on_delete=models.CASCADE, related_name='soru_cozum_detay')
-    ders = models.ForeignKey(Ders, on_delete=models.CASCADE, verbose_name="Ders")
+    hedef = models.OneToOneField('Hedef', on_delete=models.CASCADE, related_name='soru_cozum_detay')
     toplam_soru = models.PositiveIntegerField(verbose_name="Toplam Soru Hedefi")
     cozulmus_soru = models.PositiveIntegerField(default=0, verbose_name="Çözülen Soru")
     baslangic_tarihi = models.DateField(verbose_name="Başlangıç Tarihi")
     bitis_tarihi = models.DateField(verbose_name="Bitiş Tarihi")
-    
-    def ilerleme_orani(self):
-        """Hedefin ilerleme oranını hesapla"""
-        if self.toplam_soru > 0:
-            return (self.cozulmus_soru / self.toplam_soru) * 100
-        return 0
-    
+    # Ders ilişkisi hedef üzerinden alınır
+
     def __str__(self):
-        return f"{self.ders.ad} - {self.toplam_soru} Soru Hedefi"
+        return f"{self.hedef} - {self.toplam_soru} Soru"
+
+    def ilerleme_orani(self):
+        if self.toplam_soru > 0:
+            return int((self.cozulmus_soru / self.toplam_soru) * 100)
+        return 0
+
+    class Meta:
+        verbose_name = "Soru Çözüm Hedefi"
+        verbose_name_plural = "Soru Çözüm Hedefleri"
 
 class KonuTakipHedefi(models.Model):
-    """Konu takibi hedefi için detaylar"""
-    hedef = models.OneToOneField(Hedef, on_delete=models.CASCADE, related_name='konu_takip_detay')
+    hedef = models.OneToOneField('Hedef', on_delete=models.CASCADE, related_name='konu_takip_detay')
     ders = models.ForeignKey(Ders, on_delete=models.CASCADE, verbose_name="Ders")
     baslangic_tarihi = models.DateField(verbose_name="Başlangıç Tarihi")
     bitis_tarihi = models.DateField(verbose_name="Bitiş Tarihi")
-    
-    def ilerleme_orani(self):
-        """Hedefin ilerleme oranını hesapla"""
-        toplam_konu = self.konular.count()
-        if toplam_konu > 0:
-            tamamlanan = self.konular.filter(tamamlandi=True).count()
-            return (tamamlanan / toplam_konu) * 100
-        return 0
-    
+
     def __str__(self):
-        return f"{self.ders.ad} - Konu Takibi Hedefi"
+        return f"{self.hedef} - {self.ders}"
+
+    def ilerleme_orani(self):
+        toplam = self.konular.count()
+        tamamlanan = self.konular.filter(tamamlandi=True).count()
+        if toplam > 0:
+            return int((tamamlanan / toplam) * 100)
+        return 0
+
+    class Meta:
+        verbose_name = "Konu Takip Hedefi"
+        verbose_name_plural = "Konu Takip Hedefleri"
 
 class KonuTakipHedefKonu(models.Model):
-    """Konu takibi hedefinde seçilen konular ve tamamlanma durumu"""
     konu_takip_hedefi = models.ForeignKey(KonuTakipHedefi, on_delete=models.CASCADE, related_name='konular')
     konu = models.ForeignKey(Konu, on_delete=models.CASCADE, verbose_name="Konu")
     tamamlandi = models.BooleanField(default=False, verbose_name="Tamamlandı mı?")
-    
+
     def __str__(self):
-        return f"{self.konu.ad} - {'Tamamlandı' if self.tamamlandi else 'Devam Ediyor'}"
+        return f"{self.konu_takip_hedefi} - {self.konu}"
+
+    class Meta:
+        verbose_name = "Konu Takip Hedef Konusu"
+        verbose_name_plural = "Konu Takip Hedef Konuları"
+        unique_together = ('konu_takip_hedefi', 'konu')
+
+
 
 

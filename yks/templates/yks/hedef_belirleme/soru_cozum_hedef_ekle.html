@@ -12,11 +12,21 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="mb-3">
+                            <label for="hedef_turu" class="form-label">Hedef Türü</label>
+                            <select name="hedef_turu" id="hedef_turu" class="form-select" required>
+                                <option value="">Hedef Türü Seçin</option>
+                                <option value="Günlük">Günlük</option>
+                                <option value="Haftalık">Haftalık</option>
+                                <option value="Aylık">Aylık</option>
+                                <option value="Özel">Özel</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label for="ders" class="form-label">Ders</label>
                             <select name="ders" id="ders" class="form-select" required>
                                 <option value="">Ders Seçin</option>
                                 {% for ders in dersler %}
-                                <option value="{{ ders.id }}">{{ ders.ad }}</option>
+                                <option value="{{ ders.id }}">{{ ders.ad }}{% if ders.alt_tur %} ({{ ders.alt_tur.ad }}){% endif %}</option>
                                 {% endfor %}
                             </select>
                         </div>

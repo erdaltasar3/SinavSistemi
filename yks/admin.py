@@ -6,7 +6,6 @@ from .models import (
     Hedef,
     CalismaPlanı,
     CalismaOturumu,
-    Gorev,
     Hatirlatici
 )
 
@@ -48,13 +47,6 @@ class CalismaOturumuAdmin(admin.ModelAdmin):
     list_display = ('plan', 'ders', 'baslangic_saati', 'bitis_saati', 'sure', 'tamamlandi')
     list_filter = ('tamamlandi', 'baslangic_saati')
     search_fields = ('ders__ad', 'konu__ad')
-
-@admin.register(Gorev)
-class GorevAdmin(admin.ModelAdmin):
-    list_display = ('baslik', 'kullanici', 'durum', 'oncelik', 'son_tarih')
-    list_filter = ('durum', 'oncelik', 'son_tarih')
-    search_fields = ('baslik', 'kullanici__username')
-    date_hierarchy = 'son_tarih'
 
 @admin.register(Hatirlatici)
 class HatirlaticiAdmin(admin.ModelAdmin):

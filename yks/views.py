@@ -15,7 +15,6 @@ from .models import (
     HedefTuru, 
     CalismaPlanı, 
     CalismaOturumu, 
-    Gorev, 
     Hatirlatici,
     SoruCozumHedefi,
     KonuTakipHedefi,
@@ -27,8 +26,6 @@ from .forms import (
     HedefDuzenleForm,
     CalismaPlanForm,
     CalismaOturumuForm,
-    GorevForm,
-    GorevDuzenleForm,
     HatirlaticiForm
 )
 from datetime import date, timedelta
@@ -845,129 +842,6 @@ def konular_json(request, ders_id):
     
     return JsonResponse(data, safe=False)
 
-# Görev (To-Do) Yönetimi Görünümleri
-@login_required
-def gorev_listesi(request):
-    """Kullanıcının görevlerini listeler"""
-    # Bekleyen görevler
-    bekleyen_gorevler = Gorev.objects.filter(
-        kullanici=request.user,
-        durum=Gorev.DURUM_BEKLIYOR
-    ).order_by('son_tarih', '-oncelik')
-    
-    # Tamamlanan görevler
-    tamamlanan_gorevler = Gorev.objects.filter(
-        kullanici=request.user,
-        durum=Gorev.DURUM_TAMAMLANDI
-    ).order_by('-guncelleme_tarihi')[:10]  # Son 10 tamamlanan görev
-    
-    # Ertelenen görevler
-    ertelenen_gorevler = Gorev.objects.filter(
-        kullanici=request.user,
-        durum=Gorev.DURUM_ERTELENDI
-    ).order_by('son_tarih')
-    
-    # İstatistikler
-    toplam_gorev = Gorev.objects.filter(kullanici=request.user).count()
-    tamamlanan_sayisi = Gorev.objects.filter(
-        kullanici=request.user,
-        durum=Gorev.DURUM_TAMAMLANDI
-    ).count()
-    
-    tamamlanma_yuzdesi = 0
-    if toplam_gorev > 0:
-        tamamlanma_yuzdesi = (tamamlanan_sayisi / toplam_gorev) * 100
-    
-    context = {
-        'bekleyen_gorevler': bekleyen_gorevler,
-        'tamamlanan_gorevler': tamamlanan_gorevler,
-        'ertelenen_gorevler': ertelenen_gorevler,
-        'toplam_gorev': toplam_gorev,
-        'tamamlanan_sayisi': tamamlanan_sayisi,
-        'tamamlanma_yuzdesi': tamamlanma_yuzdesi,
-    }
-    
-    return render(request, 'yks/gorevler/gorev_listesi.html', context)
-
-@login_required
-def gorev_ekle(request):
-    """Yeni görev ekleme görünümü"""
-    if request.method == 'POST':
-        form = GorevForm(request.POST)
-        if form.is_valid():
-            gorev = form.save(commit=False)
-            gorev.kullanici = request.user
-            gorev.save()
-            messages.success(request, 'Görev başarıyla eklendi.')
-            return redirect('yks:gorev_listesi')
-    else:
-        form = GorevForm()
-    
-    context = {
-        'form': form,
-    }
-    
-    return render(request, 'yks/gorevler/gorev_ekle.html', context)
-
-@login_required
-def gorev_duzenle(request, gorev_id):
-    """Görev düzenleme görünümü"""
-    gorev = get_object_or_404(Gorev, id=gorev_id, kullanici=request.user)
-    
-    if request.method == 'POST':
-        form = GorevDuzenleForm(request.POST, instance=gorev)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Görev başarıyla güncellendi.')
-            return redirect('yks:gorev_listesi')
-    else:
-        form = GorevDuzenleForm(instance=gorev)
-    
-    context = {
-        'form': form,
-        'gorev': gorev,
-    }
-    
-    return render(request, 'yks/gorevler/gorev_duzenle.html', context)
-
-@login_required
-def gorev_sil(request, gorev_id):
-    """Görev silme görünümü"""
-    gorev = get_object_or_404(Gorev, id=gorev_id, kullanici=request.user)
-    
-    if request.method == 'POST':
-        gorev.delete()
-        messages.success(request, 'Görev başarıyla silindi.')
-        return redirect('yks:gorev_listesi')
-    
-    context = {
-        'gorev': gorev,
-    }
-    
-    return render(request, 'yks/gorevler/gorev_sil.html', context)
-
-@login_required
-def gorev_durum_guncelle(request, gorev_id):
-    """AJAX ile görev durumunu güncelleme"""
-    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        gorev = get_object_or_404(Gorev, id=gorev_id, kullanici=request.user)
-        
-        yeni_durum = request.POST.get('durum')
-        
-        if yeni_durum:
-            gorev.durum = yeni_durum
-            gorev.save()
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Görev durumu güncellendi.'
-            })
-    
-    return JsonResponse({
-        'success': False,
-        'message': 'Geçersiz istek.'
-    }, status=400)
-
 # Hatırlatıcı Görünümleri
 @login_required
 def hatirlatici_listesi(request):
@@ -1272,3 +1146,26 @@ def konu_takip_ilerleme(request, hedef_id):
         'ilerleme': ilerleme,
     }
     return render(request, 'yks/hedef_belirleme/konu_takip_ilerleme.html', context)
+
+@login_required
+def calisma_oturum_geri_al(request, oturum_id):
+    """Çalışma oturumunu geri alma"""
+    oturum = get_object_or_404(CalismaOturumu, id=oturum_id, plan__kullanici=request.user)
+    plan_id = oturum.plan.id
+    
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        oturum.tamamlandi = False
+        oturum.save()
+        
+        # Planın toplam süresini güncelle
+        plan = oturum.plan
+        plan.toplam_calisma_suresi = CalismaOturumu.objects.filter(
+            plan=plan
+        ).aggregate(Sum('sure'))['sure__sum'] or 0
+        plan.save()
+        
+        messages.success(request, 'Çalışma oturumu başarıyla geri alındı.')
+        
+        return redirect('yks:calisma_plani_detay', plan_id=plan_id)
+    else:
+        return JsonResponse({'success': False, 'message': 'Geçersiz istek.'})

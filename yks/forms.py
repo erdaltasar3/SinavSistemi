@@ -4,7 +4,6 @@ from .models import (
     HedefTuru, 
     CalismaPlanı, 
     CalismaOturumu, 
-    Gorev, 
     Hatirlatici
 )
 from core.models import Ders, Konu
@@ -145,31 +144,6 @@ class CalismaOturumuForm(forms.ModelForm):
             cleaned_data['sure'] = sure
             
         return cleaned_data
-
-class GorevForm(forms.ModelForm):
-    """Görev ekleme formu"""
-    class Meta:
-        model = Gorev
-        fields = ['baslik', 'aciklama', 'son_tarih', 'oncelik']
-        widgets = {
-            'baslik': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Görev başlığını girin'}),
-            'aciklama': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Görev açıklamasını girin'}),
-            'son_tarih': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'oncelik': forms.Select(attrs={'class': 'form-select'}),
-        }
-
-class GorevDuzenleForm(forms.ModelForm):
-    """Görev düzenleme formu"""
-    class Meta:
-        model = Gorev
-        fields = ['baslik', 'aciklama', 'son_tarih', 'durum', 'oncelik']
-        widgets = {
-            'baslik': forms.TextInput(attrs={'class': 'form-control'}),
-            'aciklama': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'son_tarih': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'durum': forms.Select(attrs={'class': 'form-select'}),
-            'oncelik': forms.Select(attrs={'class': 'form-select'}),
-        }
 
 class HatirlaticiForm(forms.ModelForm):
     """Hatırlatıcı ekleme formu"""

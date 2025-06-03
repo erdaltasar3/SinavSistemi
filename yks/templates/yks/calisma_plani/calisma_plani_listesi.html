@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Çalışma Planlarım - YKS Hazırlık{% endblock %}
+{% block title %}Çalışma Planları - YKS Hazırlık{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -13,12 +13,7 @@
                         <a class="nav-link" href="{% url 'yks:hedef_listesi' %}">
                             <i class="bi bi-bullseye me-2"></i> Hedeflerim
                         </a>
-                        <a class="nav-link active" href="{% url 'yks:calisma_plani_listesi' %}">
-                            <i class="bi bi-calendar3-week me-2"></i> Çalışma Planı
-                        </a>
-                        <a class="nav-link" href="{% url 'yks:gorev_listesi' %}">
-                            <i class="bi bi-check2-square me-2"></i> Görevlerim
-                        </a>
+                        <a class="nav-link active" href="{% url 'yks:calisma_plani_listesi' %}">Çalışma Planları</a>
                         <a class="nav-link" href="{% url 'yks:hatirlatici_listesi' %}">
                             <i class="bi bi-bell me-2"></i> Hatırlatıcılar
                         </a>

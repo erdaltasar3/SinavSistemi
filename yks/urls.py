@@ -33,15 +33,9 @@ urlpatterns = [
     path('calisma-plani/', views.calisma_plani_listesi, name='calisma_plani_listesi'),
     path('calisma-plani/ekle/', views.calisma_plani_ekle, name='calisma_plani_ekle'),
     path('calisma-plani/<int:plan_id>/', views.calisma_plani_detay, name='calisma_plani_detay'),
-    path('calisma-plani/oturum-sil/<int:oturum_id>/', views.oturum_sil, name='oturum_sil'),
-    path('calisma-plani/oturum-tamamlandi-yap/<int:oturum_id>/', views.oturum_tamamlandi_yap, name='oturum_tamamlandi_yap'),
-    
-    # Görevler URL'leri
-    path('gorevler/', views.gorev_listesi, name='gorev_listesi'),
-    path('gorevler/ekle/', views.gorev_ekle, name='gorev_ekle'),
-    path('gorevler/duzenle/<int:gorev_id>/', views.gorev_duzenle, name='gorev_duzenle'),
-    path('gorevler/sil/<int:gorev_id>/', views.gorev_sil, name='gorev_sil'),
-    path('gorevler/durum-guncelle/<int:gorev_id>/', views.gorev_durum_guncelle, name='gorev_durum_guncelle'),
+    path('calisma-plani/oturum-tamamlandi-yap/<int:oturum_id>/', views.oturum_tamamlandi_yap, name='calisma_oturum_tamamlandi_yap'),
+    path('calisma-plani/oturum-sil/<int:oturum_id>/', views.oturum_sil, name='calisma_oturum_sil'),
+    path('calisma-plani/oturum-geri-al/<int:oturum_id>/', views.calisma_oturum_geri_al, name='calisma_oturum_geri_al'),
     
     # Hatırlatıcılar URL'leri
     path('hatirlaticilar/', views.hatirlatici_listesi, name='hatirlatici_listesi'),

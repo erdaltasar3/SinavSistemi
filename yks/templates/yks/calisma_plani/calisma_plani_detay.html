@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Çalışma Planı Detayı - YKS Hazırlık{% endblock %}
+{% block title %}{{ calisma_plani.baslik }} - YKS Hazırlık{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -14,10 +14,7 @@
                             <i class="bi bi-bullseye me-2"></i> Hedeflerim
                         </a>
                         <a class="nav-link active" href="{% url 'yks:calisma_plani_listesi' %}">
-                            <i class="bi bi-calendar3-week me-2"></i> Çalışma Planı
-                        </a>
-                        <a class="nav-link" href="{% url 'yks:gorev_listesi' %}">
-                            <i class="bi bi-check2-square me-2"></i> Görevlerim
+                            <i class="bi bi-calendar3-week me-2"></i> Çalışma Planları
                         </a>
                         <a class="nav-link" href="{% url 'yks:hatirlatici_listesi' %}">
                             <i class="bi bi-bell me-2"></i> Hatırlatıcılar
@@ -167,8 +164,8 @@
                                                             <i class="bi bi-check-circle me-1"></i> Tamamla
                                                         </button>
                                                     {% else %}
-                                                         <button type="button" class="btn btn-sm btn-success" disabled>
-                                                            <i class="bi bi-check-circle me-1"></i> Tamamlandı
+                                                         <button type="button" class="btn btn-sm btn-outline-secondary geri-al-oturum-btn" data-oturum-id="{{ oturum.id }}">
+                                                            <i class="bi bi-arrow-counterclockwise me-1"></i> Geri Al
                                                         </button>
                                                     {% endif %}
 
@@ -325,13 +322,15 @@
                         if (btnGroup) {
                             // Mevcut tamamla butonunu kaldır
                             button.remove();
-                            // Yeni tamamlandı (disabled) butonunu ekle
-                            const tamamlandiButton = document.createElement('button');
-                            tamamlandiButton.type = 'button';
-                            tamamlandiButton.classList.add('btn', 'btn-sm', 'btn-success');
-                            tamamlandiButton.disabled = true;
-                            tamamlandiButton.innerHTML = '<i class="bi bi-check-circle me-1"></i> Tamamlandı';
-                            btnGroup.prepend(tamamlandiButton); // Başa ekle
+                            // Yeni geri al butonunu ekle
+                            const geriAlButton = document.createElement('button');
+                            geriAlButton.type = 'button';
+                            geriAlButton.classList.add('btn', 'btn-sm', 'btn-outline-secondary', 'geri-al-oturum-btn');
+                            geriAlButton.dataset.oturumId = oturumId; // Data attribute ekle
+                            geriAlButton.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i> Geri Al';
+                            btnGroup.prepend(geriAlButton); // Başa ekle
+                             // Yeni butona event listener ekle (delegate edilebilir, ama şimdilik doğrudan ekleyelim)
+                            geriAlButton.addEventListener('click', handleGeriAlClick);
                         }
                         console.log(data.message);
 
@@ -398,6 +397,52 @@
                 window.print();
             });
         }
+
+        // Geri Al butonları için event listener function (Yeni)
+        function handleGeriAlClick() {
+             const oturumId = this.dataset.oturumId;
+             const button = this; // Buton referansını sakla
+
+             fetch(`/yks/calisma-plani/oturum-geri-al/${oturumId}/`, { 
+                 method: 'POST',
+                 headers: {
+                     'X-Requested-With': 'XMLHttpRequest',
+                     'X-CSRFToken': csrfToken,
+                     'Content-Type': 'application/json'
+                 },
+                 body: JSON.stringify({}) 
+             })
+             .then(response => {
+                 // İstek başarılı olduğunda (sunucudan 2xx veya 3xx yanıtı geldiğinde) sayfayı yenile.
+                 // Redirect otomatik takip edilmediği için biz manuel yenileme yapıyoruz.
+                 if (response.ok || response.redirected) { // 2xx OK veya 3xx Redirect durumlarında yenile
+                      console.log('Geri al isteği başarılı, sayfa yenileniyor.');
+                     window.location.reload(); 
+                 } else {
+                     // Başarılı olmayan bir yanıt kodu (4xx, 5xx) gelirse hata mesajı göster.
+                      // Sunucudan gelen hata mesajını okumaya çalış (JSON formatında beklenir)
+                     response.json().then(data => {
+                         alert(data.message || `Geri al işlemi başarısız oldu: ${response.status}`);
+                     }).catch(jsonError => {
+                         // JSON parse hatası olursa (örn: sunucu HTML döndürdüyse)
+                         alert(`Geri al işlemi başarısız oldu: ${response.status} - Sunucu yanıtı işlenemedi.`);
+                         console.error('JSON parse hatası:', jsonError);
+                          // Hata durumunda da sayfayı yenilemek isterseniz bu satırı aktif yapabilirsiniz:
+                          // window.location.reload();
+                     });
+                 }
+             })
+             .catch(error => {
+                 console.error('Hata:', error);
+                 // Fetch sırasında bir ağ hatası olursa bu blok çalışır.
+                 alert('Geri al işlemi sırasında bir ağ hatası oluştu.');
+             });
+        }
+
+        // Sayfa yüklendiğinde var olan Geri Al butonlarına listener ekle 
+        document.querySelectorAll('.geri-al-oturum-btn').forEach(button => {
+            button.addEventListener('click', handleGeriAlClick);
+        });
     });
 </script>
 {% endblock %} 

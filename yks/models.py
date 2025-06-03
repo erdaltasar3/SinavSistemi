@@ -190,49 +190,6 @@ class CalismaOturumu(models.Model):
         ordering = ['baslangic_saati']
 
 
-class Gorev(models.Model):
-    """Yapılacaklar listesi görevleri"""
-    
-    DURUM_BEKLIYOR = 'Bekliyor'
-    DURUM_TAMAMLANDI = 'Tamamlandı'
-    DURUM_ERTELENDI = 'Ertelendi'
-    DURUM_IPTAL = 'İptal'
-    
-    DURUM_CHOICES = [
-        (DURUM_BEKLIYOR, 'Bekliyor'),
-        (DURUM_TAMAMLANDI, 'Tamamlandı'),
-        (DURUM_ERTELENDI, 'Ertelendi'),
-        (DURUM_IPTAL, 'İptal')
-    ]
-    
-    ONCELIK_DUSUK = 'Düşük'
-    ONCELIK_ORTA = 'Orta'
-    ONCELIK_YUKSEK = 'Yüksek'
-    
-    ONCELIK_CHOICES = [
-        (ONCELIK_DUSUK, 'Düşük'),
-        (ONCELIK_ORTA, 'Orta'),
-        (ONCELIK_YUKSEK, 'Yüksek')
-    ]
-    
-    kullanici = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gorevler', verbose_name="Kullanıcı")
-    baslik = models.CharField(max_length=200, verbose_name="Görev Başlığı")
-    aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
-    son_tarih = models.DateField(blank=True, null=True, verbose_name="Son Tarih")
-    durum = models.CharField(max_length=20, choices=DURUM_CHOICES, default=DURUM_BEKLIYOR, verbose_name="Durum")
-    oncelik = models.CharField(max_length=10, choices=ONCELIK_CHOICES, default=ONCELIK_ORTA, verbose_name="Öncelik")
-    olusturma_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturma Tarihi")
-    guncelleme_tarihi = models.DateTimeField(auto_now=True, verbose_name="Güncelleme Tarihi")
-    
-    def __str__(self):
-        return f"{self.kullanici.username} - {self.baslik}"
-    
-    class Meta:
-        verbose_name = "Görev"
-        verbose_name_plural = "Görevler"
-        ordering = ['son_tarih', 'oncelik']
-
-
 class Hatirlatici(models.Model):
     """Çalışma hatırlatıcıları"""
     

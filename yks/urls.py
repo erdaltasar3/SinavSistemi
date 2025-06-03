@@ -34,6 +34,7 @@ urlpatterns = [
     path('calisma-plani/ekle/', views.calisma_plani_ekle, name='calisma_plani_ekle'),
     path('calisma-plani/<int:plan_id>/', views.calisma_plani_detay, name='calisma_plani_detay'),
     path('calisma-plani/oturum-sil/<int:oturum_id>/', views.oturum_sil, name='oturum_sil'),
+    path('calisma-plani/oturum-tamamlandi-yap/<int:oturum_id>/', views.oturum_tamamlandi_yap, name='oturum_tamamlandi_yap'),
     
     # Görevler URL'leri
     path('gorevler/', views.gorev_listesi, name='gorev_listesi'),

@@ -69,7 +69,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div class="text-muted">Son 7 gün:</div>
-                            <div class="fw-bold">24 saat</div>
+                            <div class="fw-bold">{{ son_yedi_gun_toplam_saat|floatformat:1|default:"0" }} saat</div>
                         </div>
                         <div class="progress mb-4" style="height: 8px;">
                             <div class="progress-bar bg-primary" role="progressbar" style="width: 75%;" 
@@ -77,36 +77,22 @@
                         </div>
                         
                         <h6 class="border-bottom pb-2 mb-3">En Çok Çalışılan Dersler</h6>
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span>Matematik</span>
-                                <span class="text-muted small">8 saat</span>
-                            </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 80%;" 
-                                    aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span>Fizik</span>
-                                <span class="text-muted small">6 saat</span>
-                            </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-info" role="progressbar" style="width: 60%;" 
-                                    aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span>Türkçe</span>
-                                <span class="text-muted small">4 saat</span>
-                            </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-warning" role="progressbar" style="width: 40%;" 
-                                    aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                        </div>
+                        {% if en_cok_calisilan_dersler %}
+                            {% for istatistik in en_cok_calisilan_dersler %}
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>{{ istatistik.ders__ad }}</span>
+                                        <span class="text-muted small">{{ istatistik.toplam_sure|floatformat:1|default:"0" }} saat</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ istatistik.yuzde }}%;" 
+                                            aria-valuenow="{{ istatistik.yuzde }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                             <p class="text-muted">Son 7 güne ait çalışma verisi bulunmuyor.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -136,7 +122,8 @@
                             <div class="col-md-4">
                                 <div class="d-flex align-items-center">
                                     <div class="display-5 me-3 text-primary fw-bold">
-                                        {{ bugunun_plani.toplam_calisma_suresi|divisibleby:60 }}
+                                        {# Toplam çalışma süresini dakikadan saate çevir #}
+                                        {{ bugunun_plani_toplam_saat|floatformat:1|default:"0" }}
                                     </div>
                                     <div>
                                         <div class="text-muted">Toplam</div>
@@ -237,7 +224,7 @@
                                                     <td>
                                                         <div class="btn-group">
                                                             <a href="{% url 'yks:calisma_plani_detay' plan.id %}" class="btn btn-sm btn-outline-primary">
-                                                                <i class="bi bi-eye"></i>
+                                                                Detaylar
                                                             </a>
                                                         </div>
                                                     </td>

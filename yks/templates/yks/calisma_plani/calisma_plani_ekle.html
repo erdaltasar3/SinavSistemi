@@ -102,7 +102,23 @@
                 <div class="card-body">
                     <form method="POST" class="needs-validation" novalidate>
                         {% csrf_token %}
-                        
+
+                        {# Genel form hatalarını göster #}
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <strong>Hata oluştu:</strong> Lütfen aşağıdaki hataları düzeltin.
+                                <ul>
+                                    {% for field, errors in form.errors.items %}
+                                        {% if field != '__all__' %}
+                                            <li>{{ field|capfirst }}: {{ errors|join:", " }}</li>
+                                        {% else %}
+                                            <li>{{ errors|join:", " }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label for="{{ form.tarih.id_for_label }}" class="form-label">Plan Tarihi *</label>

@@ -73,10 +73,30 @@ class CalismaPlanForm(forms.ModelForm):
             'notlar': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Plan hakkında notlarınızı yazabilirsiniz'})
         }
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.user = user
         if not self.instance.pk:  # Yeni oluşturuluyorsa
             self.fields['tarih'].initial = timezone.localdate()
+
+    def clean_tarih(self):
+        tarih = self.cleaned_data.get('tarih')
+        if not tarih:
+            return tarih
+
+        # Seçilen tarih için kullanıcının zaten bir planı var mı kontrol et
+        if self.instance.pk: # Eğer plan düzenleniyorsa, mevcut planı hariç tut
+            existing_plan = CalismaPlanı.objects.filter(kullanici=self.user, tarih=tarih).exclude(pk=self.instance.pk).exists()
+        else:
+            # Yeni plan oluşturuluyorsa, sadece tarih ve kullanıcıya göre kontrol et
+            if not hasattr(self, 'user'):
+                 raise forms.ValidationError("Kullanıcı bilgisi forma aktarılmamış.") # Sanity check
+            existing_plan = CalismaPlanı.objects.filter(kullanici=self.user, tarih=tarih).exists()
+
+        if existing_plan:
+            raise forms.ValidationError("Bu tarih için zaten bir çalışma planınız var.")
+
+        return tarih
 
 class CalismaOturumuForm(forms.ModelForm):
     """Çalışma oturumu ekleme formu"""

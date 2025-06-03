@@ -610,12 +610,56 @@ def calisma_plani_listesi(request):
         else:
             plan.tamamlanan_oturum = 0
             plan.tamamlanma_yuzdesi = 0
-    
+
+    # Bugünün planı toplam süresini saate çevir
+    bugunun_plani_toplam_saat = 0
+    if bugunun_plani and bugunun_plani.toplam_calisma_suresi is not None:
+        bugunun_plani_toplam_saat = bugunun_plani.toplam_calisma_suresi / 60
+
+    # Son 7 günün toplam çalışma süresini hesapla
+    son_yedi_gun_toplam_sure_dakika = CalismaPlanı.objects.filter(
+        kullanici=request.user,
+        tarih__gte=bugun - timedelta(days=7),
+        tarih__lt=bugun
+    ).aggregate(Sum('toplam_calisma_suresi'))['toplam_calisma_suresi__sum'] or 0
+
+    # Toplam süreyi saate çevir
+    son_yedi_gun_toplam_saat = son_yedi_gun_toplam_sure_dakika / 60
+
+    # Son 7 günde en çok çalışılan dersleri ve sürelerini hesapla
+    yedi_gun_oncesi = bugun - timedelta(days=7)
+    en_cok_calisilan_dersler_raw = CalismaOturumu.objects.filter(
+        plan__kullanici=request.user,
+        plan__tarih__gte=yedi_gun_oncesi,
+        plan__tarih__lt=bugun
+    ).values('ders__ad').annotate(total_sure=Sum('sure')).order_by('-total_sure')[:3]
+
+    # Toplam 7 günlük süreyi (dakika) al
+    toplam_yedi_gun_sure_dakika = CalismaOturumu.objects.filter(
+        plan__kullanici=request.user,
+        plan__tarih__gte=yedi_gun_oncesi,
+        plan__tarih__lt=bugun
+    ).aggregate(Sum('sure'))['sure__sum'] or 0
+
+    # Ders bazlı istatistikleri hazırla (saat ve yüzde olarak)
+    en_cok_calisilan_dersler_data = []
+    for item in en_cok_calisilan_dersler_raw:
+        ders_saat = item['total_sure'] / 60
+        yuzde = (item['total_sure'] / toplam_yedi_gun_sure_dakika) * 100 if toplam_yedi_gun_sure_dakika > 0 else 0
+        en_cok_calisilan_dersler_data.append({
+            'ders__ad': item['ders__ad'],
+            'toplam_sure': ders_saat,
+            'yuzde': yuzde
+        })
+
     context = {
         'bugun': bugun,
         'bugunun_plani': bugunun_plani,
+        'bugunun_plani_toplam_saat': bugunun_plani_toplam_saat, # Context'e ekle
         'son_planlar': son_planlar,
         'gelecek_planlar': gelecek_planlar,
+        'son_yedi_gun_toplam_saat': son_yedi_gun_toplam_saat, # Context'e ekle
+        'en_cok_calisilan_dersler': en_cok_calisilan_dersler_data, # Context'e ekle
     }
     
     return render(request, 'yks/calisma_plani/calisma_plani_listesi.html', context)
@@ -664,20 +708,20 @@ def calisma_plani_detay(request, plan_id):
 @login_required
 def calisma_plani_ekle(request):
     """Yeni çalışma planı ekleme görünümü"""
-    
+
     # Bugün için zaten plan var mı kontrol et
-    bugun = timezone.localdate()
-    mevcut_plan = CalismaPlanı.objects.filter(
-        kullanici=request.user,
-        tarih=bugun
-    ).first()
-    
-    if mevcut_plan:
-        messages.info(request, f"Bugün için zaten bir çalışma planınız var. <a href='{mevcut_plan.get_absolute_url()}'>Görüntüle</a>")
-        return redirect('yks:calisma_plani_listesi')
-    
+    # bugun = timezone.localdate()
+    # mevcut_plan = CalismaPlanı.objects.filter(
+    #     kullanici=request.user,
+    #     tarih=bugun
+    # ).first()
+
+    # if mevcut_plan:
+    #     messages.info(request, f"Bugün için zaten bir çalışma planınız var. <a href='{mevcut_plan.get_absolute_url()}'>Görüntüle</a>")
+    #     return redirect('yks:calisma_plani_listesi')
+
     if request.method == 'POST':
-        form = CalismaPlanForm(request.POST)
+        form = CalismaPlanForm(data=request.POST, user=request.user)
         if form.is_valid():
             plan = form.save(commit=False)
             plan.kullanici = request.user
@@ -688,12 +732,16 @@ def calisma_plani_ekle(request):
                 messages.success(request, 'Çalışma planı başarıyla oluşturuldu.')
                 return redirect('yks:calisma_plani_detay', plan_id=plan.id)
     else:
-        form = CalismaPlanForm()
+        form = CalismaPlanForm(user=request.user)
     
     context = {
         'form': form,
     }
-    
+
+    # Eğer POST isteği geldiyse ve form geçerli değilse de aynı template'i render et
+    if request.method == 'POST' and not form.is_valid():
+        return render(request, 'yks/calisma_plani/calisma_plani_ekle.html', context)
+
     return render(request, 'yks/calisma_plani/calisma_plani_ekle.html', context)
 
 @login_required
@@ -713,13 +761,52 @@ def oturum_sil(request, oturum_id):
         plan.save()
         
         messages.success(request, 'Çalışma oturumu başarıyla silindi.')
-        return redirect('yks:calisma_plani_detay', plan_id=plan_id)
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Oturum başarıyla silindi.'})
+        else:
+            return redirect('yks:calisma_plani_detay', plan_id=plan_id)
     
     context = {
         'oturum': oturum,
     }
     
     return render(request, 'yks/calisma_plani/oturum_sil.html', context)
+
+@login_required
+@csrf_exempt
+def oturum_tamamlandi_yap(request, oturum_id):
+    """Çalışma oturumunu tamamlandı olarak işaretler (AJAX) """
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            oturum = get_object_or_404(CalismaOturumu, id=oturum_id, plan__kullanici=request.user)
+            oturum.tamamlandi = True
+            oturum.save()
+
+            # Planın tamamlanma oranını ve toplam süresini güncelle
+            plan = oturum.plan
+            plan.toplam_calisma_suresi = CalismaOturumu.objects.filter(
+                plan=plan
+            ).aggregate(Sum('sure'))['sure__sum'] or 0
+            plan.save()
+            
+            # Güncel tamamlanan ve toplam oturum sayılarını al
+            tamamlanan_oturum_sayisi = CalismaOturumu.objects.filter(
+                plan=plan,
+                tamamlandi=True
+            ).count()
+            toplam_oturum_sayisi = CalismaOturumu.objects.filter(plan=plan).count()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Oturum tamamlandı olarak işaretlendi.',
+                'tamamlanan_oturum_sayisi': tamamlanan_oturum_sayisi,
+                'toplam_oturum_sayisi': toplam_oturum_sayisi,
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Geçersiz istek.'}, status=400)
 
 @login_required
 def dersler_json(request):

@@ -160,32 +160,22 @@
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                <div class="dropdown">
-                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        İşlemler
+                                                <div class="btn-group" role="group" aria-label="Oturum İşlemleri">
+                                                    {# Tamamlandı butonu - Duruma göre gösterilir/gizlenir ve rengi değişir #}
+                                                    {% if not oturum.tamamlandi %}
+                                                        <button type="button" class="btn btn-sm btn-outline-success tamamla-oturum-btn" data-oturum-id="{{ oturum.id }}">
+                                                            <i class="bi bi-check-circle me-1"></i> Tamamla
+                                                        </button>
+                                                    {% else %}
+                                                         <button type="button" class="btn btn-sm btn-success" disabled>
+                                                            <i class="bi bi-check-circle me-1"></i> Tamamlandı
+                                                        </button>
+                                                    {% endif %}
+
+                                                    {# Sil butonu #}
+                                                    <button type="button" class="btn btn-sm btn-outline-danger sil-oturum-btn" data-oturum-id="{{ oturum.id }}">
+                                                        <i class="bi bi-trash me-1"></i> Sil
                                                     </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end">
-                                                        <li>
-                                                            <form method="POST" action="#" class="m-0">
-                                                                {% csrf_token %}
-                                                                <input type="hidden" name="oturum_id" value="{{ oturum.id }}">
-                                                                <button type="submit" name="tamamla" class="dropdown-item">
-                                                                    <i class="bi bi-check-circle text-success me-2"></i> Tamamlandı Olarak İşaretle
-                                                                </button>
-                                                            </form>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item" href="#">
-                                                                <i class="bi bi-pencil-square text-primary me-2"></i> Düzenle
-                                                            </a>
-                                                        </li>
-                                                        <li><hr class="dropdown-divider"></li>
-                                                        <li>
-                                                            <a class="dropdown-item text-danger" href="{% url 'yks:oturum_sil' oturum.id %}">
-                                                                <i class="bi bi-trash text-danger me-2"></i> Sil
-                                                            </a>
-                                                        </li>
-                                                    </ul>
                                                 </div>
                                             </td>
                                         </tr>
@@ -282,41 +272,129 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ders değiştiğinde konuları getir
-        const dersSelect = document.getElementById('{{ form.ders.id_for_label }}');
-        const konuSelect = document.getElementById('{{ form.konu.id_for_label }}');
-        
-        if (dersSelect && konuSelect) {
-            dersSelect.addEventListener('change', function() {
-                const dersId = this.value;
-                if (!dersId) {
-                    // Ders seçilmediyse konu listesini temizle
-                    konuSelect.innerHTML = '<option value="">---------</option>';
-                    konuSelect.disabled = true;
-                    return;
+    // CSRF token almak için helper fonksiyon
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
-                
-                // AJAX ile konuları getir
-                fetch(`/yks/api/dersler/${dersId}/konular/`)
+            }
+        }
+        return cookieValue;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfToken = getCookie('csrftoken');
+
+        // Tamamla butonları için event listener
+        document.querySelectorAll('.tamamla-oturum-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const oturumId = this.dataset.oturumId;
+                const button = this; // Buton referansını sakla
+
+                fetch(`/yks/calisma-plani/oturum-tamamlandi-yap/${oturumId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Satırı bul ve sınıfını güncelle (yeşil yap)
+                        const row = button.closest('tr');
+                        if (row) {
+                            row.classList.add('table-success', 'bg-opacity-25');
+                            
+                            // Durum badge'ini güncelle
+                            const durumCell = row.querySelector('td:nth-child(5)'); // 5. sütun durum
+                            if (durumCell) {
+                                durumCell.innerHTML = '<span class="badge bg-success rounded-pill">Tamamlandı</span>';
+                            }
+                        }
+                        // Buton grubunu bul
+                        const btnGroup = button.closest('.btn-group');
+                        if (btnGroup) {
+                            // Mevcut tamamla butonunu kaldır
+                            button.remove();
+                            // Yeni tamamlandı (disabled) butonunu ekle
+                            const tamamlandiButton = document.createElement('button');
+                            tamamlandiButton.type = 'button';
+                            tamamlandiButton.classList.add('btn', 'btn-sm', 'btn-success');
+                            tamamlandiButton.disabled = true;
+                            tamamlandiButton.innerHTML = '<i class="bi bi-check-circle me-1"></i> Tamamlandı';
+                            btnGroup.prepend(tamamlandiButton); // Başa ekle
+                        }
+                        console.log(data.message);
+
+                        // Tamamlanan oturum sayısını güncelle
+                        const tamamlananOturumElement = document.querySelector('.card-body .badge.bg-success.rounded-pill.fs-6');
+                        if (tamamlananOturumElement && data.tamamlanan_oturum_sayisi !== undefined && data.toplam_oturum_sayisi !== undefined) {
+                            tamamlananOturumElement.textContent = `${data.tamamlanan_oturum_sayisi}/${data.toplam_oturum_sayisi}`;
+                        }
+
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('Bir hata oluştu.');
+                });
+            });
+        });
+
+        // Sil butonları için event listener
+        document.querySelectorAll('.sil-oturum-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const oturumId = this.dataset.oturumId;
+                const button = this; // Buton referansını sakla
+
+                if (confirm('Bu oturumu silmek istediğinizden emin misiniz?')) {
+                     fetch(`/yks/calisma-plani/oturum-sil/${oturumId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken,
+                             'Content-Type': 'application/json'
+                        },
+                         body: JSON.stringify({}) // POST isteği için boş body gönderilebilir
+                    })
                     .then(response => response.json())
                     .then(data => {
-                        konuSelect.innerHTML = '<option value="">Konu Seçin (Opsiyonel)</option>';
-                        data.forEach(konu => {
-                            const option = document.createElement('option');
-                            option.value = konu.id;
-                            option.textContent = konu.ad;
-                            konuSelect.appendChild(option);
-                        });
-                        konuSelect.disabled = false;
+                        if (data.success) {
+                            // Satırı DOM'dan kaldır
+                            const row = button.closest('tr');
+                            if (row) {
+                                row.remove();
+                            }
+                             console.log(data.message);
+                             // İsteğe bağlı: Sayfayı yenile veya toplam süre bilgisini güncelle
+                            // window.location.reload();
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Hata:', error);
+                        alert('Bir hata oluştu.');
                     });
+                }
             });
-        }
-        
-        // Yazdırma işlevi
-        const printBtn = document.getElementById('printPlanBtn');
-        if (printBtn) {
-            printBtn.addEventListener('click', function() {
+        });
+
+         // Planı Yazdır butonu işlevselliği
+        const printPlanBtn = document.getElementById('printPlanBtn');
+        if (printPlanBtn) {
+            printPlanBtn.addEventListener('click', function() {
                 window.print();
             });
         }

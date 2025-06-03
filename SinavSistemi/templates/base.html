@@ -35,7 +35,7 @@
                                 {{ user.first_name|default:user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="#">Profil</a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:profile' %}">Profil</a></li>
                                 <li><a class="dropdown-item" href="#">Ayarlar</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'core:cikis' %}">Çıkış Yap</a></li>

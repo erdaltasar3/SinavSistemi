@@ -6,6 +6,7 @@ app_name = 'yks'
 urlpatterns = [
     path('', views.index, name='index'),
     path('oturum/<str:oturum_kodu>/', views.oturum_dersleri, name='oturum_dersleri'),
+    path('profil/', views.profil, name='profil'),
     
     # Konu Takip URL'leri
     path('konu-takip/', views.konu_takip_sinav_secim, name='konu_takip_sinav_secim'),

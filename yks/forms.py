@@ -6,8 +6,9 @@ from .models import (
     CalismaOturumu, 
     Hatirlatici
 )
-from core.models import Ders, Konu
+from core.models import Ders, Konu, UserProfile
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 class HedefForm(forms.ModelForm):
     """Hedef ekleme formu"""
@@ -172,3 +173,33 @@ class HatirlaticiForm(forms.ModelForm):
             raise forms.ValidationError("Tekrar seçildiğinde tekrar periyodu belirtilmelidir.")
             
         return cleaned_data 
+
+class UserProfileForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30, required=False, label='Ad')
+    last_name = forms.CharField(max_length=150, required=False, label='Soyad')
+    email = forms.EmailField(max_length=254, required=False, label='E-posta', disabled=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ['phone_number', 'profile_picture']
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(UserProfileForm, self).__init__(*args, **kwargs)
+        
+        if user:
+            self.fields['first_name'].initial = user.first_name
+            self.fields['last_name'].initial = user.last_name
+            self.fields['email'].initial = user.email
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        user = profile.user
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        # E-posta değiştirilemez olduğu için burada güncelleme yapmıyoruz
+        
+        if commit:
+            user.save()
+            profile.save()
+        return profile 

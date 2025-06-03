@@ -6,7 +6,7 @@ from django.db.models import Count, Case, When, IntegerField, Q, Sum, F, Avg, Ex
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from core.models import (
-    SinavAltTur, Ders, Unite, Konu, SinavTurleri
+    SinavAltTur, Ders, Unite, Konu, SinavTurleri, UserProfile
 )
 from .models import (
     YKSOturum, 
@@ -26,9 +26,11 @@ from .forms import (
     HedefDuzenleForm,
     CalismaPlanForm,
     CalismaOturumuForm,
-    HatirlaticiForm
+    HatirlaticiForm,
+    UserProfileForm
 )
 from datetime import date, timedelta
+from django.contrib.auth import update_session_auth_hash
 
 
 def index(request):
@@ -1169,3 +1171,25 @@ def calisma_oturum_geri_al(request, oturum_id):
         return redirect('yks:calisma_plani_detay', plan_id=plan_id)
     else:
         return JsonResponse({'success': False, 'message': 'Geçersiz istek.'})
+
+@login_required
+def profil(request):
+    """Kullanıcı profil sayfası"""
+    # Kullanıcının profilini al veya oluştur
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profil bilgileriniz başarıyla güncellendi.')
+            return redirect('yks:profil')
+    else:
+        form = UserProfileForm(instance=profile)
+    
+    context = {
+        'form': form,
+        'profile': profile
+    }
+    
+    return render(request, 'yks/profil.html', context)

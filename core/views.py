@@ -1151,4 +1151,21 @@ def konu_detay(request, konu_id):
     
     return render(request, 'core/konular/konu_detay.html', context)
 
+@login_required
+def profile_view(request):
+    if request.method == 'POST':
+        # Profil resmi ve telefon numarası güncelleme
+        if 'profile_picture' in request.FILES:
+            request.user.userprofile.profile_picture = request.FILES['profile_picture']
+        
+        phone_number = request.POST.get('phone_number')
+        if phone_number:
+            request.user.userprofile.phone_number = phone_number
+            
+        request.user.userprofile.save()
+        messages.success(request, 'Profil bilgileriniz başarıyla güncellendi.')
+        return redirect('core:profile')
+        
+    return render(request, 'core/profile.html')
+
 

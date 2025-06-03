@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import profile_view
 
 app_name = 'core'
 
@@ -41,4 +42,5 @@ urlpatterns = [
     # Devre dışı bırakılan URL'ler
     # Hedefler, Planlar, Hatırlatıcılar ve Yapılacaklar için URL'ler
     # artık kullanılmıyor
+    path('profile/', profile_view, name='profile'),
 ] 

@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Count, Case, When, IntegerField, Q, Sum, F, Avg, Exists, OuterRef
+from django.db.models import Count, Case, When, IntegerField, Q, Sum, F, Avg, Exists, OuterRef, BooleanField
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from core.models import (
@@ -19,7 +19,8 @@ from .models import (
     Hatirlatici,
     SoruCozumHedefi,
     KonuTakipHedefi,
-    KonuTakipHedefKonu
+    KonuTakipHedefKonu,
+    HedefDurum
 )
 from .forms import (
     HedefForm,
@@ -301,19 +302,25 @@ def hedef_listesi(request):
 
     # Sekmeye göre filtrele
     if sekme == 'aktif':
-        hedefler = hedefler.filter(durum=Hedef.DURUM_AKTIF)
+        # Aktif hedefler: Durumu AKTIF olanlar (ID=1)
+        hedefler = hedefler.filter(hedef_durum__id=1)
     elif sekme == 'tamamlanan':
-        hedefler = hedefler.filter(durum=Hedef.DURUM_TAMAMLANDI)
+        # Tamamlanan hedefler: Durumu TAMAMLANDI olanlar (ID=2)
+        hedefler = hedefler.filter(hedef_durum__id=2)
     elif sekme == 'tamamlanmayan':
-        hedefler = hedefler.exclude(durum=Hedef.DURUM_TAMAMLANDI)
+        # Tamamlanmayan hedefler: Durumu TAMAMLANMADI olanlar (ID=3)
+        hedefler = hedefler.filter(hedef_durum__id=3)
+
     else:
-        hedefler = hedefler.filter(durum=Hedef.DURUM_AKTIF)
+        # Varsayılan olarak aktif hedefler gösterilsin (ID=1)
+        hedefler = hedefler.filter(hedef_durum__id=1)
 
     # Tür filtresi uygula
-    hedefler = hedefler.filter(tur__ad=tur)
+    if tur != 'Hepsi': 
+         hedefler = hedefler.filter(tur__ad=tur)
 
     # Sıralama
-    hedefler = hedefler.order_by('bitis_tarihi', '-oncelik')
+    hedefler = hedefler.order_by('bitis_tarihi', '-oncelik') 
 
     # Her hedef için detay bilgilerini al
     hedef_listesi = []
@@ -323,34 +330,37 @@ def hedef_listesi(request):
             'tip': None,
             'ilerleme': 0
         }
-        
-        # Soru çözümü hedefi mi kontrol et
+
+        # İlerleme oranını hesapla
         try:
             soru_cozum = hedef.soru_cozum_detay
             hedef_data['tip'] = 'soru_cozum'
             hedef_data['ilerleme'] = soru_cozum.ilerleme_orani()
-            hedef_data['toplam_soru'] = soru_cozum.toplam_soru
-            hedef_data['cozulmus_soru'] = soru_cozum.cozulmus_soru
-        except:
+        except SoruCozumHedefi.DoesNotExist:
             pass
-        
-        # Konu takibi hedefi mi kontrol et
+
         try:
             konu_takip = hedef.konu_takip_detay
             hedef_data['tip'] = 'konu_takip'
             hedef_data['ilerleme'] = konu_takip.ilerleme_orani()
-            hedef_data['toplam_konu'] = konu_takip.konular.count()
-            hedef_data['tamamlanan_konu'] = konu_takip.konular.filter(tamamlandi=True).count()
-        except:
+        except KonuTakipHedefi.DoesNotExist:
             pass
-        
+
+        # Genel Hedef tamamlanma oranını kullan, eğer alt detay ilerlemesi 0 ise
+        if hedef_data['tip'] is None and hedef.tamamlanma_orani > 0:
+             hedef_data['ilerleme'] = hedef.tamamlanma_orani
+        # Alt detay ilerlemesi 0 ise ve genel oran > 0 ise genel oranı kullan
+        elif hedef_data['ilerleme'] == 0 and hedef.tamamlanma_orani > 0:
+             hedef_data['ilerleme'] = hedef.tamamlanma_orani
+
+
         hedef_listesi.append(hedef_data)
 
-    # İstatistikler
+    # İstatistikler (Tüm hedefler üzerinden hesaplanmalı)
     toplam_hedef = Hedef.objects.filter(kullanici=request.user).count()
     tamamlanan_sayisi = Hedef.objects.filter(
-        kullanici=request.user, 
-        durum=Hedef.DURUM_TAMAMLANDI
+        kullanici=request.user,
+        hedef_durum__id=2 # Tamamlananlar (ID=2)
     ).count()
     tamamlanma_yuzdesi = (tamamlanan_sayisi / toplam_hedef) * 100 if toplam_hedef > 0 else 0
 
@@ -395,61 +405,117 @@ def hedef_ekle(request):
 
 @login_required
 def hedef_duzenle(request, hedef_id):
-    """Hedef düzenleme görünümü"""
+    """
+    Hedef düzenleme görünümü ve POST işlemi. Hem genel hedefi hem de alt detayları (soru/konu) günceller.
+    """
     hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
-    
+
     if request.method == 'POST':
-        try:
-            if hasattr(hedef, 'sorucozumhedefi'):
+        # Formdan gelen genel hedef verilerini işle
+        form = HedefDuzenleForm(request.POST, instance=hedef)
+        if form.is_valid():
+            form.save()
+
+            # Hedef tipine göre alt detayları güncelle
+            try:
+                soru_cozum = hedef.soru_cozum_detay
                 # Soru çözümü hedefi güncelleme
                 cozulmus_soru = int(request.POST.get('cozulmus_soru', 0))
-                hedef.sorucozumhedefi.cozulmus_soru = cozulmus_soru
-                hedef.sorucozumhedefi.save()
-                
-                # Hedef durumunu güncelle
-                if cozulmus_soru >= hedef.sorucozumhedefi.toplam_soru:
-                    hedef.durum = 'Tamamlandı'
-                hedef.save()
-                
-                messages.success(request, 'Soru çözümü ilerlemesi başarıyla güncellendi.')
-            elif hasattr(hedef, 'konutakiphedefi'):
+                soru_cozum.cozulmus_soru = cozulmus_soru
+                soru_cozum.save()
+
+                # Hedef durumunu ilerlemeye göre otomatik güncelle
+                if soru_cozum.ilerleme_orani() >= 100:
+                    hedef.hedef_durum = HedefDurum.objects.get(ad='Tamamlandı')
+                    hedef.tamamlanma_orani = 100
+                    hedef.guncelleme_tarihi = timezone.now()
+                else:
+                    # Eğer tamamlanma oranı %100 değilse durumu AKTIF yap (IPTAL veya diğer durumları bozmamak için dikkatli olmak lazım)
+                    # Sadece AKTIF durumdan %100 olmayan bir orana düşerse AKTIF kalsın
+                    if hedef.hedef_durum.ad == 'Tamamlandı' and soru_cozum.ilerleme_orani() < 100:
+                         # Tamamlanmış bir hedef tekrar düzenlenip ilerlemesi düşürülürse durumu Aktif'e çek
+                         hedef.hedef_durum = HedefDurum.objects.get(ad='Aktif')
+                         hedef.tamamlanma_orani = soru_cozum.ilerleme_orani()
+                    elif hedef.hedef_durum.ad == 'Aktif':
+                         hedef.tamamlanma_orani = soru_cozum.ilerleme_orani()
+
+                hedef.save() # Genel hedefi kaydet
+
+                messages.success(request, 'Soru çözümü hedefi başarıyla güncellendi.')
+
+            except SoruCozumHedefi.DoesNotExist:
+                 pass # Soru çözümü hedefi yoksa geç
+
+            try:
+                konu_takip = hedef.konu_takip_detay
                 # Konu takibi hedefi güncelleme
-                tamamlanan_konular = request.POST.getlist('tamamlanan_konular')
-                
-                # Tüm konuları tamamlanmamış olarak işaretle
-                hedef.konutakiphedefi.konutakiphedefkonu_set.all().update(tamamlandi=False)
-                
-                # Seçili konuları tamamlanmış olarak işaretle
-                if tamamlanan_konular:
-                    hedef.konutakiphedefi.konutakiphedefkonu_set.filter(konu_id__in=tamamlanan_konular).update(tamamlandi=True)
-                
-                # Hedef durumunu güncelle
-                tamamlanan_sayisi = hedef.konutakiphedefi.konutakiphedefkonu_set.filter(tamamlandi=True).count()
-                toplam_konu = hedef.konutakiphedefi.konutakiphedefkonu_set.count()
-                
-                if tamamlanan_sayisi == toplam_konu:
-                    hedef.durum = 'Tamamlandı'
-                hedef.save()
-                
-                messages.success(request, 'Konu takibi ilerlemesi başarıyla güncellendi.')
-            
-            return redirect('yks:hedef_listesi')
-        except Exception as e:
-            messages.error(request, f'İlerleme güncellenirken bir hata oluştu: {str(e)}')
-    
-    # Hedef tipini ve ilgili verileri belirle
-    if hasattr(hedef, 'sorucozumhedefi'):
+                # Konu Takip Hedef Konu objelerini güncelle
+                tamamlanan_konular_ids = request.POST.getlist('konular') # Formdan gelen tamamlanan konu ID'leri
+
+                # Hedefe bağlı tüm KonuTakipHedefKonu objelerini al
+                all_konu_hedef_konular = konu_takip.konular.all()
+
+                # Gelen ID listesindeki konuları tamamlandı olarak işaretle
+                for konu_hedef_konu in all_konu_hedef_konular:
+                    if str(konu_hedef_konu.konu.id) in tamamlanan_konular_ids:
+                        konu_hedef_konu.tamamlandi = True
+                    else:
+                        konu_hedef_konu.tamamlandi = False
+                    konu_hedef_konu.save()
+
+                # Hedef durumunu ilerlemeye göre otomatik güncelle
+                if konu_takip.ilerleme_orani() >= 100:
+                    hedef.hedef_durum = HedefDurum.objects.get(ad='Tamamlandı')
+                    hedef.tamamlanma_orani = 100
+                    hedef.guncelleme_tarihi = timezone.now()
+                else:
+                     # Eğer tamamlanma oranı %100 değilse durumu AKTIF yap
+                     if hedef.hedef_durum.ad == 'Tamamlandı' and konu_takip.ilerleme_orani() < 100:
+                         # Tamamlanmış bir hedef tekrar düzenlenip ilerlemesi düşürülürse durumu Aktif'e çek
+                         hedef.hedef_durum = HedefDurum.objects.get(ad='Aktif')
+                         hedef.tamamlanma_orani = konu_takip.ilerleme_orani()
+                     elif hedef.hedef_durum.ad == 'Aktif':
+                         hedef.tamamlanma_orani = konu_takip.ilerleme_orani()
+
+                hedef.save() # Genel hedefi kaydet
+
+                messages.success(request, 'Konu takibi hedefi başarıyla güncellendi.')
+
+            except KonuTakipHedefi.DoesNotExist:
+                pass # Konu takibi hedefi yoksa geç
+
+
+            return redirect('yks:hedef_listesi') # Güncelleme sonrası hedef listesine yönlendir
+        else:
+            # Form geçerli değilse aynı sayfayı hata mesajlarıyla göster
+            messages.error(request, 'Lütfen form hatalarını düzeltin.')
+
+    else:
+        # GET isteği veya form geçerli değilse formu oluştur
+        form = HedefDuzenleForm(instance=hedef)
+
+    # Hedef tipini ve ilgili verileri belirle (template için)
+    hedef.tip = None
+    try:
+        hedef.soru_cozum_detay
         hedef.tip = 'soru_cozum'
-        hedef.ilerleme = hedef.sorucozumhedefi.ilerleme_orani()
-        hedef.cozulmus_soru = hedef.sorucozumhedefi.cozulmus_soru
-        hedef.toplam_soru = hedef.sorucozumhedefi.toplam_soru
-    elif hasattr(hedef, 'konutakiphedefi'):
+        hedef.ilerleme = hedef.soru_cozum_detay.ilerleme_orani()
+        hedef.cozulmus_soru = hedef.soru_cozum_detay.cozulmus_soru
+        hedef.toplam_soru = hedef.soru_cozum_detay.toplam_soru
+    except SoruCozumHedefi.DoesNotExist:
+        pass
+
+    try:
+        hedef.konu_takip_detay
         hedef.tip = 'konu_takip'
-        hedef.ilerleme = hedef.konutakiphedefi.ilerleme_orani()
-        hedef.konular = hedef.konutakiphedefi.konutakiphedefkonu_set.all().select_related('konu')
-    
+        hedef.ilerleme = hedef.konu_takip_detay.ilerleme_orani()
+        hedef.konular = hedef.konu_takip_detay.konular.all().select_related('konu') # Konuları template'te kullanmak için çek
+    except KonuTakipHedefi.DoesNotExist:
+        pass
+
     return render(request, 'yks/hedef_belirleme/hedef_duzenle.html', {
-        'hedef': hedef
+        'form': form, # Düzenleme formu
+        'hedef': hedef # Hedef objesi ve eklenen tip/ilerleme bilgileri
     })
 
 @login_required
@@ -471,38 +537,42 @@ def hedef_sil(request, hedef_id):
 @login_required
 def hedef_durum_guncelle(request, hedef_id):
     """AJAX ile hedef durumunu güncelleme"""
+    # Bu view'ın CSRF korumasını kapatmak yerine frontend'den CSRF token göndermek daha güvenlidir.
+    # @csrf_exempt annotation'ını kaldırıp frontend'den token gönderildiğinden emin olun.
+    
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         hedef = get_object_or_404(Hedef, id=hedef_id, kullanici=request.user)
-        
-        yeni_durum = request.POST.get('durum')
-        yeni_oran = request.POST.get('tamamlanma_orani')
-        
-        if yeni_durum:
-            hedef.durum = yeni_durum
-        
-        if yeni_oran:
-            try:
-                oran = int(yeni_oran)
-                if 0 <= oran <= 100:
-                    hedef.tamamlanma_orani = oran
-                    
-                    # Eğer oran 100 ise otomatik olarak tamamlandı olarak işaretle
-                    if oran == 100:
-                        hedef.durum = Hedef.DURUM_TAMAMLANDI
-            except ValueError:
-                pass
-        
-        hedef.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Hedef durumu güncellendi.'
-        })
-    
-    return JsonResponse({
-        'success': False,
-        'message': 'Geçersiz istek.'
-    }, status=400)
+
+        # İsteğin bodysinden 'durum' bilgisini al (frontend JS'den gelecek)
+        # Örneğin, JSON: { "durum": "Tamamlandı" }
+        import json
+
+        try:
+            data = json.loads(request.body)
+            yeni_durum_id = data.get('durum_id') # Frontend'den durum ID'si gelecek (örn: 2 for Tamamlandı)
+
+            # Durum ID'sine karşılık gelen HedefDurum objesini bul
+            hedef_durum_obj = HedefDurum.objects.get(id=yeni_durum_id)
+
+            # Hedefin durumunu güncelle
+            hedef.hedef_durum = hedef_durum_obj
+
+            # Eğer durum 'Tamamlandı' (ID=2) olarak güncelleniyorsa tamamlanma oranını 100 yap
+            if yeni_durum_id == 2:
+                hedef.tamamlanma_orani = 100
+                hedef.guncelleme_tarihi = timezone.now()
+
+            hedef.save()
+            return JsonResponse({'success': True, 'message': f'Hedef durumu {hedef_durum_obj.ad} olarak güncellendi.'})
+        except HedefDurum.DoesNotExist:
+            # HedefDurum objesi bulunamazsa hata döndür
+            return JsonResponse({'success': False, 'message': f"Geçersiz hedef durumu ID'si sağlandı."}, status=400)
+        except Exception as e:
+            # Diğer hatalar için genel hata döndür
+            return JsonResponse({'success': False, 'message': f'Durum güncellenirken bir hata oluştu: {str(e)}'}, status=500)
+
+    # Eğer istek metodu POST değilse veya X-Requested-With header'ı yoksa
+    return JsonResponse({'success': False, 'message': 'Geçersiz istek metodu veya header.'}, status=405)
 
 # Çalışma Planı Görünümleri
 @login_required
@@ -949,6 +1019,11 @@ def soru_cozum_hedef_ekle(request):
     """Soru çözümü hedefi ekleme görünümü"""
     if request.method == 'POST':
         try:
+            # Hedef Durumlarını kontrol et/oluştur
+            aktif_durum, _ = HedefDurum.objects.get_or_create(ad='Aktif')
+            tamamlandi_durum, _ = HedefDurum.objects.get_or_create(ad='Tamamlandı')
+            tamamlanmadi_durum, _ = HedefDurum.objects.get_or_create(ad='Tamamlanmadı')
+
             ders_id = request.POST.get('ders')
             toplam_soru = request.POST.get('toplam_soru')
             baslangic_tarihi = request.POST.get('baslangic_tarihi')
@@ -964,7 +1039,8 @@ def soru_cozum_hedef_ekle(request):
                 tur=hedef_turu,
                 baslangic_tarihi=baslangic_tarihi,
                 bitis_tarihi=bitis_tarihi,
-                ders=ders
+                ders=ders,
+                hedef_durum=aktif_durum # Yeni hedefin durumu varsayılan olarak Aktif
             )
             SoruCozumHedefi.objects.create(
                 hedef=hedef,
@@ -993,6 +1069,11 @@ def konu_takip_hedef_ekle(request):
     """Konu takibi hedefi ekleme görünümü"""
     if request.method == 'POST':
         try:
+            # Hedef Durumlarını kontrol et/oluştur
+            aktif_durum, _ = HedefDurum.objects.get_or_create(ad='Aktif')
+            tamamlandi_durum, _ = HedefDurum.objects.get_or_create(ad='Tamamlandı')
+            tamamlanmadi_durum, _ = HedefDurum.objects.get_or_create(ad='Tamamlanmadı')
+            
             ders_id = request.POST.get('ders')
             konular = request.POST.getlist('konular')
             baslangic_tarihi = request.POST.get('baslangic_tarihi')
@@ -1010,7 +1091,8 @@ def konu_takip_hedef_ekle(request):
                 tur=hedef_turu,
                 baslangic_tarihi=baslangic_tarihi,
                 bitis_tarihi=bitis_tarihi,
-                ders=ders
+                ders=ders,
+                hedef_durum=aktif_durum # Yeni hedefin durumu varsayılan olarak Aktif
             )
             konu_takip_hedefi = KonuTakipHedefi.objects.create(
                 hedef=hedef,

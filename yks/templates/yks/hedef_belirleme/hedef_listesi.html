@@ -51,7 +51,7 @@
                             <span class="badge bg-primary rounded-pill">{{ tamamlanan_sayisi }}/{{ toplam_hedef }}</span>
                         </div>
                         <div class="progress mb-3" style="height: 8px;">
-                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ tamamlanma_yuzdesi }}%;" 
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ tamamlanma_yuzdesi }}%;"
                                  aria-valuenow="{{ tamamlanma_yuzdesi }}" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                     </div>
@@ -249,41 +249,19 @@
                                                 </td>
                                                 <td>
                                                     <div class="d-flex justify-content-end">
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                İşlemler
-                                                            </button>
-                                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width: 180px; max-height: 250px; overflow-y: auto;">
-                                                                <li>
-                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_ilerleme_kaydet' hedef.hedef.id %}">
-                                                                        <i class="bi bi-pencil-square text-primary me-2"></i> İlerleme Kaydet
-                                                                    </a>
-                                                                </li>
-                                                                <li>
-                                                                    {% if hedef.hedef.id %}
-                                                                    <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.hedef.id }}">
-                                                                        <i class="bi bi-check-lg text-success me-2"></i> Tamamlandı
-                                                                    </button>
-                                                                    {% else %}
-                                                                    <span class="dropdown-item text-muted">
-                                                                        <i class="bi bi-check-lg text-muted me-2"></i> Tamamlandı
-                                                                    </span>
-                                                                    {% endif %}
-                                                                </li>
-                                                                <li><hr class="dropdown-divider"></li>
-                                                                <li>
-                                                                    {% if hedef.hedef.id %}
-                                                                    <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.hedef.id %}">
-                                                                        <i class="bi bi-trash text-danger me-2"></i> Sil
-                                                                    </a>
-                                                                    {% else %}
-                                                                    <span class="dropdown-item text-muted">
-                                                                        <i class="bi bi-trash text-muted me-2"></i> Sil
-                                                                    </span>
-                                                                    {% endif %}
-                                                                </li>
-                                                            </ul>
-                                                        </div>
+                                                        <a href="{% url 'yks:hedef_ilerleme_kaydet' hedef.hedef.id %}" class="btn btn-sm btn-outline-primary" title="İlerleme Kaydet">
+                                                            Kaydet
+                                                        </a>
+                                                        {% if hedef.hedef.id %}
+                                                        <button class="btn btn-sm btn-outline-success tamamla-btn" data-hedef-id="{{ hedef.hedef.id }}" title="Tamamlandı">
+                                                            Tamamla
+                                                        </button>
+                                                        {% endif %}
+                                                        {% if hedef.hedef.id %}
+                                                        <a href="{% url 'yks:hedef_sil' hedef.hedef.id %}" class="btn btn-sm btn-outline-danger" title="Sil">
+                                                            Sil
+                                                        </a>
+                                                        {% endif %}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -332,11 +310,11 @@
                                                 </td>
                                                 <td>
                                                     <div class="d-flex justify-content-end">
-                                                        <a href="{% url 'yks:hedef_duzenle' hedef.hedef.id %}" class="btn btn-sm btn-outline-primary me-2">
-                                                            <i class="bi bi-pencil-square"></i>
+                                                        <a href="{% url 'yks:hedef_duzenle' hedef.hedef.id %}" class="btn btn-sm btn-outline-primary" title="Düzenle">
+                                                            Düzenle
                                                         </a>
-                                                        <a href="{% url 'yks:hedef_sil' hedef.hedef.id %}" class="btn btn-sm btn-outline-danger">
-                                                            <i class="bi bi-trash"></i>
+                                                        <a href="{% url 'yks:hedef_sil' hedef.hedef.id %}" class="btn btn-sm btn-outline-danger" title="Sil">
+                                                            Sil
                                                         </a>
                                                     </div>
                                                 </td>
@@ -419,41 +397,19 @@
                                                 </td>
                                                 <td>
                                                     <div class="d-flex justify-content-end">
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                İşlemler
-                                                            </button>
-                                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm p-1" style="min-width: 180px; max-height: 250px; overflow-y: auto;">
-                                                                <li>
-                                                                    <a class="dropdown-item" href="{% url 'yks:hedef_ilerleme_kaydet' hedef.hedef.id %}">
-                                                                        <i class="bi bi-pencil-square text-primary me-2"></i> İlerleme Kaydet
-                                                                    </a>
-                                                                </li>
-                                                                <li>
-                                                                    {% if hedef.hedef.id %}
-                                                                    <button class="dropdown-item tamamla-btn" data-hedef-id="{{ hedef.hedef.id }}">
-                                                                        <i class="bi bi-check-lg text-success me-2"></i> Tamamlandı
-                                                                    </button>
-                                                                    {% else %}
-                                                                    <span class="dropdown-item text-muted">
-                                                                        <i class="bi bi-check-lg text-muted me-2"></i> Tamamlandı
-                                                                    </span>
-                                                                    {% endif %}
-                                                                </li>
-                                                                <li><hr class="dropdown-divider"></li>
-                                                                <li>
-                                                                    {% if hedef.hedef.id %}
-                                                                    <a class="dropdown-item text-danger" href="{% url 'yks:hedef_sil' hedef.hedef.id %}">
-                                                                        <i class="bi bi-trash text-danger me-2"></i> Sil
-                                                                    </a>
-                                                                    {% else %}
-                                                                    <span class="dropdown-item text-muted">
-                                                                        <i class="bi bi-trash text-muted me-2"></i> Sil
-                                                                    </span>
-                                                                    {% endif %}
-                                                                </li>
-                                                            </ul>
-                                                        </div>
+                                                        <a href="{% url 'yks:hedef_ilerleme_kaydet' hedef.hedef.id %}" class="btn btn-sm btn-outline-primary" title="İlerleme Kaydet">
+                                                            Kaydet
+                                                        </a>
+                                                        {% if hedef.hedef.id %}
+                                                        <button class="btn btn-sm btn-outline-success tamamla-btn" data-hedef-id="{{ hedef.hedef.id }}" title="Tamamlandı">
+                                                            Tamamla
+                                                        </button>
+                                                        {% endif %}
+                                                        {% if hedef.hedef.id %}
+                                                        <a href="{% url 'yks:hedef_sil' hedef.hedef.id %}" class="btn btn-sm btn-outline-danger" title="Sil">
+                                                            Sil
+                                                        </a>
+                                                        {% endif %}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -490,6 +446,45 @@
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
+</div>
+
+<!-- Yeni Hedef Ekle Modalı (Eksik olduğu için eklendi) -->
+<div class="modal fade" id="yeniHedefModal" tabindex="-1" aria-labelledby="yeniHedefModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="yeniHedefModalLabel">Yeni Hedef Ekle</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Modal içeriği buraya gelecek -->
+        <p>Modal içeriği yakında eklenecek.</p>
+        <!-- Örnek: Form seçimi veya doğrudan formlar -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hedef Tamamlandı Başarı Modalı -->
+<div class="modal fade" id="hedefTamamlandiModal" tabindex="-1" aria-labelledby="hedefTamamlandiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content text-center border-0 shadow-lg">
+      <div class="modal-header border-0">
+        <h5 class="modal-title visually-hidden" id="hedefTamamlandiModalLabel">Tebrikler!</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-4">
+        <i class="bi bi-check-circle-fill text-success mb-3" style="font-size: 4rem;"></i>
+        <h4>Başarılı!</h4>
+        <p class="text-muted mb-0">Hedef başarıyla tamamlandı.</p>
+      </div>
+      <div class="modal-footer justify-content-center border-0">
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -595,5 +590,92 @@ document.addEventListener('submit', function(e) {
     });
   }
 });
+
+// Tamamlandı butonu için AJAX isteği
+document.addEventListener('click', function(e) {
+  console.log('Doküman click event dinleyicisi tetiklendi.');
+
+  const tamamlaBtn = e.target.closest('.tamamla-btn');
+
+  if (tamamlaBtn) {
+    console.log('Tamamla butonu veya ilgili bir element tıklandı.');
+    e.preventDefault();
+    const hedefId = tamamlaBtn.dataset.hedefId;
+    const originalText = tamamlaBtn.innerHTML;
+
+    console.log('Hedef ID:', hedefId);
+
+    if (hedefId) {
+      console.log('Hedef ID geçerli. AJAX isteği başlatılıyor.');
+
+      // Butonu geçici olarak devre dışı bırakabiliriz ama görünür bir efekt eklemiyoruz.
+      // tamamlaBtn.disabled = true; // İsteğe bağlı: Kullanıcı tekrar basamasın diye
+
+      // AJAX isteğini doğrudan gönder
+      fetch(`/yks/hedefler/durum-guncelle/${hedefId}/`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ durum_id: 2 })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Başarı modalını göster
+          const successModalElement = document.getElementById('hedefTamamlandiModal');
+          const successModal = new bootstrap.Modal(successModalElement);
+          successModal.show();
+
+          // Modalı 2 saniye sonra otomatik kapat
+          setTimeout(() => {
+            successModal.hide();
+          }, 2000); // 2 saniye
+
+          // Modal tamamen gizlendikten sonra sayfayı yenile
+          successModalElement.addEventListener('hidden.bs.modal', function (event) {
+            window.location.reload();
+          });
+
+          const row = tamamlaBtn.closest('tr');
+          if (row) {
+            // Satırı hemen kaldır, animasyonlu kaldırmaya gerek yok artık
+            row.remove();
+          }
+        } else {
+          // Hata durumunda alert göster ve butonu geri yükle (eğer disable ettiysek)
+          alert(data.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+          // if (tamamlaBtn.disabled) { tamamlaBtn.disabled = false; } // Eğer disable ettiysek geri aç
+        }
+      })
+      .catch(() => {
+        // İstek sırasında hata olursa butonu geri yükle (eğer disable ettiysek)
+        alert('İstek sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+        // if (tamamlaBtn.disabled) { tamamlaBtn.disabled = false; } // Eğer disable ettiysek geri aç
+      });
+    } else {
+      console.log('Hedef ID geçerli değil.');
+    }
+  }
+});
+
+// CSRF token'ını almak için helper fonksiyon
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 </script>
 {% endblock %} 

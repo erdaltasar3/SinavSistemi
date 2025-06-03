@@ -49,7 +49,7 @@ class HedefDuzenleForm(forms.ModelForm):
         model = Hedef
         fields = [
             'baslik', 'aciklama', 'tur', 'baslangic_tarihi', 'bitis_tarihi',
-            'durum', 'oncelik', 'tamamlanma_orani', 'ders'
+            'hedef_durum', 'oncelik', 'tamamlanma_orani', 'ders'
         ]
         widgets = {
             'baslik': forms.TextInput(attrs={'class': 'form-control'}),
@@ -57,7 +57,7 @@ class HedefDuzenleForm(forms.ModelForm):
             'tur': forms.Select(attrs={'class': 'form-select'}),
             'baslangic_tarihi': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'bitis_tarihi': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'durum': forms.Select(attrs={'class': 'form-select'}),
+            'hedef_durum': forms.Select(attrs={'class': 'form-select'}),
             'oncelik': forms.Select(attrs={'class': 'form-select'}),
             'tamamlanma_orani': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
             'ders': forms.Select(attrs={'class': 'form-select'}),

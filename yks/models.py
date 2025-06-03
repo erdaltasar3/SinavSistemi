@@ -99,18 +99,20 @@ class HedefTuru(models.Model):
         verbose_name_plural = "Hedef Türleri"
 
 
+class HedefDurum(models.Model):
+    """Hedeflerin durumları (Aktif, Tamamlandı, Tamamlanmadı, vb.)"""
+    ad = models.CharField(max_length=50, unique=True, verbose_name="Durum Adı")
+
+    def __str__(self):
+        return self.ad
+
+    class Meta:
+        verbose_name = "Hedef Durumu"
+        verbose_name_plural = "Hedef Durumları"
+
+
 class Hedef(models.Model):
     """Kullanıcının belirlediği çalışma hedefleri"""
-    
-    DURUM_AKTIF = 'Aktif'
-    DURUM_TAMAMLANDI = 'Tamamlandı'
-    DURUM_IPTAL = 'İptal'
-    
-    DURUM_CHOICES = [
-        (DURUM_AKTIF, 'Aktif'),
-        (DURUM_TAMAMLANDI, 'Tamamlandı'),
-        (DURUM_IPTAL, 'İptal')
-    ]
     
     ONCELIK_DUSUK = 'Düşük'
     ONCELIK_ORTA = 'Orta'
@@ -128,7 +130,7 @@ class Hedef(models.Model):
     tur = models.ForeignKey(HedefTuru, on_delete=models.CASCADE, related_name='hedefler', verbose_name="Hedef Türü")
     baslangic_tarihi = models.DateField(verbose_name="Başlangıç Tarihi", default=timezone.now)
     bitis_tarihi = models.DateField(verbose_name="Bitiş Tarihi", blank=True, null=True)
-    durum = models.CharField(max_length=20, choices=DURUM_CHOICES, default=DURUM_AKTIF, verbose_name="Durum")
+    hedef_durum = models.ForeignKey(HedefDurum, on_delete=models.SET_NULL, null=True, related_name='hedefler', verbose_name="Hedef Durumu")
     oncelik = models.CharField(max_length=10, choices=ONCELIK_CHOICES, default=ONCELIK_ORTA, verbose_name="Öncelik")
     tamamlanma_orani = models.IntegerField(default=0, verbose_name="Tamamlanma Oranı (%)")
     ders = models.ForeignKey(Ders, on_delete=models.SET_NULL, blank=True, null=True, related_name='hedefler', verbose_name="İlgili Ders")

@@ -31,8 +31,8 @@ class HedefTuruAdmin(admin.ModelAdmin):
 
 @admin.register(Hedef)
 class HedefAdmin(admin.ModelAdmin):
-    list_display = ('baslik', 'kullanici', 'tur', 'durum', 'oncelik', 'baslangic_tarihi', 'bitis_tarihi', 'tamamlanma_orani')
-    list_filter = ('durum', 'oncelik', 'tur', 'baslangic_tarihi')
+    list_display = ('baslik', 'kullanici', 'tur', 'hedef_durum', 'oncelik', 'baslangic_tarihi', 'bitis_tarihi', 'tamamlanma_orani')
+    list_filter = ('hedef_durum__ad', 'oncelik', 'tur', 'baslangic_tarihi')
     search_fields = ('baslik', 'kullanici__username')
     date_hierarchy = 'baslangic_tarihi'
 

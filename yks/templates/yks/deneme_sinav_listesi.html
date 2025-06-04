@@ -12,9 +12,11 @@
         {% if deneme_sonuclari %}
             <ul class="list-group">
                 {% for sonuc in deneme_sonuclari %}
-                    <li class="list-group-item">
-                        {{ sonuc.oturum.ad }} - {{ sonuc.sinav_tarihi|date:"d.m.Y" }}
-                        <!-- Detay linki veya özeti buraya gelecek -->
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            {{ sonuc.sinav_alt_tur.ad }} - {{ sonuc.sinav_tarihi|date:"d.m.Y" }}
+                        </div>
+                        <a href="{% url 'yks:deneme_sinav_detay' sonuc.id %}" class="btn btn-info btn-sm">Detaylar</a>
                     </li>
                 {% endfor %}
             </ul>

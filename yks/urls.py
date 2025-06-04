@@ -53,4 +53,5 @@ urlpatterns = [
     path('denemelerim/', views.deneme_sinav_listesi, name='deneme_sinav_listesi'),
     path('denemelerim/ekle/', views.deneme_sinav_ekle_sinav_secim, name='deneme_sinav_ekle_sinav_secim'),
     path('denemelerim/ekle/<str:sinav_kodu>/', views.deneme_sinav_ekle_ders_sonuclari, name='deneme_sinav_ekle_ders_sonuclari'),
+    path('denemelerim/detay/<int:sonuc_id>/', views.deneme_sinav_detay, name='deneme_sinav_detay'),
 ] 

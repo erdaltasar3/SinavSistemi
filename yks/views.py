@@ -1447,3 +1447,19 @@ def deneme_sinav_ekle_ders_sonuclari(request, sinav_kodu):
     }
     
     return render(request, 'yks/deneme_sinav_ekle_ders_sonuclari.html', context)
+
+@login_required
+def deneme_sinav_detay(request, sonuc_id):
+    """Belirli bir deneme sınavı sonucunun detaylarını gösterir."""
+    # Deneme sınavı sonucunu kullanıcıya ait olup olmadığını kontrol ederek getir
+    deneme_sonucu = get_object_or_404(DenemeSinavSonucu, id=sonuc_id, kullanici=request.user)
+
+    # Bu deneme sınavına ait ders sonuçlarını getir
+    ders_sonuclari = DenemeSinavDersSonucu.objects.filter(deneme_sinav_sonucu=deneme_sonucu).order_by('ders__ad')
+
+    context = {
+        'deneme_sonucu': deneme_sonucu,
+        'ders_sonuclari': ders_sonuclari,
+    }
+
+    return render(request, 'yks/deneme_sinav_detay.html', context)

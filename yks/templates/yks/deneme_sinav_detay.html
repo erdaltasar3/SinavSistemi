@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ deneme_sonucu.sinav_alt_tur.ad }} Detayları{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ deneme_sonucu.sinav_alt_tur.ad }} Detayları <small class="text-muted">({{ deneme_sonucu.sinav_tarihi|date:"d.m.Y" }})</small></h2>
+
+    <h3>Ders Sonuçları:</h3>
+
+    {% if ders_sonuclari %}
+        <ul class="list-group">
+            {% for ders_sonuc in ders_sonuclari %}
+                <li class="list-group-item">
+                    <strong>{{ ders_sonuc.ders.ad }}:</strong> Doğru: {{ ders_sonuc.dogru }}, Yanlış: {{ ders_sonuc.yanlis }}, Boş: {{ ders_sonuc.bos }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Bu deneme sınavına ait ders sonucu bulunamadı.</p>
+    {% endif %}
+
+    <a href="{% url 'yks:deneme_sinav_listesi' %}" class="btn btn-secondary mt-3">Denemelerime Geri Dön</a>
+</div>
+{% endblock %} 

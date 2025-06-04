@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ sinav_alt_tur.ad }} Deneme Sonucu Ekle{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ sinav_alt_tur.ad }} Deneme Sonucu Ekle</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div id="ders-sonuclari-form">
+            {% for ders in dersler %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ ders.ad }} (Toplam Soru: {{ ders.soru_sayisi }})</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="dogru-{{ ders.id }}">Doğru Sayısı:</label>
+                                    <input type="number" class="form-control" id="dogru-{{ ders.id }}" name="dogru_{{ ders.id }}" min="0" value="{{ submitted_data.dogru|default:0 }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="yanlis-{{ ders.id }}">Yanlış Sayısı:</label>
+                                    <input type="number" class="form-control" id="yanlis-{{ ders.id }}" name="yanlis_{{ ders.id }}" min="0" value="{{ submitted_data.yanlis|default:0 }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="bos-{{ ders.id }}">Boş Sayısı:</label>
+                                    <input type="number" class="form-control" id="bos-{{ ders.id }}" name="bos_{{ ders.id }}" min="0" value="{{ submitted_data.bos|default:0 }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p>Bu sınav türüne ait ders bulunamadı.</p>
+            {% endfor %}
+        </div>
+        
+        <button type="submit" class="btn btn-success mt-3">Sonuçları Kaydet</button>
+    </form>
+    
+    <a href="{% url 'yks:deneme_sinav_ekle_sinav_secim' %}" class="btn btn-secondary mt-3">Geri Dön</a>
+</div>
+{% endblock %} 

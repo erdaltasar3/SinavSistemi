@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Sınav Türü Seçimi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Yeni Deneme Sınavı Ekle - Sınav Türü Seçimi</h2>
+    
+    <p>Lütfen sonuçlarını girmek istediğiniz sınav türünü seçin:</p>
+    
+    <div class="list-group">
+        {% for sinav_turu in sinav_alt_turleri %}
+            <a href="{% url 'yks:deneme_sinav_ekle_ders_sonuclari' sinav_turu.kod %}" class="list-group-item list-group-item-action">
+                {{ sinav_turu.ad }} ({{ sinav_turu.kod }})
+            </a>
+        {% empty %}
+            <p>Sınav türü bulunamadı.</p>
+        {% endfor %}
+    </div>
+    
+    <a href="{% url 'yks:deneme_sinav_listesi' %}" class="btn btn-secondary mt-3">Geri Dön</a>
+</div>
+{% endblock %} 

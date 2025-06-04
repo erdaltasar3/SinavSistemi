@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Denemelerim{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Denemelerim</h2>
+    
+    <a href="{% url 'yks:deneme_sinav_ekle_sinav_secim' %}" class="btn btn-primary mb-3">Yeni Deneme Ekle</a>
+    
+    <div id="deneme-listesi">
+        {% if deneme_sonuclari %}
+            <ul class="list-group">
+                {% for sonuc in deneme_sonuclari %}
+                    <li class="list-group-item">
+                        {{ sonuc.oturum.ad }} - {{ sonuc.sinav_tarihi|date:"d.m.Y" }}
+                        <!-- Detay linki veya özeti buraya gelecek -->
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Henüz kaydedilmiş bir deneme sınavı sonucunuz bulunmamaktadır.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

@@ -48,4 +48,9 @@ urlpatterns = [
     # AJAX için URL'ler
     path('api/dersler/', views.dersler_json, name='dersler_json'),
     path('api/dersler/<int:ders_id>/konular/', views.konular_json, name='konular_json'),
+    
+    # Deneme Sınavı URL'leri
+    path('denemelerim/', views.deneme_sinav_listesi, name='deneme_sinav_listesi'),
+    path('denemelerim/ekle/', views.deneme_sinav_ekle_sinav_secim, name='deneme_sinav_ekle_sinav_secim'),
+    path('denemelerim/ekle/<str:sinav_kodu>/', views.deneme_sinav_ekle_ders_sonuclari, name='deneme_sinav_ekle_ders_sonuclari'),
 ] 

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from core.models import Ders, Konu
+from core.models import Ders, Konu, SinavAltTur
 from django.urls import reverse
 
 # Create your models here.
@@ -28,6 +28,7 @@ class YKSOturum(models.Model):
         default=DURUM_BEKLIYOR,
         verbose_name="Durum"
     )
+    sinav_alt_tur = models.ForeignKey(SinavAltTur, on_delete=models.SET_NULL, null=True, blank=True, related_name='yks_oturumlar', verbose_name="Sınav Alt Türü")
     
     def __str__(self):
         return f"{self.ad} ({self.yil})"
@@ -265,6 +266,51 @@ class KonuTakipHedefKonu(models.Model):
         verbose_name = "Konu Takip Hedef Konusu"
         verbose_name_plural = "Konu Takip Hedef Konuları"
         unique_together = ('konu_takip_hedefi', 'konu')
+
+
+# --- Deneme Sınavı Sonuç Modelleri ---
+
+class DenemeSinavSonucu(models.Model):
+    """Kullanıcının deneme sınavı sonuçlarını kaydetmek için kullanılır"""
+    
+    kullanici = models.ForeignKey(User, on_delete=models.CASCADE, related_name='deneme_sinav_sonuclari', verbose_name="Kullanıcı")
+    sinav_alt_tur = models.ForeignKey('core.SinavAltTur', on_delete=models.CASCADE, related_name='deneme_sinav_sonuclari', verbose_name="Sınav Alt Türü")
+    sinav_tarihi = models.DateField(verbose_name="Sınav Tarihi", default=timezone.now)
+    olusturma_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturma Tarihi")
+    guncelleme_tarihi = models.DateTimeField(auto_now=True, verbose_name="Güncelleme Tarihi")
+    
+    def __str__(self):
+        return f"{self.kullanici.username} - {self.sinav_alt_tur.ad} - {self.sinav_tarihi.strftime('%Y-%m-%d')}"
+    
+    class Meta:
+        verbose_name = "Deneme Sınav Sonucu"
+        verbose_name_plural = "Deneme Sınav Sonuçları"
+        ordering = ['-sinav_tarihi', '-olusturma_tarihi']
+
+class DenemeSinavDersSonucu(models.Model):
+    """Bir deneme sınavı sonucuna ait ders bazlı doğru, yanlış ve boş sayıları"""
+    
+    deneme_sinav_sonucu = models.ForeignKey(DenemeSinavSonucu, on_delete=models.CASCADE, related_name='ders_sonuclari', verbose_name="Deneme Sınav Sonucu")
+    ders = models.ForeignKey(Ders, on_delete=models.CASCADE, related_name='deneme_sinav_sonuclari', verbose_name="Ders")
+    dogru = models.PositiveIntegerField(default=0, verbose_name="Doğru Sayısı")
+    yanlis = models.PositiveIntegerField(default=0, verbose_name="Yanlış Sayısı")
+    bos = models.PositiveIntegerField(default=0, verbose_name="Boş Sayısı")
+    net = models.FloatField(default=0.0, verbose_name="Net Sayısı") # Net sayısı hesaplanabilir
+    
+    def __str__(self):
+        return f"{self.deneme_sinav_sonucu} - {self.ders.ad}"
+        
+    def save(self, *args, **kwargs):
+        # Net sayısını hesapla (Genellikle 4 yanlış 1 doğruyu götürür)
+        self.net = self.dogru - (self.yanlis / 4.0)
+        if self.net < 0:
+            self.net = 0.0
+        super().save(*args, **kwargs)
+    
+    class Meta:
+        verbose_name = "Deneme Sınav Ders Sonucu"
+        verbose_name_plural = "Deneme Sınav Ders Sonuçları"
+        unique_together = ('deneme_sinav_sonucu', 'ders') # Bir deneme sınavında bir derse ait yalnızca bir sonuç olabilir
 
 
 

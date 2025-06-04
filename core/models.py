@@ -51,6 +51,7 @@ class Ders(models.Model):
     aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
     ikon = models.CharField(max_length=50, blank=True, null=True, verbose_name="İkon Kodu") 
     aktif = models.BooleanField(default=True, verbose_name="Aktif")
+    soru_sayisi = models.PositiveIntegerField(default=0, verbose_name="Toplam Soru Sayısı")
     
     def __str__(self):
         if self.alt_tur:

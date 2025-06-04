@@ -35,17 +35,19 @@
 
                         {{ form.first_name|as_crispy_field }}
                         {{ form.last_name|as_crispy_field }}
+
                         {{ form.email|as_crispy_field }}
                         {% if not user.userprofile.email_verified %}
-                            <p class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>E-posta adresiniz doğrulanmadı. <a href="#" id="verifyEmailLink">Hemen doğrula</a></p>
+                            <p class="text-danger mt-1"><i class="fas fa-exclamation-circle me-1"></i>E-posta adresiniz doğrulanmadı. <a href="#" id="verifyEmailLink">Hemen doğrula</a></p>
                         {% else %}
-                             <p class="text-success"><i class="fas fa-check-circle me-1"></i>E-posta adresiniz doğrulandı.</p>
+                            <p class="text-success mt-1"><i class="fas fa-check-circle me-1"></i>E-posta adresiniz doğrulandı.</p>
                         {% endif %}
+
                         {{ form.phone_number|as_crispy_field }}
                          {% if not user.userprofile.phone_number_verified %}
-                            <p class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Telefon numaranız doğrulanmadı. <a href="#" id="verifyPhoneLink">Hemen doğrula</a></p>
+                            <p class="text-danger mt-1"><i class="fas fa-exclamation-circle me-1"></i>Telefon numaranız doğrulanmadı. <a href="#" id="verifyPhoneLink">Hemen doğrula</a></p>
                         {% else %}
-                            <p class="text-success"><i class="fas fa-check-circle me-1"></i>Telefon numaranız doğrulandı.</p>
+                            <p class="text-success mt-1"><i class="fas fa-check-circle me-1"></i>Telefon numaranız doğrulandı.</p>
                         {% endif %}
                         {{ form.date_of_birth|as_crispy_field }}
 
@@ -61,9 +63,9 @@
     </div>
 </div>
 
-<!-- Email Verification Modal -->
+<!-- Email Verification Modal (for initial verification) -->
 <div class="modal fade" id="emailVerificationModal" tabindex="-1" aria-labelledby="emailVerificationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="emailVerificationModalLabel">E-posta Doğrulama</h5>
@@ -72,10 +74,11 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label for="modalEmailInput" class="form-label">E-posta Adresiniz</label>
-                    <input type="email" class="form-control" id="modalEmailInput" value="{{ user.email }}">
+                    <input type="email" class="form-control" id="modalEmailInput" value="{{ user.email }}" readonly>
                 </div>
-                <div class="mb-3">
-                    <button type="button" class="btn btn-secondary" id="sendVerificationCodeBtn">Doğrulama kodu gönder</button>
+                <div class="mb-3 d-flex align-items-center">
+                    <button type="button" class="btn btn-secondary me-2" id="sendVerificationCodeBtn">Doğrulama kodu gönder</button>
+                    <span id="emailVerificationTimer" class="text-muted" style="display: none;">180s</span>
                 </div>
                  <div class="mb-3">
                     <label for="verificationCodeInput" class="form-label">Doğrulama Kodu</label>
@@ -90,6 +93,37 @@
     </div>
 </div>
 
+<!-- Email Change Verification Modal -->
+<div class="modal fade" id="emailChangeVerificationModal" tabindex="-1" aria-labelledby="emailChangeVerificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailChangeVerificationModalLabel">E-posta Adresini Değiştir ve Doğrula</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                 <div class="mb-3">
+                    <label for="modalChangeEmailInput" class="form-label">Yeni E-posta Adresiniz</label>
+                    <input type="email" class="form-control" id="modalChangeEmailInput" value="{{ user.email }}">
+                </div>
+                 <div class="mb-3 d-flex align-items-center">
+                    <button type="button" class="btn btn-secondary me-2" id="sendChangeVerificationCodeBtn">Doğrulama kodu gönder</button>
+                     <span id="emailChangeVerificationTimer" class="text-muted" style="display: none;">180s</span>
+                </div>
+                 <div class="mb-3">
+                    <label for="changeVerificationCodeInput" class="form-label">Doğrulama Kodu</label>
+                    <input type="text" class="form-control" id="changeVerificationCodeInput" placeholder="Doğrulama kodunu girin">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="verifyChangeEmailBtn">Doğrula</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- Phone Verification Modal -->
 <div class="modal fade" id="phoneVerificationModal" tabindex="-1" aria-labelledby="phoneVerificationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -103,8 +137,9 @@
                     <label for="modalPhoneInput" class="form-label">Telefon Numaranız</label>
                     <input type="tel" class="form-control" id="modalPhoneInput" value="{{ user.userprofile.phone_number }}">
                 </div>
-                <div class="mb-3">
-                    <button type="button" class="btn btn-secondary" id="sendPhoneVerificationCodeBtn">Doğrulama kodu gönder</button>
+                <div class="mb-3 d-flex align-items-center">
+                    <button type="button" class="btn btn-secondary me-2" id="sendPhoneVerificationCodeBtn">Doğrulama kodu gönder</button>
+                    <span id="phoneVerificationTimer" class="text-muted" style="display: none;">180s</span>
                 </div>
                  <div class="mb-3">
                     <label for="phoneVerificationCodeInput" class="form-label">Doğrulama Kodu</label>
@@ -180,6 +215,14 @@
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(13,110,253,0.3);
 }
+
+.toast-container.centralized {
+    top: 20% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%);
+    right: auto !important;
+    bottom: auto !important;
+}
 </style>
 
 <script>
@@ -202,63 +245,390 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form doğrulama
     const form = document.querySelector('form');
-    form.addEventListener('submit', function(event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-    });
+    // Remove AJAX submit listener
+    // form.removeEventListener('submit', ...);
 
-    // Email verification modal handling
+     // Re-add standard form validation (if needed, though Django handles much of it)
+     // form.addEventListener('submit', function(event) {
+     //     if (!form.checkValidity()) {
+     //         event.preventDefault();
+     //         event.stopPropagation();
+     //     }
+     //     form.classList.add('was-validated');
+     // });
+
+
+    // Helper function to show Bootstrap Toast messages
+    function showToast(message, type = 'success', delay = 2000) {
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) return; // Exit if container not found
+
+        // Clear previous toasts if needed (optional, uncomment if only one toast should be visible at a time)
+        // toastContainer.innerHTML = '';
+
+        const toastId = `toast-${Date.now()}`;
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        toastContainer.innerHTML += toastHtml;
+
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, {
+            delay: delay // Use passed in delay
+        });
+
+        toast.show();
+
+        // Remove the toast element from the DOM after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', function () {
+            toastElement.remove();
+        });
+    }
+
+    // Variables to store timer end times
+    let emailTimerEndTime = null;
+    let emailChangeTimerEndTime = null;
+    let phoneTimerEndTime = null;
+
+    // Function to start countdown timer
+    function startTimer(duration, displayElement, buttonElement, endTimeVariable) {
+        const endTime = Date.now() + duration * 1000;
+        if (endTimeVariable === 'email') {
+            emailTimerEndTime = endTime;
+        } else if (endTimeVariable === 'changeEmail') {
+            emailChangeTimerEndTime = endTime;
+        } else if (endTimeVariable === 'phone') {
+            phoneTimerEndTime = endTime;
+        }
+
+        displayElement.style.display = 'inline'; // Show the timer element
+        buttonElement.disabled = true; // Disable the button
+
+        function updateTimer() {
+            const now = Date.now();
+            const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+
+            if (remaining <= 0) {
+                clearInterval(countdown);
+                displayElement.style.display = 'none'; // Hide the timer element
+                buttonElement.disabled = false; // Enable the button
+                displayElement.textContent = ''; // Clear timer text
+                 // Clear the timer end time variable
+                 if (endTimeVariable === 'email') emailTimerEndTime = null;
+                 else if (endTimeVariable === 'changeEmail') emailChangeTimerEndTime = null;
+                 else if (endTimeVariable === 'phone') phoneTimerEndTime = null;
+
+            } else {
+                displayElement.textContent = remaining + 's';
+            }
+        }
+
+        updateTimer(); // Initial display
+        const countdown = setInterval(updateTimer, 1000);
+    }
+
+    // Function to check and resume timer on modal open
+    function checkAndResumeTimer(endTimeVariable, duration, displayElement, buttonElement) {
+        let endTime;
+        if (endTimeVariable === 'email') endTime = emailTimerEndTime;
+        else if (endTimeVariable === 'changeEmail') endTime = emailChangeTimerEndTime;
+        else if (endTimeVariable === 'phone') endTime = phoneTimerEndTime;
+
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+
+        if (endTime && remaining > 0) {
+            displayElement.style.display = 'inline';
+            buttonElement.disabled = true;
+            displayElement.textContent = remaining + 's';
+
+             // Restart the timer interval based on the remaining time
+            let timer = remaining;
+             const countdown = setInterval(function () {
+                timer = Math.max(0, Math.floor((endTime - Date.now()) / 1000)); // Calculate remaining based on original endTime
+
+                 if (timer <= 0) {
+                     clearInterval(countdown);
+                     displayElement.style.display = 'none';
+                     buttonElement.disabled = false;
+                     displayElement.textContent = '';
+                      if (endTimeVariable === 'email') emailTimerEndTime = null;
+                      else if (endTimeVariable === 'changeEmail') emailChangeTimerEndTime = null;
+                      else if (endTimeVariable === 'phone') phoneTimerEndTime = null;
+                 } else {
+                    displayElement.textContent = timer + 's';
+                 }
+             }, 1000);
+
+        } else {
+            // No active timer, ensure button is enabled and display hidden
+            displayElement.style.display = 'none';
+            buttonElement.disabled = false;
+            displayElement.textContent = '';
+             if (endTimeVariable === 'email') emailTimerEndTime = null;
+             else if (endTimeVariable === 'changeEmail') emailChangeTimerEndTime = null;
+             else if (endTimeVariable === 'phone') phoneTimerEndTime = null;
+        }
+    }
+
+    // Email verification modal handling (for initial verification)
     const verifyEmailLink = document.getElementById('verifyEmailLink');
     const emailVerificationModal = new bootstrap.Modal(document.getElementById('emailVerificationModal'));
     const modalEmailInput = document.getElementById('modalEmailInput');
+    const verificationCodeInput = document.getElementById('verificationCodeInput');
+    const sendVerificationCodeBtn = document.getElementById('sendVerificationCodeBtn');
+    const verifyEmailBtn = document.getElementById('verifyEmailBtn');
+    const emailVerificationTimerDisplay = document.getElementById('emailVerificationTimer');
 
     if (verifyEmailLink) {
         verifyEmailLink.addEventListener('click', function(e) {
             e.preventDefault();
-            // Set current email in modal input
             modalEmailInput.value = "{{ user.email }}";
+             // Check and resume timer when modal is shown
+             checkAndResumeTimer('email', 180, emailVerificationTimerDisplay, sendVerificationCodeBtn);
             emailVerificationModal.show();
         });
     }
+
+    // Email change verification modal handling
+    const emailChangeVerificationModal = new bootstrap.Modal(document.getElementById('emailChangeVerificationModal'));
+    const modalChangeEmailInput = document.getElementById('modalChangeEmailInput');
+    const changeVerificationCodeInput = document.getElementById('changeVerificationCodeInput');
+    const sendChangeVerificationCodeBtn = document.getElementById('sendChangeVerificationCodeBtn');
+    const verifyChangeEmailBtn = document.getElementById('verifyChangeEmailBtn');
+     const emailChangeVerificationTimerDisplay = document.getElementById('emailChangeVerificationTimer');
 
     // Phone verification modal handling
     const verifyPhoneLink = document.getElementById('verifyPhoneLink');
     const phoneVerificationModal = new bootstrap.Modal(document.getElementById('phoneVerificationModal'));
     const modalPhoneInput = document.getElementById('modalPhoneInput');
+    const phoneVerificationCodeInput = document.getElementById('phoneVerificationCodeInput');
+    const sendPhoneVerificationCodeBtn = document.getElementById('sendPhoneVerificationCodeBtn');
+    const verifyPhoneBtn = document.getElementById('verifyPhoneBtn');
+    const phoneVerificationTimerDisplay = document.getElementById('phoneVerificationTimer');
 
     if (verifyPhoneLink) {
         verifyPhoneLink.addEventListener('click', function(e) {
             e.preventDefault();
-            // Set current phone number in modal input
-            modalPhoneInput.value = "{{ user.userprofile.phone_number|default:'' }}"; // Use default:'' for potentially None values
+            modalPhoneInput.value = "{{ user.userprofile.phone_number|default:'' }}";
+            // Check and resume timer when modal is shown
+            checkAndResumeTimer('phone', 180, phoneVerificationTimerDisplay, sendPhoneVerificationCodeBtn);
             phoneVerificationModal.show();
         });
     }
 
-    // Placeholder for button actions (will be implemented later)
-    document.getElementById('sendVerificationCodeBtn').addEventListener('click', function() {
-        console.log('E-posta doğrulama kodu gönder butonuna tıklandı.');
-        // TODO: Implement code to send verification email
+    // Handle send email verification code button click (initial verification)
+    if (sendVerificationCodeBtn) {
+        sendVerificationCodeBtn.addEventListener('click', function() {
+            const email = modalEmailInput.value;
+            console.log('E-posta doğrulama kodu gönder butonuna tıklandı (İlk Doğrulama):', email);
+
+            // Start the timer
+            startTimer(180, emailVerificationTimerDisplay, sendVerificationCodeBtn, 'email');
+
+            // Send AJAX request to send verification email
+            fetch('{% url "core:send_verification_email" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams({
+                    'email': email
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                } else {
+                    showToast('Hata: ' + data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
+            });
+        });
+    }
+
+    // Handle verify email code button click (initial verification)
+    if (verifyEmailBtn) {
+        verifyEmailBtn.addEventListener('click', function() {
+            const email = modalEmailInput.value;
+            const code = verificationCodeInput.value;
+            console.log('E-posta doğrula butonuna tıklandı (İlk Doğrulama). Email:', email, 'Code:', code);
+
+            // Send AJAX request to verify email code
+            fetch('{% url "core:verify_email_code" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams({
+                    'email': email,
+                    'code': code
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    emailVerificationModal.hide();
+                    // window.location.reload(); // Removed immediate reload here
+                } else {
+                    showToast('Hata: ' + data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
+            });
+        });
+    }
+
+    // Handle send email verification code button click (for changing email)
+    const verifyEmailLinkChange = document.getElementById('verifyEmailLinkChange');
+    if (sendChangeVerificationCodeBtn) {
+         sendChangeVerificationCodeBtn.addEventListener('click', function() {
+            const email = modalChangeEmailInput.value;
+            console.log('E-posta doğrulama kodu gönder butonuna tıklandı (Değişiklik için):', email);
+
+             // Start the timer
+            startTimer(180, emailChangeVerificationTimerDisplay, sendChangeVerificationCodeBtn, 'changeEmail');
+
+            // Send AJAX request to send verification email
+            fetch('{% url "core:send_verification_email" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams({
+                    'email': email
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                } else {
+                    showToast('Hata: ' + data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
+            });
+        });
+    }
+
+    // Handle verify email code button click (for changing email)
+    if (verifyChangeEmailBtn) {
+        verifyChangeEmailBtn.addEventListener('click', function() {
+            const email = modalChangeEmailInput.value;
+            const code = changeVerificationCodeInput.value;
+             console.log('E-posta doğrula butonuna tıklandı (Değişiklik için). Email:', email, 'Code:', code);
+
+            // Send AJAX request to verify email code
+            fetch('{% url "core:verify_email_code" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: new URLSearchParams({
+                    'email': email,
+                    'code': code
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    emailChangeVerificationModal.hide();
+                     // alert('E-posta adresi başarıyla doğrulandı. Değişikliği kaydetmek için lütfen profili güncelleyin.'); // Removed alert
+                     // window.location.reload(); // Removed immediate reload
+
+                } else {
+                    showToast('Hata: ' + data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
+            });
+        });
+    }
+
+    // Handle send phone verification code button click (Placeholder)
+     if (sendPhoneVerificationCodeBtn) {
+        sendPhoneVerificationCodeBtn.addEventListener('click', function() {
+            const phone_number = modalPhoneInput.value;
+            console.log('Telefon doğrulama kodu gönder butonuna tıklandı:', phone_number);
+            // TODO: Implement code to send verification SMS via AJAX
+            showToast('Telefon doğrulama kodu gönderme işlevi henüz aktif değil.', 'info');
+             // Start the timer for phone (if implemented)
+             startTimer(180, phoneVerificationTimerDisplay, sendPhoneVerificationCodeBtn, 'phone');
+        });
+    }
+
+    // Handle verify phone code button click (Placeholder)
+     if (verifyPhoneBtn) {
+        verifyPhoneBtn.addEventListener('click', function() {
+            const phone_number = modalPhoneInput.value;
+            const code = phoneVerificationCodeInput.value;
+            console.log('Telefon doğrula butonuna tıklandı. Phone:', phone_number, 'Code:', code);
+            // TODO: Implement code to verify phone with code via AJAX
+             showToast('Telefon doğrulama işlevi henüz aktif değil.', 'info');
+        });
+    }
+
+    // Add event listeners to reload the page when modals are hidden
+    const modalsToReload = document.querySelectorAll('.modal');
+    modalsToReload.forEach(modalElement => {
+        modalElement.addEventListener('hidden.bs.modal', function (event) {
+             // Prevent double reload if one modal hides another
+            if (!event.relatedTarget) {
+                window.location.reload();
+            }
+        });
     });
 
-     document.getElementById('sendPhoneVerificationCodeBtn').addEventListener('click', function() {
-        console.log('Telefon doğrulama kodu gönder butonuna tıklandı.');
-        // TODO: Implement code to send verification SMS
-    });
-
-    document.getElementById('verifyEmailBtn').addEventListener('click', function() {
-        console.log('E-posta doğrula butonuna tıklandı.');
-        // TODO: Implement code to verify email with code
-    });
-
-     document.getElementById('verifyPhoneBtn').addEventListener('click', function() {
-        console.log('Telefon doğrula butonuna tıklandı.');
-        // TODO: Implement code to verify phone with code
-    });
+    // Check for Django messages and display them as Toasts on page load
+    {% if messages %}
+        {% for message in messages %}
+            // Display success message with larger toast if it's a success message after save
+            {% if message.tags == 'success' and "Profil bilgileriniz başarıyla güncellendi." in message %}
+                 // Show a larger, more prominent toast for profile update success
+                showToast("Profil bilgileriniz başarıyla güncellendi.", "success", 3000); // Show for 3 seconds
+            {% elif message.tags == 'success' %}
+                 // Show standard success toast for other success messages
+                showToast("{{ message|escapejs }}", "success");
+            {% elif message.tags == 'error' %}
+                 // Show error toast
+                showToast("{{ message|escapejs }}", "danger");
+            {% else %}
+                 // Show info/warning toasts
+                showToast("{{ message|escapejs }}", "info"); // Use info or warning based on message.tags
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 
 });
 </script>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 centralized" id="toastContainer">
+    <!-- Toasts will be added here -->
+</div>
+
 {% endblock %} 

@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 import os
+from django.utils import timezone
+import random
+import string
 
 # Create your models here.
 
@@ -119,6 +122,25 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username + ' Profile'
+
+class EmailVerification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Kullanıcı")
+    email = models.EmailField(verbose_name="E-posta Adresi")
+    code = models.CharField(max_length=6, unique=True, verbose_name="Doğrulama Kodu")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturulma Zamanı")
+    is_used = models.BooleanField(default=False, verbose_name="Kullanıldı mı?")
+
+    def is_expired(self):
+        # Kodun 15 dakika içinde geçerli olduğunu varsayalım
+        expiration_time = self.created_at + timezone.timedelta(minutes=15)
+        return timezone.now() > expiration_time
+
+    def __str__(self):
+        return f"{self.user.username} - {self.email} - {self.code}"
+
+    class Meta:
+        verbose_name = "E-posta Doğrulama Kodu"
+        verbose_name_plural = "E-posta Doğrulama Kodları"
 
 @receiver(pre_save, sender=UserProfile)
 def delete_old_profile_picture(sender, instance, **kwargs):

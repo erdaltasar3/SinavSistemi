@@ -6,14 +6,18 @@ from django.http import JsonResponse, Http404
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.db.models import Count, Avg, Q
+from django.core.mail import send_mail
+from django.conf import settings
 import json
+import random
+import string
 from .forms import (
     KayitFormu, GirisFormu, UserProfileForm,
     DersForm, UniteForm, KonuForm
 )
 from django.contrib.auth.models import User
 from .models import (
-    SinavTurleri, SinavAltTur, Ders, Unite, Konu
+    SinavTurleri, SinavAltTur, Ders, Unite, Konu, EmailVerification, UserProfile
 )
 from datetime import timedelta, date, datetime
 
@@ -1154,18 +1158,119 @@ def konu_detay(request, konu_id):
 @login_required
 def profile_view(request):
     user_profile = request.user.userprofile
+    user = request.user
+
+    # Kullanıcının mevcut e-posta adresini al
+    current_email = user.email
+
     if request.method == 'POST':
         form = UserProfileForm(request.POST, request.FILES, instance=user_profile)
         if form.is_valid():
+            # Formdan gelen yeni e-posta adresini al
+            new_email = form.cleaned_data.get('email')
+
+            # Eğer e-posta adresi değiştiyse, email_verified'ı False yap ve User modelindeki email'i güncelle
+            if new_email and new_email != current_email:
+                user.email = new_email
+                user.save()
+                user_profile.email_verified = False
+
+            # user_profile formunu kaydet
             form.save()
+
+            # Başarılı mesajı ekle ve profil sayfasına yönlendir
             messages.success(request, 'Profil bilgileriniz başarıyla güncellendi.')
             return redirect('core:profile')
+        else:
+            # Form geçerli değilse hataları JSON olarak döndür (AJAX form validation için)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                 return JsonResponse({'success': False, 'errors': form.errors.get_json_data()})
+            else:
+                # Normal form submit ise hatalarla birlikte sayfayı yeniden render et
+                messages.error(request, 'Lütfen formdaki hataları düzeltin.')
+
     else:
-        form = UserProfileForm(instance=user_profile)
+        # Formu User instance'ı ile başlat
+        form = UserProfileForm(instance=user_profile, initial={'email': user.email})
 
     context = {
         'form': form
     }
     return render(request, 'core/profile.html', context)
+
+@login_required
+def send_verification_email(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        user = request.user
+
+        if not email:
+            return JsonResponse({'success': False, 'message': 'E-posta adresi boş olamaz.'})
+
+        # Daha önce gönderilmiş ve kullanılmamış kodları geçersiz kıl
+        EmailVerification.objects.filter(user=user, is_used=False).update(is_used=True)
+
+        # Yeni doğrulama kodu oluştur
+        code = ''.join(random.choices(string.digits, k=6))
+
+        # Doğrulama kaydını oluştur
+        EmailVerification.objects.create(user=user, email=email, code=code)
+
+        # E-posta gönderme işlemi (Ayarların yapılmış olması gerekir)
+        subject = 'E-posta Doğrulama Kodunuz'
+        message = f'E-posta doğrulama kodunuz: {code}'
+        email_from = settings.EMAIL_HOST_USER
+        recipient_list = [email]
+
+        try:
+            send_mail(subject, message, email_from, recipient_list)
+            return JsonResponse({'success': True, 'message': 'Doğrulama kodu e-posta adresinize gönderildi.'})
+        except Exception as e:
+            # Log the error for debugging
+            print(f"Error sending email: {e}")
+            return JsonResponse({'success': False, 'message': 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'})
+
+    return JsonResponse({'success': False, 'message': 'Geçersiz istek yöntemi.'})
+
+@login_required
+def verify_email_code(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        code = request.POST.get('code')
+        user = request.user
+
+        if not email or not code:
+            return JsonResponse({'success': False, 'message': 'E-posta adresi ve doğrulama kodu boş olamaz.'})
+
+        try:
+            # En son gönderilen ve kullanılmamış doğrulama kodunu al
+            verification_entry = EmailVerification.objects.filter(user=user, email=email, is_used=False).latest('created_at')
+
+            # Kodun süresinin dolup dolmadığını kontrol et
+            if verification_entry.is_expired():
+                return JsonResponse({'success': False, 'message': 'Doğrulama kodunun süresi dolmuş. Lütfen yeni bir kod gönderin.'})
+
+            # Kodları karşılaştır
+            if verification_entry.code == code:
+                # Doğrulama başarılı, is_used olarak işaretle
+                verification_entry.is_used = True
+                verification_entry.save()
+
+                # Kullanıcının e-posta adresini doğrulanmış olarak işaretle
+                user.userprofile.email_verified = True
+                user.userprofile.save()
+
+                return JsonResponse({'success': True, 'message': 'E-posta adresiniz başarıyla doğrulandı.'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Hatalı doğrulama kodu.'})
+
+        except EmailVerification.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'E-posta adresinize ait bekleyen doğrulama kodu bulunamadı.'})
+        except Exception as e:
+             # Log the error for debugging
+            print(f"Error verifying email code: {e}")
+            return JsonResponse({'success': False, 'message': 'Doğrulama sırasında bir hata oluştu.'})
+
+    return JsonResponse({'success': False, 'message': 'Geçersiz istek yöntemi.'})
 
 

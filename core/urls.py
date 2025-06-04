@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import profile_view
+from .views import profile_view, send_verification_email, verify_email_code
 
 app_name = 'core'
 
@@ -39,6 +39,10 @@ urlpatterns = [
     path('api/sinav/<int:sinav_turu_id>/alt-turler/', views.sinav_alt_turler_api, name='sinav_alt_turler_api'),
     path('api/ders/ekle/', views.ders_ekle, name='ders_ekle'),
     
+    # E-posta doğrulama URL'leri
+    path('send-verification-email/', send_verification_email, name='send_verification_email'),
+    path('verify-email-code/', verify_email_code, name='verify_email_code'),
+
     # Devre dışı bırakılan URL'ler
     # Hedefler, Planlar, Hatırlatıcılar ve Yapılacaklar için URL'ler
     # artık kullanılmıyor

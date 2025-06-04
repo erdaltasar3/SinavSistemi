@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="container py-5">
@@ -32,17 +33,23 @@
                                    class="d-none" accept="image/*">
                         </div>
 
-                        <div class="form-floating mb-3">
-                            <input type="tel" class="form-control" id="id_phone_number" 
-                                   name="phone_number" value="{{ user.userprofile.phone_number }}"
-                                   placeholder="Telefon Numarası" pattern="[0-9]{10}">
-                            <label for="id_phone_number">Telefon Numarası</label>
-                            <div class="invalid-feedback">
-                                Lütfen geçerli bir telefon numarası giriniz.
-                            </div>
-                        </div>
+                        {{ form.first_name|as_crispy_field }}
+                        {{ form.last_name|as_crispy_field }}
+                        {{ form.email|as_crispy_field }}
+                        {% if not user.userprofile.email_verified %}
+                            <p class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>E-posta adresiniz doğrulanmadı. <a href="#" id="verifyEmailLink">Hemen doğrula</a></p>
+                        {% else %}
+                             <p class="text-success"><i class="fas fa-check-circle me-1"></i>E-posta adresiniz doğrulandı.</p>
+                        {% endif %}
+                        {{ form.phone_number|as_crispy_field }}
+                         {% if not user.userprofile.phone_number_verified %}
+                            <p class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Telefon numaranız doğrulanmadı. <a href="#" id="verifyPhoneLink">Hemen doğrula</a></p>
+                        {% else %}
+                            <p class="text-success"><i class="fas fa-check-circle me-1"></i>Telefon numaranız doğrulandı.</p>
+                        {% endif %}
+                        {{ form.date_of_birth|as_crispy_field }}
 
-                        <div class="d-grid gap-2">
+                        <div class="d-grid gap-2 mt-4">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save me-2"></i>Değişiklikleri Kaydet
                             </button>
@@ -53,6 +60,65 @@
         </div>
     </div>
 </div>
+
+<!-- Email Verification Modal -->
+<div class="modal fade" id="emailVerificationModal" tabindex="-1" aria-labelledby="emailVerificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailVerificationModalLabel">E-posta Doğrulama</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="modalEmailInput" class="form-label">E-posta Adresiniz</label>
+                    <input type="email" class="form-control" id="modalEmailInput" value="{{ user.email }}">
+                </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-secondary" id="sendVerificationCodeBtn">Doğrulama kodu gönder</button>
+                </div>
+                 <div class="mb-3">
+                    <label for="verificationCodeInput" class="form-label">Doğrulama Kodu</label>
+                    <input type="text" class="form-control" id="verificationCodeInput" placeholder="Doğrulama kodunu girin">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="verifyEmailBtn">Doğrula</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Phone Verification Modal -->
+<div class="modal fade" id="phoneVerificationModal" tabindex="-1" aria-labelledby="phoneVerificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="phoneVerificationModalLabel">Telefon Numarası Doğrulama</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="modalPhoneInput" class="form-label">Telefon Numaranız</label>
+                    <input type="tel" class="form-control" id="modalPhoneInput" value="{{ user.userprofile.phone_number }}">
+                </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-secondary" id="sendPhoneVerificationCodeBtn">Doğrulama kodu gönder</button>
+                </div>
+                 <div class="mb-3">
+                    <label for="phoneVerificationCodeInput" class="form-label">Doğrulama Kodu</label>
+                    <input type="text" class="form-control" id="phoneVerificationCodeInput" placeholder="Doğrulama kodunu girin">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="verifyPhoneBtn">Doğrula</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <style>
 .profile-picture-container {
@@ -143,6 +209,56 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         form.classList.add('was-validated');
     });
+
+    // Email verification modal handling
+    const verifyEmailLink = document.getElementById('verifyEmailLink');
+    const emailVerificationModal = new bootstrap.Modal(document.getElementById('emailVerificationModal'));
+    const modalEmailInput = document.getElementById('modalEmailInput');
+
+    if (verifyEmailLink) {
+        verifyEmailLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Set current email in modal input
+            modalEmailInput.value = "{{ user.email }}";
+            emailVerificationModal.show();
+        });
+    }
+
+    // Phone verification modal handling
+    const verifyPhoneLink = document.getElementById('verifyPhoneLink');
+    const phoneVerificationModal = new bootstrap.Modal(document.getElementById('phoneVerificationModal'));
+    const modalPhoneInput = document.getElementById('modalPhoneInput');
+
+    if (verifyPhoneLink) {
+        verifyPhoneLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Set current phone number in modal input
+            modalPhoneInput.value = "{{ user.userprofile.phone_number|default:'' }}"; // Use default:'' for potentially None values
+            phoneVerificationModal.show();
+        });
+    }
+
+    // Placeholder for button actions (will be implemented later)
+    document.getElementById('sendVerificationCodeBtn').addEventListener('click', function() {
+        console.log('E-posta doğrulama kodu gönder butonuna tıklandı.');
+        // TODO: Implement code to send verification email
+    });
+
+     document.getElementById('sendPhoneVerificationCodeBtn').addEventListener('click', function() {
+        console.log('Telefon doğrulama kodu gönder butonuna tıklandı.');
+        // TODO: Implement code to send verification SMS
+    });
+
+    document.getElementById('verifyEmailBtn').addEventListener('click', function() {
+        console.log('E-posta doğrula butonuna tıklandı.');
+        // TODO: Implement code to verify email with code
+    });
+
+     document.getElementById('verifyPhoneBtn').addEventListener('click', function() {
+        console.log('Telefon doğrula butonuna tıklandı.');
+        // TODO: Implement code to verify phone with code
+    });
+
 });
 </script>
 {% endblock %} 

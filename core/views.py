@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db.models import Count, Avg, Q
 import json
 from .forms import (
-    KayitFormu, GirisFormu, 
+    KayitFormu, GirisFormu, UserProfileForm,
     DersForm, UniteForm, KonuForm
 )
 from django.contrib.auth.models import User
@@ -1153,19 +1153,19 @@ def konu_detay(request, konu_id):
 
 @login_required
 def profile_view(request):
+    user_profile = request.user.userprofile
     if request.method == 'POST':
-        # Profil resmi ve telefon numarası güncelleme
-        if 'profile_picture' in request.FILES:
-            request.user.userprofile.profile_picture = request.FILES['profile_picture']
-        
-        phone_number = request.POST.get('phone_number')
-        if phone_number:
-            request.user.userprofile.phone_number = phone_number
-            
-        request.user.userprofile.save()
-        messages.success(request, 'Profil bilgileriniz başarıyla güncellendi.')
-        return redirect('core:profile')
-        
-    return render(request, 'core/profile.html')
+        form = UserProfileForm(request.POST, request.FILES, instance=user_profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profil bilgileriniz başarıyla güncellendi.')
+            return redirect('core:profile')
+    else:
+        form = UserProfileForm(instance=user_profile)
+
+    context = {
+        'form': form
+    }
+    return render(request, 'core/profile.html', context)
 
 

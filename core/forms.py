@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from .models import Ders, Konu, Unite
+from .models import Ders, Konu, Unite, UserProfile
 
 class KayitFormu(UserCreationForm):
     """Kullanıcı kayıt formu"""
@@ -84,4 +84,45 @@ class KonuForm(forms.ModelForm):
             'sira_no': forms.NumberInput(attrs={'class': 'form-control'}),
             'aciklama': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'aktif': forms.CheckboxInput(attrs={'class': 'form-check-input'})
-        } 
+        }
+
+# Profil güncelleme formu
+class UserProfileForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=150, required=False, label="Adınız",
+                                 widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Adınız'}))
+    last_name = forms.CharField(max_length=150, required=False, label="Soyadınız",
+                                widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Soyadınız'}))
+    email = forms.EmailField(required=False, label="E-posta Adresi",
+                             widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-posta Adresi'}))
+    date_of_birth = forms.DateField(required=False, label="Doğum Tarihi",
+                                    widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+
+    class Meta:
+        model = UserProfile
+        fields = ['profile_picture', 'phone_number', 'date_of_birth']
+        widgets = {
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Telefon Numarası'}),
+            'profile_picture': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # User modelinden alanları forma ekle
+        if self.instance and self.instance.user:
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+            self.fields['email'].initial = self.instance.user.email
+
+    def save(self, commit=True):
+        # UserProfile objesini kaydet
+        user_profile = super().save(commit=True)
+
+        # User objesini güncelle ve kaydet
+        user = user_profile.user
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+
+        return user_profile 

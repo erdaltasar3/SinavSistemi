@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+import os
 
 # Create your models here.
 
@@ -112,9 +113,24 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=20, blank=True, null=True, verbose_name="Telefon Numarası")
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True, verbose_name="Profil Fotoğrafı")
+    date_of_birth = models.DateField(blank=True, null=True, verbose_name="Doğum Tarihi")
+    phone_number_verified = models.BooleanField(default=False, verbose_name="Telefon Numarası Doğrulandı")
+    email_verified = models.BooleanField(default=False, verbose_name="E-posta Doğrulandı")
 
     def __str__(self):
         return self.user.username + ' Profile'
+
+@receiver(pre_save, sender=UserProfile)
+def delete_old_profile_picture(sender, instance, **kwargs):
+    if instance.pk:  # Eğer bu bir güncelleme ise
+        try:
+            old_instance = UserProfile.objects.get(pk=instance.pk)
+            if old_instance.profile_picture and old_instance.profile_picture != instance.profile_picture:
+                # Eski profil resmini sil
+                if os.path.isfile(old_instance.profile_picture.path):
+                    os.remove(old_instance.profile_picture.path)
+        except UserProfile.DoesNotExist:
+            pass
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):

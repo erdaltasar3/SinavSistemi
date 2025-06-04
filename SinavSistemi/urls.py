@@ -22,13 +22,16 @@ from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
 
+# core.views içinden index fonksiyonunu import et
+from core import views as core_views
+
 def accounts_login_redirect(request):
     """accounts/login/ URL'ini kendi giris sayfamıza yönlendir"""
     return redirect('core:giris')
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", TemplateView.as_view(template_name="index.html"), name="index"),
+    path("", core_views.index, name="index"),
     path("yks/", include("yks.urls")),
     path("", include("core.urls")),
     path("accounts/login/", accounts_login_redirect, name="accounts_login"),
@@ -37,3 +40,4 @@ urlpatterns = [
 # Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

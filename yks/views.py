@@ -44,7 +44,7 @@ def index(request):
         'oturumlar': oturumlar,
     }
     
-    return render(request, 'yks/index.html', context)
+    return render(request, 'core/index.html', context)
 
 def oturum_dersleri(request, oturum_kodu):
     """YKS oturumuna ait dersleri gösterir"""

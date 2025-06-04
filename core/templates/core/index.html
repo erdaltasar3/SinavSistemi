@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sınav Sistemi - Başarıya Giden Yol!{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<section class="hero-section position-relative d-flex align-items-center justify-content-center text-center" style="min-height: 60vh;">
+    <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100" style="background: rgba(24,28,36,0.7);"></div>
+    <div class="container position-relative z-2">
+        <h1 class="display-4 fw-bold text-white mb-3 animate__animated animate__fadeInDown">YKS'de <span class="text-warning">Başarıya</span> Bir Adım Daha Yaklaş!</h1>
+        <p class="lead text-white mb-4 animate__animated animate__fadeInUp animate__delay-1s">Türkiye'nin en yenilikçi YKS hazırlık ve analiz platformu ile hedeflerine ulaş!</p>
+        <div class="d-flex justify-content-center gap-4 animate__animated animate__fadeInUp animate__delay-2s">
+            <a href="{% url 'core:kayit' %}" class="btn btn-warning btn-lg shadow-lg px-5 py-3">Hemen Üye Ol</a>
+            <a href="{% url 'core:giris' %}" class="btn btn-outline-light btn-lg shadow-lg px-5 py-3">Giriş Yap</a>
+        </div>
+    </div>
+    <div class="parallax-stars position-absolute w-100 h-100 top-0 start-0"></div>
+</section>
+
+<!-- YKS AVANTAJLARI -->
+<section class="features-section py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 animate__animated animate__fadeIn">YKS'de <span class="text-primary">Neden Biz?</span></h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 animate__animated animate__zoomIn animate__delay-1s shadow-lg h-100">
+                    <i class="fas fa-brain fa-3x mb-3 text-primary"></i>
+                    <h3>Akıllı Analiz</h3>
+                    <p>YKS'ye özel algoritmalar ile performansını detaylı analiz et, güçlü ve zayıf yönlerini keşfet.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 animate__animated animate__zoomIn animate__delay-2s shadow-lg h-100">
+                    <i class="fas fa-rocket fa-3x mb-3 text-success"></i>
+                    <h3>Kişiselleştirilmiş YKS Planı</h3>
+                    <p>Sana özel YKS çalışma planları ve önerilerle hedeflerine daha hızlı ulaş.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 animate__animated animate__zoomIn animate__delay-3s shadow-lg h-100">
+                    <i class="fas fa-chart-pie fa-3x mb-3 text-warning"></i>
+                    <h3>Kapsamlı YKS İstatistikleri</h3>
+                    <p>Türkiye geneli ve bölgesel YKS istatistikleriyle kendini karşılaştır, gelişimini takip et.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- YKS İSTATİSTİKLERİ ve MOTİVASYON -->
+<section class="parallax-section position-relative py-5 w-100" style="background: rgba(24,28,36,0.7);">
+    <div class="w-100 text-center text-white" style="max-width: 1200px; margin: 0 auto;">
+        <h2 class="display-6 fw-bold mb-4 animate__animated animate__fadeInLeft">YKS'de Başarıya Giden Yolda <span class="text-warning">Yalnız Değilsin!</span></h2>
+        <p class="lead mb-5 animate__animated animate__fadeInRight">Sınav Sistemi ile binlerce öğrenci YKS'de hedeflerine ulaşıyor. Sen de aramıza katıl!</p>
+        <div class="row justify-content-center">
+            <div class="col-md-3 mb-4">
+                <div class="stat-card bg-white text-primary rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-1s">
+                    <h2 class="display-4 fw-bold mb-0" data-count="12000">0</h2>
+                    <p class="mb-0">YKS Öğrencisi</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card bg-white text-success rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-2s">
+                    <h2 class="display-4 fw-bold mb-0" data-count="85000">0</h2>
+                    <p class="mb-0">Çözülmüş YKS Sorusu</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card bg-white text-warning rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-3s">
+                    <h2 class="display-4 fw-bold mb-0" data-count="97">0</h2>
+                    <p class="mb-0">% YKS Memnuniyet</p>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-5">
+            <div class="col-md-6 mx-auto">
+                <div class="alert alert-info bg-opacity-75 animate__animated animate__fadeInUp">
+                    <strong>Motivasyon:</strong> "Başarı, hazırlanmış olanlarındır! YKS'de hedefin için bugün bir adım at!"
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="parallax-move position-absolute top-0 start-0 w-100 h-100"></div>
+</section>
+
+<!-- YKS POPÜLER OTURUMLAR -->
+<section class="py-5 bg-light w-100" style="background: rgba(255,255,255,0.02);">
+    <div class="w-100" style="max-width: 1200px; margin: 0 auto;">
+        <h2 class="text-center mb-5 animate__animated animate__fadeIn text-white">YKS Oturumları</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 shadow-lg exam-card animate__animated animate__fadeInUp animate__delay-1s">
+                    <img src="https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="TYT">
+                    <div class="card-body">
+                        <h3 class="card-title h5">Temel Yeterlilik Testi (TYT)</h3>
+                        <p class="card-text">YKS'nin ilk adımı olan TYT için en güncel kaynaklar ve analizler burada.</p>
+                        <a href="{% url 'yks:index' %}" class="btn btn-primary">Detaylar</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-lg exam-card animate__animated animate__fadeInUp animate__delay-2s">
+                    <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="AYT">
+                    <div class="card-body">
+                        <h3 class="card-title h5">Alan Yeterlilik Testi (AYT)</h3>
+                        <p class="card-text">AYT'de başarıya ulaşmak için ihtiyacın olan her şey burada.</p>
+                        <a href="{% url 'yks:index' %}" class="btn btn-primary">Detaylar</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 shadow-lg exam-card animate__animated animate__fadeInUp animate__delay-3s">
+                    <img src="https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=600&q=80" class="card-img-top" alt="YDT">
+                    <div class="card-body">
+                        <h3 class="card-title h5">Yabancı Dil Testi (YDT)</h3>
+                        <p class="card-text">YDT'ye hazırlık için en iyi kaynaklar ve analizler.</p>
+                        <a href="{% url 'yks:index' %}" class="btn btn-primary">Detaylar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CALL TO ACTION -->
+<section class="cta-section py-5 w-100" style="background: linear-gradient(135deg, #23272f, #3498db);">
+    <div class="w-100 text-center" style="max-width: 900px; margin: 0 auto;">
+        <h2 class="mb-4 animate__animated animate__fadeIn text-white">Sen de YKS Başarı Hikayeni Yaz!</h2>
+        <a href="{% url 'core:kayit' %}" class="btn btn-warning btn-lg animate__animated animate__pulse animate__infinite">Ücretsiz Üye Ol</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<style>
+body {
+    background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+    background-size: cover;
+    background-color: #181c24;
+    position: relative;
+}
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(24,28,36,0.85);
+    z-index: 0;
+    pointer-events: none;
+}
+.hero-section, .features-section, .parallax-section, .cta-section, .bg-light {
+    position: relative;
+    z-index: 1;
+}
+.hero-section {
+    position: relative;
+    overflow: hidden;
+}
+.parallax-stars {
+    pointer-events: none;
+    background: url('https://www.transparenttextures.com/patterns/stardust.png');
+    opacity: 0.3;
+    z-index: 1;
+}
+.parallax-move {
+    background: url('https://www.transparenttextures.com/patterns/diamond-upholstery.png');
+    opacity: 0.08;
+    z-index: 1;
+}
+.feature-card {
+    border-radius: 18px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    background: #fff;
+}
+.feature-card:hover {
+    transform: translateY(-10px) scale(1.04) rotate(-1deg);
+    box-shadow: 0 8px 32px rgba(44,62,80,0.15);
+}
+.exam-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+    border-radius: 16px;
+}
+.exam-card:hover {
+    transform: scale(1.03) translateY(-6px);
+    box-shadow: 0 8px 32px rgba(52,152,219,0.15);
+}
+.stat-card {
+    min-width: 180px;
+    min-height: 120px;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08);
+    transition: transform 0.3s;
+}
+.stat-card:hover {
+    transform: scale(1.05);
+}
+.cta-section {
+    background: linear-gradient(135deg, #f1c40f, #3498db);
+    color: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+// Parallax efektleri
+window.addEventListener('scroll', function() {
+    const parallax = document.querySelector('.parallax-move');
+    if (parallax) {
+        parallax.style.transform = 'translateY(' + window.scrollY * 0.2 + 'px)';
+    }
+});
+// Cardlara tilt efekti
+VanillaTilt.init(document.querySelectorAll('.feature-card, .exam-card, .stat-card'), {
+    max: 12,
+    speed: 400,
+    glare: true,
+    "max-glare": 0.2
+});
+</script>
+{% endblock %} 

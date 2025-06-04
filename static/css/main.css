@@ -1,0 +1,132 @@
+.navbar {
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff !important;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+.nav-link {
+    color: rgba(255,255,255,0.9) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.2rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff !important;
+}
+
+.nav-link.active {
+    background: rgba(255,255,255,0.2);
+    color: #fff !important;
+}
+
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.dropdown-item {
+    padding: 0.7rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+    transform: translateX(5px);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.main-content-wrapper {
+    background: url('{% static "images/background-image.jpg" %}') no-repeat center center fixed;
+    background-size: cover;
+}
+
+.hero-section {
+    background: rgba(0,0,0,0.6); /* Daha koyu bir overlay */
+    color: white;
+    padding: 100px 0;
+}
+
+.features-section, .stats-section, .how-it-works, .testimonials, .cta-section {
+    background: rgba(255,255,255,0.9); /* Hafif şeffaf beyaz arka plan */
+    padding: 60px 0;
+    margin-bottom: 20px; /* Bölümler arasına boşluk */
+    border-radius: 10px; /* Hafif yuvarlak köşeler */
+}
+
+.feature-card, .testimonial-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover, .testimonial-card:hover {
+    transform: translateY(-5px);
+}
+
+.step-number {
+    width: 50px; /* Biraz daha büyük */
+    height: 50px; /* Biraz daha büyük */
+    background: var(--bs-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-weight: bold;
+    font-size: 1.5rem; /* Daha belirgin sayı */
+}
+
+.stats-section h2 {
+    font-size: 3.5rem; /* Daha büyük istatistik sayıları */
+}
+
+.cta-section {
+    background: linear-gradient(135deg, #3498db, #2c3e50); /* Header ile uyumlu gradient */
+    color: white;
+    text-align: center;
+}
+
+.cta-section .btn {
+    background-color: #fff; /* Beyaz buton */
+    color: #3498db; /* Mavi yazı */
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.cta-section .btn:hover {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+} 

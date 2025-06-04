@@ -50,7 +50,7 @@ class CalismaOturumuAdmin(admin.ModelAdmin):
 
 @admin.register(Hatirlatici)
 class HatirlaticiAdmin(admin.ModelAdmin):
-    list_display = ('baslik', 'kullanici', 'hatirlatma_tarihi', 'tekrar', 'aktif')
-    list_filter = ('tekrar', 'aktif', 'hatirlatma_tarihi')
+    list_display = ('baslik', 'kullanici', 'hatirlatma_tarihi', 'aktif')
+    list_filter = ('aktif', 'hatirlatma_tarihi')
     search_fields = ('baslik', 'kullanici__username')
     date_hierarchy = 'hatirlatma_tarihi'

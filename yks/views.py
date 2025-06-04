@@ -17,7 +17,6 @@ from .models import (
     CalismaOturumu, 
     Hatirlatici,
     SoruCozumHedefi,
-    KonuTakipHedefi,
     KonuTakipHedefKonu,
     HedefDurum
 )
@@ -281,10 +280,41 @@ def konu_durum_guncelle(request):
 
 # API Görünümleri
 @login_required
-def ders_konulari_api(request, ders_id):
-    """Belirli bir derse ait konuları JSON formatında döndürür"""
-    konular = Konu.objects.filter(unite__ders_id=ders_id).values('id', 'ad')
-    return JsonResponse(list(konular), safe=False)
+def ders_konulari_api(request):
+    """AJAX için dersleri JSON formatında döndürür"""
+    dersler = Ders.objects.filter(aktif=True).order_by('alt_tur', 'ad')
+    
+    data = [
+        {
+            'id': ders.id,
+            'ad': ders.ad,
+            'kod': ders.kod,
+            'alt_tur': ders.alt_tur.ad if ders.alt_tur else None
+        }
+        for ders in dersler
+    ]
+    
+    return JsonResponse(data, safe=False)
+
+@login_required
+def konular_json(request, ders_id):
+    """AJAX için belirli bir derse ait konuları JSON formatında döndürür"""
+    ders = get_object_or_404(Ders, id=ders_id)
+    uniteler = Unite.objects.filter(ders=ders).order_by('sira_no')
+    
+    data = []
+    
+    for unite in uniteler:
+        konular = Konu.objects.filter(unite=unite).order_by('sira_no')
+        
+        for konu in konular:
+            data.append({
+                'id': konu.id,
+                'ad': konu.ad,
+                'unite': unite.ad
+            })
+    
+    return JsonResponse(data, safe=False)
 
 # Hedef Belirleme ve Takip Görünümleri
 @login_required
@@ -616,11 +646,11 @@ def calisma_plani_listesi(request):
         bugunun_plani_toplam_saat = bugunun_plani.toplam_calisma_suresi / 60
 
     # Son 7 günün toplam çalışma süresini hesapla
-    son_yedi_gun_toplam_sure_dakika = CalismaPlanı.objects.filter(
-        kullanici=request.user,
-        tarih__gte=bugun - timedelta(days=7),
-        tarih__lt=bugun
-    ).aggregate(Sum('toplam_calisma_suresi'))['toplam_calisma_suresi__sum'] or 0
+    son_yedi_gun_toplam_sure_dakika = CalismaOturumu.objects.filter(
+        plan__kullanici=request.user,
+        plan__tarih__gte=bugun - timedelta(days=7),
+        plan__tarih__lt=bugun
+    ).aggregate(Sum('sure'))['sure__sum'] or 0
 
     # Toplam süreyi saate çevir
     son_yedi_gun_toplam_saat = son_yedi_gun_toplam_sure_dakika / 60
@@ -782,7 +812,7 @@ def oturum_tamamlandi_yap(request, oturum_id):
             oturum.tamamlandi = True
             oturum.save()
 
-            # Planın tamamlanma oranını ve toplam süresini güncelle
+            # Planın toplam süresini güncelle
             plan = oturum.plan
             plan.toplam_calisma_suresi = CalismaOturumu.objects.filter(
                 plan=plan
@@ -848,31 +878,43 @@ def konular_json(request, ders_id):
 @login_required
 def hatirlatici_listesi(request):
     """Kullanıcının hatırlatıcılarını listeler"""
-    # Aktif hatırlatıcılar
-    aktif_hatirlaticilar = Hatirlatici.objects.filter(
+    
+    # Bugünün tarihi (saat bilgisini içermeden karşılaştırma yapmak için date() kullanıyoruz)
+    bugun_date = timezone.localdate()
+
+    # Bugünkü tüm hatırlatıcılar
+    bugunun_hatirlaticilari = Hatirlatici.objects.filter(
         kullanici=request.user,
-        aktif=True,
-        hatirlatma_tarihi__gte=timezone.now()
+        hatirlatma_tarihi__date=bugun_date
     ).order_by('hatirlatma_tarihi')
     
-    # Yaklaşan hatırlatıcılar (bugün ve yakın gelecek)
-    bugun = timezone.now()
+    # Bugünden sonraki tüm hatırlatıcılar (Yaklaşan)
     yaklasan_hatirlaticilar = Hatirlatici.objects.filter(
         kullanici=request.user,
-        aktif=True,
-        hatirlatma_tarihi__date=bugun.date()
+        hatirlatma_tarihi__date__gt=bugun_date
     ).order_by('hatirlatma_tarihi')
     
-    # Geçmiş hatırlatıcılar
+    # Bugünden önceki tüm hatırlatıcılar (Geçmiş)
     gecmis_hatirlaticilar = Hatirlatici.objects.filter(
         kullanici=request.user,
-        hatirlatma_tarihi__lt=bugun
-    ).order_by('-hatirlatma_tarihi')[:10]  # Son 10 geçmiş hatırlatıcı
+        hatirlatma_tarihi__date__lt=bugun_date
+    ).order_by('-hatirlatma_tarihi')
     
+    # Kullanıcının e-posta doğrulama durumunu al
+    email_verified = request.user.userprofile.email_verified if hasattr(request.user, 'userprofile') else False
+
     context = {
-        'aktif_hatirlaticilar': aktif_hatirlaticilar,
-        'yaklasan_hatirlaticilar': yaklasan_hatirlaticilar,
-        'gecmis_hatirlaticilar': gecmis_hatirlaticilar,
+        # İstatistik kartları için
+        'toplam_hatirlatici_sayisi': Hatirlatici.objects.filter(kullanici=request.user).count(),
+        'bugunku_hatirlatici_sayisi': bugunun_hatirlaticilari.count(),
+        'yaklasan_hatirlatici_sayisi': yaklasan_hatirlaticilar.count(),
+        
+        # Tab içerikleri için
+        'bugunun_hatirlaticilari': bugunun_hatirlaticilari,
+        'yaklasan_hatirlaticilar_tab': yaklasan_hatirlaticilar,
+        'gecmis_hatirlaticilar_tab': gecmis_hatirlaticilar,
+        
+        'email_verified': email_verified,
     }
     
     return render(request, 'yks/hatirlaticilar/hatirlatici_listesi.html', context)
@@ -920,55 +962,74 @@ def hatirlatici_duzenle(request, hatirlatici_id):
 
 @login_required
 def hatirlatici_sil(request, hatirlatici_id):
-    """Hatırlatıcı silme görünümü"""
-    hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id, kullanici=request.user)
-    
+    """AJAX ile hatırlatıcı silme"""
+    # Kullanıcının sadece kendi hatırlatıcılarını silebildiğinden emin ol
+    try:
+        hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id, kullanici=request.user)
+    except Http404:
+        # Eğer hatırlatıcı bulunamazsa veya kullanıcıya ait değilse 404 döndür
+        return JsonResponse({'success': False, 'message': 'Hatırlatıcı bulunamadı veya silme yetkiniz yok.'}, status=404)
+
+
     if request.method == 'POST':
-        hatirlatici.delete()
-        messages.success(request, 'Hatırlatıcı başarıyla silindi.')
-        return redirect('yks:hatirlatici_listesi')
-    
-    context = {
-        'hatirlatici': hatirlatici,
-    }
-    
-    return render(request, 'yks/hatirlaticilar/hatirlatici_sil.html', context)
+        try:
+            hatirlatici.delete()
+            # messages.success(request, 'Hatırlatıcı başarıyla silindi.') # Kaldırıldı
+            # return redirect('yks:hatirlatici_listesi') # Kaldırıldı
+            return JsonResponse({'success': True, 'message': 'Hatırlatıcı başarıyla silindi.'})
+        except Exception as e:
+            # Silme sırasında bir hata oluşursa hata yanıtı döndür
+            return JsonResponse({'success': False, 'message': f'Hatırlatıcı silinirken bir hata oluştu: {str(e)}'}, status=500)
+
+    # Eğer istek POST değilse hata döndür
+    return JsonResponse({'success': False, 'message': 'Geçersiz istek metodu.'}, status=405)
 
 @login_required
 def hatirlatici_durum_guncelle(request, hatirlatici_id):
-    """Hatırlatıcı durumunu güncelleme (AJAX veya normal form)"""
-    hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id, kullanici=request.user)
-    
-    if request.method == 'POST':
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        
-        # İstek AJAX veya normal form olabilir
-        if 'aktif' in request.POST:
-            aktif_value = request.POST.get('aktif')
-            # String 'true' veya 'false' değerini bool'a çevir
-            aktif = aktif_value.lower() == 'true'
-            hatirlatici.aktif = aktif
-            hatirlatici.save()
-            
-            if is_ajax:
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Hatırlatıcı durumu güncellendi.'
-                })
-            else:
-                status_text = "aktifleştirildi" if aktif else "devre dışı bırakıldı"
-                messages.success(request, f'Hatırlatıcı başarıyla {status_text}.')
-                return redirect('yks:hatirlatici_listesi')
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+    """Hatırlatıcı durumunu güncelleme (AJAX POST) """
+
+    # Sadece AJAX POST isteklerini kabul et. Başka bir istek gelirse hata döndür.
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    if not (request.method == 'POST' and is_ajax):
         return JsonResponse({
             'success': False,
-            'message': 'Geçersiz istek.'
-        }, status=400)
-    else:
-        messages.error(request, 'Geçersiz istek.')
-        return redirect('yks:hatirlatici_listesi')
+            'message': 'Bu işlem sadece AJAX POST istekleri ile desteklenmektedir.'
+        }, status=405) # Method Not Allowed
 
+    # Eğer buraya ulaştıysak, bu geçerli bir AJAX POST isteğidir.
+    import json
+    try:
+        # Kullanıcının sadece kendi hatırlatıcılarını güncelleyebildiğinden emin ol
+        hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id, kullanici=request.user)
+
+        # JSON verisini oku
+        data = json.loads(request.body)
+        aktif = data.get('aktif') # JSON'dan aktif değerini al
+
+        # 'aktif' değeri None değilse ve boolean ise devam et
+        if aktif is not None and isinstance(aktif, bool):
+            hatirlatici.aktif = aktif
+            hatirlatici.save()
+
+            # Başarılı JSON yanıtı döndür
+            return JsonResponse({
+                'success': True,
+                'message': 'Hatırlatıcı durumu başarıyla güncellendi.'
+            })
+        else:
+             # Geçersiz veya eksik veri durumunda hata yanıtı
+             return JsonResponse({'success': False, 'message': 'Geçersiz veya eksik veri sağlandı.'}, status=400) # Bad Request
+
+    except Http404:
+         # Hatırlatıcı bulunamazsa veya kullanıcıya ait değilse 404 yanıtı
+         return JsonResponse({'success': False, 'message': 'Hatırlatıcı bulunamadı veya güncelleme yetkiniz yok.'}, status=404)
+    except json.JSONDecodeError:
+         # Geçersiz JSON formatı durumunda hata yanıtı
+         return JsonResponse({'success': False, 'message': 'Geçersiz JSON formatı.'}, status=400)
+    except Exception as e:
+         # Diğer tüm hatalar için genel hata yanıtı
+         # Loglama yapılmalı: logger.error(f"Hatırlatıcı durum güncelleme hatası: {e}", exc_info=True)
+         return JsonResponse({'success': False, 'message': f'Beklenmedik bir hata oluştu: {str(e)}'}, status=500) # Internal Server Error
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render

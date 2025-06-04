@@ -197,11 +197,10 @@ class Hatirlatici(models.Model):
     baslik = models.CharField(max_length=200, verbose_name="Hatırlatıcı Başlığı")
     aciklama = models.TextField(blank=True, null=True, verbose_name="Açıklama")
     hatirlatma_tarihi = models.DateTimeField(verbose_name="Hatırlatma Tarihi ve Saati")
-    tekrar = models.BooleanField(default=False, verbose_name="Tekrarla")
-    tekrar_periyodu = models.CharField(max_length=20, blank=True, null=True, verbose_name="Tekrar Periyodu")
     aktif = models.BooleanField(default=True, verbose_name="Aktif")
     olusturma_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturma Tarihi")
     guncelleme_tarihi = models.DateTimeField(auto_now=True, verbose_name="Güncelleme Tarihi")
+    sent = models.BooleanField(default=False, verbose_name="E-posta gönderildi mi?")
     
     def __str__(self):
         return f"{self.kullanici.username} - {self.baslik}"
@@ -260,7 +259,7 @@ class KonuTakipHedefKonu(models.Model):
     tamamlandi = models.BooleanField(default=False, verbose_name="Tamamlandı mı?")
 
     def __str__(self):
-        return f"{self.konu_takip_hedefi} - {self.konu}"
+        return f"{self.konu_takip_hedefi.hedef.baslik} - {self.konu.ad}"
 
     class Meta:
         verbose_name = "Konu Takip Hedef Konusu"

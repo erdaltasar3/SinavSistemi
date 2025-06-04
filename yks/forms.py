@@ -150,29 +150,13 @@ class HatirlaticiForm(forms.ModelForm):
     """Hatırlatıcı ekleme formu"""
     class Meta:
         model = Hatirlatici
-        fields = ['baslik', 'aciklama', 'hatirlatma_tarihi', 'tekrar', 'tekrar_periyodu', 'aktif']
+        fields = ['baslik', 'aciklama', 'hatirlatma_tarihi', 'aktif']
         widgets = {
             'baslik': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Hatırlatıcı başlığını girin'}),
             'aciklama': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Hatırlatıcı açıklamasını girin'}),
             'hatirlatma_tarihi': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'tekrar': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'tekrar_periyodu': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Günlük, Haftalık, Aylık vb.'}),
             'aktif': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['tekrar_periyodu'].required = False
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        tekrar = cleaned_data.get('tekrar')
-        tekrar_periyodu = cleaned_data.get('tekrar_periyodu')
-        
-        if tekrar and not tekrar_periyodu:
-            raise forms.ValidationError("Tekrar seçildiğinde tekrar periyodu belirtilmelidir.")
-            
-        return cleaned_data 
 
 class UserProfileForm(forms.ModelForm):
     first_name = forms.CharField(max_length=30, required=False, label='Ad')

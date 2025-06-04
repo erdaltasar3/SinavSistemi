@@ -44,16 +44,16 @@
                         </div>
                         
                         <h6 class="fw-bold border-bottom pb-2">Bugünkü Hatırlatıcılar</h6>
-                        {% if yaklasan_hatirlaticilar %}
-                            {% for hatirlatici in yaklasan_hatirlaticilar|slice:":3" %}
+                        {% if bugunun_hatirlaticilari %}
+                            {% for hatirlatici in bugunun_hatirlaticilari|slice:":3" %}
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="text-truncate">{{ hatirlatici.baslik }}</span>
                                     <span class="badge bg-warning text-dark">{{ hatirlatici.hatirlatma_tarihi|time:"H:i" }}</span>
                                 </div>
                             {% endfor %}
-                            {% if yaklasan_hatirlaticilar.count > 3 %}
+                            {% if bugunun_hatirlaticilari.count > 3 %}
                                 <div class="text-center mt-2">
-                                    <small class="text-muted">+{{ yaklasan_hatirlaticilar.count|add:"-3" }} daha...</small>
+                                    <small class="text-muted">+{{ bugunun_hatirlaticilari.count|add:"-3" }} daha...</small>
                                 </div>
                             {% endif %}
                         {% else %}
@@ -69,7 +69,7 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush">
-                            <a href="{% url 'yks:hatirlatici_ekle' %}" class="list-group-item list-group-item-action py-3">
+                            <a href="{% url 'yks:hatirlatici_ekle' %}" class="list-group-item list-group-item-action py-3" id="addReminderBtnQuickAccess">
                                 <i class="bi bi-plus-circle-fill text-success me-2"></i> Yeni Hatırlatıcı Ekle
                             </a>
                             <a href="{% url 'yks:hedef_ekle' %}" class="list-group-item list-group-item-action py-3">
@@ -102,8 +102,8 @@
         <!-- Ana İçerik Alanı -->
         <div class="col-lg-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h2 mb-0">Hatırlatıcılar</h1>
-                <a href="{% url 'yks:hatirlatici_ekle' %}" class="btn btn-warning">
+                <h1 class="h2 mb-0">Hatırlatıcılar <span id="liveClock" class="fw-bold ms-4"></span></h1>
+                <a href="{% url 'yks:hatirlatici_ekle' %}" class="btn btn-warning" id="addReminderBtnMain" data-email-verified="{{ email_verified|lower }}">
                     <i class="bi bi-plus-circle me-2"></i> Yeni Hatırlatıcı Ekle
                 </a>
             </div>
@@ -119,7 +119,7 @@
                                 </div>
                                 <div>
                                     <h6 class="text-muted mb-1">Toplam Hatırlatıcı</h6>
-                                    <h2 class="display-6 fw-bold mb-0">{{ aktif_hatirlaticilar.count|add:gecmis_hatirlaticilar.count }}</h2>
+                                    <h2 class="display-6 fw-bold mb-0">{{ toplam_hatirlatici_sayisi }}</h2>
                                 </div>
                             </div>
                         </div>
@@ -134,7 +134,7 @@
                                 </div>
                                 <div>
                                     <h6 class="text-muted mb-1">Bugünkü Hatırlatıcılar</h6>
-                                    <h2 class="display-6 fw-bold mb-0">{{ yaklasan_hatirlaticilar.count }}</h2>
+                                    <h2 class="display-6 fw-bold mb-0">{{ bugunku_hatirlatici_sayisi }}</h2>
                                 </div>
                             </div>
                         </div>
@@ -149,7 +149,7 @@
                                 </div>
                                 <div>
                                     <h6 class="text-muted mb-1">Yaklaşan Hatırlatıcılar</h6>
-                                    <h2 class="display-6 fw-bold mb-0">{{ aktif_hatirlaticilar.count }}</h2>
+                                    <h2 class="display-6 fw-bold mb-0">{{ yaklasan_hatirlatici_sayisi }}</h2>
                                 </div>
                             </div>
                         </div>
@@ -185,21 +185,20 @@
                     <div class="tab-content" id="hatirlaticiTabContent">
                         <!-- Bugünkü Hatırlatıcılar Sekmesi -->
                         <div class="tab-pane fade show active" id="bugun" role="tabpanel" aria-labelledby="bugun-tab">
-                            {% if yaklasan_hatirlaticilar %}
+                            {% if bugunun_hatirlaticilari %}
                                 <div class="table-responsive">
                                     <table class="table align-middle table-hover mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th scope="col" style="width: 40%">Hatırlatıcı</th>
+                                                <th scope="col" style="width: 50%">Hatırlatıcı</th>
                                                 <th scope="col">Saat</th>
-                                                <th scope="col">Tekrar</th>
                                                 <th scope="col">Durum</th>
                                                 <th scope="col" style="width: 20%">İşlemler</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for hatirlatici in yaklasan_hatirlaticilar %}
-                                                <tr>
+                                            {% for hatirlatici in bugunun_hatirlaticilari %}
+                                                <tr class="{% if not hatirlatici.aktif %}table-secondary{% endif %}">
                                                     <td>
                                                         <div class="fw-bold">{{ hatirlatici.baslik }}</div>
                                                         {% if hatirlatici.aciklama %}
@@ -210,36 +209,23 @@
                                                         <span class="badge bg-warning text-dark">{{ hatirlatici.hatirlatma_tarihi|time:"H:i" }}</span>
                                                     </td>
                                                     <td>
-                                                        {% if hatirlatici.tekrar %}
-                                                            <span class="badge bg-info text-dark">
-                                                                <i class="bi bi-arrow-repeat me-1"></i> {{ hatirlatici.tekrar_periyodu|default:"Tekrarlı" }}
-                                                            </span>
-                                                        {% else %}
-                                                            <span class="badge bg-secondary">Tek Seferlik</span>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
                                                         {% if hatirlatici.aktif %}
-                                                            <span class="badge bg-success">Aktif</span>
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-bugun-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
+                                                                <label class="form-check-label" for="aktifSwitch-bugun-{{ hatirlatici.id }}"><span class="badge bg-success">Aktif</span></label>
+                                                            </div>
                                                         {% else %}
-                                                            <span class="badge bg-secondary">Pasif</span>
+                                                             <div class="form-check form-switch">
+                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-bugun-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
+                                                                 <label class="form-check-label" for="aktifSwitch-bugun-{{ hatirlatici.id }}"><span class="badge bg-secondary">Pasif</span></label>
+                                                            </div>
                                                         {% endif %}
                                                     </td>
                                                     <td>
                                                         <div class="btn-group" role="group">
-                                                            <a href="{% url 'yks:hatirlatici_duzenle' hatirlatici.id %}" class="btn btn-sm btn-outline-primary">
-                                                                <i class="bi bi-pencil-square"></i>
-                                                            </a>
-                                                            <form method="POST" action="{% url 'yks:hatirlatici_durum_guncelle' hatirlatici.id %}" class="d-inline">
-                                                                {% csrf_token %}
-                                                                <input type="hidden" name="aktif" value="{% if hatirlatici.aktif %}false{% else %}true{% endif %}">
-                                                                <button type="submit" class="btn btn-sm btn-outline-{% if hatirlatici.aktif %}warning{% else %}success{% endif %}">
-                                                                    <i class="bi bi-{% if hatirlatici.aktif %}pause-fill{% else %}play-fill{% endif %}"></i>
-                                                                </button>
-                                                            </form>
-                                                            <a href="{% url 'yks:hatirlatici_sil' hatirlatici.id %}" class="btn btn-sm btn-outline-danger">
-                                                                <i class="bi bi-trash"></i>
-                                                            </a>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-hatirlatici-icon" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-hatirlatici-id="{{ hatirlatici.id }}">
+                                                                <i class="bi bi-trash-fill"></i>
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -263,21 +249,20 @@
                         
                         <!-- Yaklaşan Hatırlatıcılar Sekmesi -->
                         <div class="tab-pane fade" id="yaklasan" role="tabpanel" aria-labelledby="yaklasan-tab">
-                            {% if aktif_hatirlaticilar %}
+                            {% if yaklasan_hatirlaticilar_tab %}
                                 <div class="table-responsive">
                                     <table class="table align-middle table-hover mb-0">
                                         <thead class="table-light">
                                             <tr>
                                                 <th scope="col" style="width: 40%">Hatırlatıcı</th>
                                                 <th scope="col">Tarih & Saat</th>
-                                                <th scope="col">Tekrar</th>
                                                 <th scope="col">Durum</th>
                                                 <th scope="col" style="width: 20%">İşlemler</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for hatirlatici in aktif_hatirlaticilar %}
-                                                <tr>
+                                            {% for hatirlatici in yaklasan_hatirlaticilar_tab %}
+                                                <tr class="{% if not hatirlatici.aktif %}table-secondary{% endif %}">
                                                     <td>
                                                         <div class="fw-bold">{{ hatirlatici.baslik }}</div>
                                                         {% if hatirlatici.aciklama %}
@@ -295,36 +280,23 @@
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        {% if hatirlatici.tekrar %}
-                                                            <span class="badge bg-info text-dark">
-                                                                <i class="bi bi-arrow-repeat me-1"></i> {{ hatirlatici.tekrar_periyodu|default:"Tekrarlı" }}
-                                                            </span>
-                                                        {% else %}
-                                                            <span class="badge bg-secondary">Tek Seferlik</span>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
                                                         {% if hatirlatici.aktif %}
-                                                            <span class="badge bg-success">Aktif</span>
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-yaklasan-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
+                                                                <label class="form-check-label" for="aktifSwitch-yaklasan-{{ hatirlatici.id }}"><span class="badge bg-success">Aktif</span></label>
+                                                            </div>
                                                         {% else %}
-                                                            <span class="badge bg-secondary">Pasif</span>
+                                                             <div class="form-check form-switch">
+                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-yaklasan-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
+                                                                 <label class="form-check-label" for="aktifSwitch-yaklasan-{{ hatirlatici.id }}"><span class="badge bg-secondary">Pasif</span></label>
+                                                            </div>
                                                         {% endif %}
                                                     </td>
                                                     <td>
                                                         <div class="btn-group" role="group">
-                                                            <a href="{% url 'yks:hatirlatici_duzenle' hatirlatici.id %}" class="btn btn-sm btn-outline-primary">
-                                                                <i class="bi bi-pencil-square"></i>
-                                                            </a>
-                                                            <form method="POST" action="{% url 'yks:hatirlatici_durum_guncelle' hatirlatici.id %}" class="d-inline">
-                                                                {% csrf_token %}
-                                                                <input type="hidden" name="aktif" value="{% if hatirlatici.aktif %}false{% else %}true{% endif %}">
-                                                                <button type="submit" class="btn btn-sm btn-outline-{% if hatirlatici.aktif %}warning{% else %}success{% endif %}">
-                                                                    <i class="bi bi-{% if hatirlatici.aktif %}pause-fill{% else %}play-fill{% endif %}"></i>
-                                                                </button>
-                                                            </form>
-                                                            <a href="{% url 'yks:hatirlatici_sil' hatirlatici.id %}" class="btn btn-sm btn-outline-danger">
-                                                                <i class="bi bi-trash"></i>
-                                                            </a>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-hatirlatici-icon" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-hatirlatici-id="{{ hatirlatici.id }}">
+                                                                <i class="bi bi-trash-fill"></i>
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -348,20 +320,19 @@
                         
                         <!-- Geçmiş Hatırlatıcılar Sekmesi -->
                         <div class="tab-pane fade" id="gecmis" role="tabpanel" aria-labelledby="gecmis-tab">
-                            {% if gecmis_hatirlaticilar %}
+                            {% if gecmis_hatirlaticilar_tab %}
                                 <div class="table-responsive">
                                     <table class="table align-middle table-hover mb-0">
                                         <thead class="table-light">
                                             <tr>
                                                 <th scope="col" style="width: 40%">Hatırlatıcı</th>
                                                 <th scope="col">Tarih & Saat</th>
-                                                <th scope="col">Tekrar</th>
                                                 <th scope="col">Durum</th>
                                                 <th scope="col" style="width: 20%">İşlemler</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for hatirlatici in gecmis_hatirlaticilar %}
+                                            {% for hatirlatici in gecmis_hatirlaticilar_tab %}
                                                 <tr class="{% if not hatirlatici.aktif %}table-secondary{% endif %}">
                                                     <td>
                                                         <div class="fw-bold">{{ hatirlatici.baslik }}</div>
@@ -379,30 +350,24 @@
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td>
-                                                        {% if hatirlatici.tekrar %}
-                                                            <span class="badge bg-info text-dark">
-                                                                <i class="bi bi-arrow-repeat me-1"></i> {{ hatirlatici.tekrar_periyodu|default:"Tekrarlı" }}
-                                                            </span>
-                                                        {% else %}
-                                                            <span class="badge bg-secondary">Tek Seferlik</span>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
+                                                     <td>
                                                         {% if hatirlatici.aktif %}
-                                                            <span class="badge bg-success">Aktif</span>
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-gecmis-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
+                                                                <label class="form-check-label" for="aktifSwitch-gecmis-{{ hatirlatici.id }}"><span class="badge bg-success">Aktif</span></label>
+                                                            </div>
                                                         {% else %}
-                                                            <span class="badge bg-secondary">Pasif</span>
+                                                             <div class="form-check form-switch">
+                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-gecmis-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
+                                                                 <label class="form-check-label" for="aktifSwitch-gecmis-{{ hatirlatici.id }}"><span class="badge bg-secondary">Pasif</span></label>
+                                                            </div>
                                                         {% endif %}
                                                     </td>
                                                     <td>
                                                         <div class="btn-group" role="group">
-                                                            <a href="{% url 'yks:hatirlatici_duzenle' hatirlatici.id %}" class="btn btn-sm btn-outline-primary">
-                                                                <i class="bi bi-pencil-square"></i>
-                                                            </a>
-                                                            <a href="{% url 'yks:hatirlatici_sil' hatirlatici.id %}" class="btn btn-sm btn-outline-danger">
-                                                                <i class="bi bi-trash"></i>
-                                                            </a>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-hatirlatici-icon" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-hatirlatici-id="{{ hatirlatici.id }}">
+                                                                <i class="bi bi-trash-fill"></i>
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -446,4 +411,281 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmationModalLabel">Silme Onayı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Bu hatırlatıcıyı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3 centralized" style="z-index: 11">
+    <!-- Toasts will be appended here -->
+</div>
+
+<style>
+/* Santralize Toast Container CSS */
+.toast-container.centralized {
+    top: 30% !important; /* Ekranın biraz daha aşağısında */
+    left: 50% !important;
+    transform: translate(-50%, -50%);
+    right: auto !important;
+    bottom: auto !important;
+}
+
+/* Büyük Toast mesajları için CSS */
+.toast-large .toast-body {
+    padding: 2.5rem; /* İç boşluğu biraz daha artır */
+    font-size: 1.2rem; /* Yazı boyutu aynı kalsın veya hafif artırılabilir */
+    font-weight: bold;
+}
+
+.toast-large {
+    min-width: 400px; /* Minimum genişliği biraz daha artır */
+    /* İsteğe bağlı: Daha belirgin bir border */
+    /* border: 2px solid rgba(0,0,0,0.1); */
+}
+</style>
+
+{% block extra_js %}
+<script>
+    // Toast gösterme fonksiyonu
+    function showToast(message, type = 'info') {
+        const toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            console.error('Toast container not found!');
+            return;
+        }
+
+        const toastId = 'toast-' + Date.now(); // Benzersiz ID
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0 toast-large" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+
+        toastContainer.innerHTML = toastHtml; // Önceki toastları kaldır, yenisini ekle
+
+        const toastEl = document.getElementById(toastId);
+        if (toastEl) {
+            const toast = new bootstrap.Toast(toastEl, { delay: 2000 }); // 2 saniye sonra kaybolsun
+            toast.show();
+
+             // Toast kaybolduktan sonra HTML'den kaldır
+            toastEl.addEventListener('hidden.bs.toast', function () {
+                toastEl.remove();
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Anlık saat güncelleme
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timeString = `${hours}:${minutes}:${seconds}`;
+            
+            const liveClockElement = document.getElementById('liveClock');
+            if (liveClockElement) {
+                liveClockElement.textContent = timeString;
+            }
+        }
+        
+        // Saati her saniye güncelle
+        updateClock(); // İlk gösterme
+        setInterval(updateClock, 1000);
+
+        // Sekme içeriği yüklendikten sonra DataTable veya diğer JS kütüphanelerini başlat
+        // Bootstrap sekmeleri için shown.bs.tab olayını kullanabiliriz
+        const hatirlaticiTab = document.getElementById('hatirlaticiTab');
+        if (hatirlaticiTab) {
+            hatirlaticiTab.addEventListener('shown.bs.tab', function (event) {
+                // Yeni aktif olan sekmenin içeriğindeki tabloları veya diğer elementleri burada işleyebilirsiniz
+                console.log('Sekme değiştirildi: ', event.target); // Yeni aktif olan sekme
+                console.log('Önceki sekme: ', event.relatedTarget); // Önceki sekme
+                
+                // Örneğin, yeni sekmedeki DataTable'ı başlatmak için:
+                // $(event.target.getAttribute('data-bs-target')).find('table').DataTable();
+            });
+        }
+
+        // DataTable başlatma (örnek - jQuery gerektirebilir)
+        // Sayfa ilk yüklendiğinde aktif olan sekmenin tablosunu başlatın
+        // $(document).ready( function () {
+        //     $('#bugun table').DataTable();
+        // });
+
+        // Modal silme/düzenleme butonları için olay dinleyicileri (örnek)
+        document.querySelectorAll('.delete-hatirlatici-icon').forEach(button => {
+            button.addEventListener('click', function() {
+                const hatirlaticiId = this.dataset.hatirlaticiId;
+                // Store the ID in the confirm button for later use
+                document.getElementById('confirmDeleteBtn').dataset.hatirlaticiId = hatirlaticiId;
+                console.log('Silme onay modalı açıldı, Hatırlatıcı ID:', hatirlaticiId);
+                // Modal is automatically opened by data-bs-toggle and data-bs-target
+            });
+        });
+
+        // Handle confirm delete button click
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', function() {
+                const hatirlaticiId = this.dataset.hatirlaticiId;
+                console.log('Silme işlemi onaylandı, Hatırlatıcı ID:', hatirlaticiId);
+
+                // Send AJAX request to delete the reminder
+                fetch('{% url "yks:hatirlatici_sil" 0 %}'.replace('/0/', `/${hatirlaticiId}/`), { // Construct URL dynamically
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json' // Specify content type as JSON
+                    },
+                    body: JSON.stringify({}) // Send an empty JSON object or necessary data
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close the modal
+                        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                        if (deleteModal) {
+                            deleteModal.hide();
+                        }
+                        showToast(data.message, 'success');
+                        // Reload the page after successful deletion to update the list
+                        window.location.reload();
+                    } else {
+                        // Close the modal
+                         const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                         if (deleteModal) {
+                             deleteModal.hide();
+                         }
+                        showToast('Hata: ' + data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Close the modal
+                     const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                     if (deleteModal) {
+                         deleteModal.hide();
+                     }
+                    showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
+                });
+            });
+        }
+
+        document.querySelectorAll('.edit-hatirlatici-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const hatirlaticiId = this.dataset.hatirlaticiId;
+                console.log('Düzenle butonuna basıldı, Hatırlatıcı ID:', hatirlaticiId);
+                // Düzenleme modalını aç veya düzenleme sayfası için yönlendirme yap
+            });
+        });
+
+        document.querySelectorAll('.complete-hatirlatici-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const hatirlaticiId = this.dataset.hatirlaticiId;
+                console.log('Tamamla butonuna basıldı, Hatırlatıcı ID:', hatirlaticiId);
+                // Tamamlama işlemi için AJAX isteği gönder
+            });
+        });
+
+        // Yeni Hatırlatıcı Ekle butonu click eventi
+        const addReminderBtnMain = document.getElementById('addReminderBtnMain');
+        const addReminderBtnQuickAccess = document.getElementById('addReminderBtnQuickAccess');
+        const isEmailVerified = addReminderBtnMain ? addReminderBtnMain.dataset.emailVerified === 'true' : false;
+        const addReminderUrl = "{% url 'yks:hatirlatici_ekle' %}";
+
+        function handleAddReminderClick(event) {
+            if (!isEmailVerified) {
+                event.preventDefault(); // Sayfa yönlendirmesini engelle
+                showToast('E-posta doğrulaması yapılmadan bu özellik kullanılamaz.', 'warning');
+            } else {
+                // E-posta doğrulanmışsa, normal link davranışı devam eder veya manuel yönlendirilir
+                // Şu an preventDefault yapmadığımız için normal link çalışacak.
+                // Eğer link href'i '#' olsaydı veya preventDefault yapsaydık manuel yönlendirme gerekirdi:
+                // window.location.href = addReminderUrl;
+            }
+        }
+
+        if (addReminderBtnMain) {
+            addReminderBtnMain.addEventListener('click', handleAddReminderClick);
+        }
+
+        if (addReminderBtnQuickAccess) {
+             // Hızlı erişim butonu da aynı logic'i kullansın
+            addReminderBtnQuickAccess.addEventListener('click', handleAddReminderClick);
+        }
+
+        // Hatırlatıcı aktif/pasif switchleri için olay dinleyici
+        document.querySelectorAll('.hatirlatici-aktif-switch').forEach(switchEl => {
+            switchEl.addEventListener('change', function() {
+                const hatirlaticiId = this.dataset.hatirlaticiId;
+                const yeniDurum = this.checked; // true or false
+                const statusLabel = this.nextElementSibling.querySelector('.badge');
+
+                // AJAX isteği gönder
+                fetch('{% url "yks:hatirlatici_durum_guncelle" 0 %}'.replace('/0/', `/${hatirlaticiId}/`), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                     body: JSON.stringify({ aktif: yeniDurum })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Durum yazısını ve rengini güncelle
+                        if (yeniDurum) {
+                            statusLabel.textContent = 'Aktif';
+                            statusLabel.classList.remove('bg-secondary');
+                            statusLabel.classList.add('bg-success');
+                        } else {
+                            statusLabel.textContent = 'Pasif';
+                            statusLabel.classList.remove('bg-success');
+                            statusLabel.classList.add('bg-secondary');
+                        }
+                        // showToast(data.message, 'success'); // İsteğe bağlı: Başarı mesajı göster
+                        console.log('Hatırlatıcı durumu güncellendi:', data.message);
+                    } else {
+                        // Hata durumunda switch'i eski haline getir ve hata mesajı göster
+                        this.checked = !yeniDurum; // Switch'i geri al
+                        showToast('Durum güncellenirken hata oluştu: ' + data.message, 'danger');
+                        console.error('Durum güncelleme hatası:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('AJAX Hatası:', error);
+                    this.checked = !yeniDurum; // Switch'i geri al
+                     showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
+                });
+            });
+        });
+
+    });
+</script>
+{% endblock %}
+
 {% endblock %} 

@@ -5,23 +5,30 @@
 {% block content %}
 <div class="container-fluid py-4">
     <!-- YKS Hazırlık Navigasyon Menüsü -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <nav class="nav nav-pills nav-fill">
-                        <a class="nav-link" href="{% url 'yks:hedef_listesi' %}">
-                            <i class="bi bi-bullseye me-2"></i> Hedeflerim
-                        </a>
-                        <a class="nav-link" href="{% url 'yks:calisma_plani_listesi' %}">
-                            <i class="bi bi-calendar3-week me-2"></i> Çalışma Planı
-                        </a>
-                        <a class="nav-link active" href="{% url 'yks:hatirlatici_listesi' %}">
-                            <i class="bi bi-bell me-2"></i> Hatırlatıcılar
-                        </a>
-                    </nav>
+    <div class="row mb-4 justify-content-center g-3">
+        <div class="col-12 col-md-4">
+            <a href="{% url 'yks:hedef_listesi' %}" class="tool-card-link">
+                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'hedef_listesi' %}active-tool-card{% endif %}">
+                    <i class="bi bi-bullseye tool-icon text-primary mb-2"></i>
+                    <div class="fw-bold">Hedeflerim</div>
                 </div>
-            </div>
+            </a>
+        </div>
+        <div class="col-12 col-md-4">
+            <a href="{% url 'yks:calisma_plani_listesi' %}" class="tool-card-link">
+                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'calisma_plani_listesi' %}active-tool-card{% endif %}">
+                    <i class="bi bi-calendar3-week tool-icon text-success mb-2"></i>
+                    <div class="fw-bold">Çalışma Planı</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-12 col-md-4">
+            <a href="{% url 'yks:hatirlatici_listesi' %}" class="tool-card-link">
+                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'hatirlatici_listesi' %}active-tool-card{% endif %}">
+                    <i class="bi bi-bell tool-icon text-warning mb-2"></i>
+                    <div class="fw-bold">Hatırlatıcılar</div>
+                </div>
+            </a>
         </div>
     </div>
 
@@ -198,35 +205,15 @@
                                         </thead>
                                         <tbody>
                                             {% for hatirlatici in bugunun_hatirlaticilari %}
-                                                <tr class="{% if not hatirlatici.aktif %}table-secondary{% endif %}">
+                                                <tr>
+                                                    <td>{{ hatirlatici.baslik }}</td>
+                                                    <td>{{ hatirlatici.hatirlatma_tarihi|time:"H:i" }}</td>
                                                     <td>
-                                                        <div class="fw-bold">{{ hatirlatici.baslik }}</div>
-                                                        {% if hatirlatici.aciklama %}
-                                                            <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hatirlatici.aciklama }}</small>
-                                                        {% endif %}
+                                                        <span class="badge bg-warning text-dark">{{ hatirlatici.get_durum_display }}</span>
                                                     </td>
                                                     <td>
-                                                        <span class="badge bg-warning text-dark">{{ hatirlatici.hatirlatma_tarihi|time:"H:i" }}</span>
-                                                    </td>
-                                                    <td>
-                                                        {% if hatirlatici.aktif %}
-                                                            <div class="form-check form-switch">
-                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-bugun-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
-                                                                <label class="form-check-label" for="aktifSwitch-bugun-{{ hatirlatici.id }}"><span class="badge bg-success">Aktif</span></label>
-                                                            </div>
-                                                        {% else %}
-                                                             <div class="form-check form-switch">
-                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-bugun-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
-                                                                 <label class="form-check-label" for="aktifSwitch-bugun-{{ hatirlatici.id }}"><span class="badge bg-secondary">Pasif</span></label>
-                                                            </div>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
-                                                        <div class="btn-group" role="group">
-                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-hatirlatici-icon" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-hatirlatici-id="{{ hatirlatici.id }}">
-                                                                <i class="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </div>
+                                                        <a href="{% url 'yks:hatirlatici_duzenle' hatirlatici.id %}" class="btn btn-sm btn-primary">Düzenle</a>
+                                                        <a href="{% url 'yks:hatirlatici_sil' hatirlatici.id %}" class="btn btn-sm btn-danger delete-hatirlatici-icon" data-hatirlatici-id="{{ hatirlatici.id }}">Sil</a>
                                                     </td>
                                                 </tr>
                                             {% endfor %}
@@ -234,161 +221,21 @@
                                     </table>
                                 </div>
                             {% else %}
-                                <div class="p-5 text-center">
-                                    <div class="py-5">
-                                        <i class="bi bi-calendar-check text-muted display-1 mb-3"></i>
-                                        <h4>Bugün İçin Hatırlatıcı Yok</h4>
-                                        <p class="text-muted">Bugün için planlanmış bir hatırlatıcı bulunmuyor.</p>
-                                        <a href="{% url 'yks:hatirlatici_ekle' %}" class="btn btn-primary mt-3">
-                                            <i class="bi bi-plus-circle me-2"></i> Hatırlatıcı Ekle
-                                        </a>
-                                    </div>
-                                </div>
+                                <p class="text-muted small text-center">Bugün için planlanmış hatırlatıcı bulunmuyor.</p>
                             {% endif %}
                         </div>
-                        
                         <!-- Yaklaşan Hatırlatıcılar Sekmesi -->
                         <div class="tab-pane fade" id="yaklasan" role="tabpanel" aria-labelledby="yaklasan-tab">
-                            {% if yaklasan_hatirlaticilar_tab %}
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th scope="col" style="width: 40%">Hatırlatıcı</th>
-                                                <th scope="col">Tarih & Saat</th>
-                                                <th scope="col">Durum</th>
-                                                <th scope="col" style="width: 20%">İşlemler</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for hatirlatici in yaklasan_hatirlaticilar_tab %}
-                                                <tr class="{% if not hatirlatici.aktif %}table-secondary{% endif %}">
-                                                    <td>
-                                                        <div class="fw-bold">{{ hatirlatici.baslik }}</div>
-                                                        {% if hatirlatici.aciklama %}
-                                                            <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hatirlatici.aciklama }}</small>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
-                                                        <div class="d-flex flex-column">
-                                                            <span class="badge bg-light text-dark mb-1">
-                                                                <i class="bi bi-calendar3 text-primary me-1"></i> {{ hatirlatici.hatirlatma_tarihi|date:"d.m.Y" }}
-                                                            </span>
-                                                            <span class="badge bg-warning text-dark">
-                                                                <i class="bi bi-clock me-1"></i> {{ hatirlatici.hatirlatma_tarihi|time:"H:i" }}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        {% if hatirlatici.aktif %}
-                                                            <div class="form-check form-switch">
-                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-yaklasan-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
-                                                                <label class="form-check-label" for="aktifSwitch-yaklasan-{{ hatirlatici.id }}"><span class="badge bg-success">Aktif</span></label>
-                                                            </div>
-                                                        {% else %}
-                                                             <div class="form-check form-switch">
-                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-yaklasan-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
-                                                                 <label class="form-check-label" for="aktifSwitch-yaklasan-{{ hatirlatici.id }}"><span class="badge bg-secondary">Pasif</span></label>
-                                                            </div>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
-                                                        <div class="btn-group" role="group">
-                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-hatirlatici-icon" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-hatirlatici-id="{{ hatirlatici.id }}">
-                                                                <i class="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% else %}
-                                <div class="p-5 text-center">
-                                    <div class="py-5">
-                                        <i class="bi bi-calendar-range text-muted display-1 mb-3"></i>
-                                        <h4>Yaklaşan Hatırlatıcı Yok</h4>
-                                        <p class="text-muted">Yaklaşan hatırlatıcınız bulunmuyor.</p>
-                                        <a href="{% url 'yks:hatirlatici_ekle' %}" class="btn btn-primary mt-3">
-                                            <i class="bi bi-plus-circle me-2"></i> Hatırlatıcı Ekle
-                                        </a>
-                                    </div>
-                                </div>
-                            {% endif %}
+                            <!-- Yaklaşan hatırlatıcılar için içerik burada gösterilecek -->
                         </div>
-                        
                         <!-- Geçmiş Hatırlatıcılar Sekmesi -->
                         <div class="tab-pane fade" id="gecmis" role="tabpanel" aria-labelledby="gecmis-tab">
-                            {% if gecmis_hatirlaticilar_tab %}
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-hover mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th scope="col" style="width: 40%">Hatırlatıcı</th>
-                                                <th scope="col">Tarih & Saat</th>
-                                                <th scope="col">Durum</th>
-                                                <th scope="col" style="width: 20%">İşlemler</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for hatirlatici in gecmis_hatirlaticilar_tab %}
-                                                <tr class="{% if not hatirlatici.aktif %}table-secondary{% endif %}">
-                                                    <td>
-                                                        <div class="fw-bold">{{ hatirlatici.baslik }}</div>
-                                                        {% if hatirlatici.aciklama %}
-                                                            <small class="text-muted d-block text-truncate" style="max-width: 300px;">{{ hatirlatici.aciklama }}</small>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
-                                                        <div class="d-flex flex-column">
-                                                            <span class="badge bg-light text-dark mb-1">
-                                                                <i class="bi bi-calendar3 text-secondary me-1"></i> {{ hatirlatici.hatirlatma_tarihi|date:"d.m.Y" }}
-                                                            </span>
-                                                            <span class="badge bg-secondary text-white">
-                                                                <i class="bi bi-clock me-1"></i> {{ hatirlatici.hatirlatma_tarihi|time:"H:i" }}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                     <td>
-                                                        {% if hatirlatici.aktif %}
-                                                            <div class="form-check form-switch">
-                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-gecmis-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
-                                                                <label class="form-check-label" for="aktifSwitch-gecmis-{{ hatirlatici.id }}"><span class="badge bg-success">Aktif</span></label>
-                                                            </div>
-                                                        {% else %}
-                                                             <div class="form-check form-switch">
-                                                                <input class="form-check-input hatirlatici-aktif-switch" type="checkbox" role="switch" id="aktifSwitch-gecmis-{{ hatirlatici.id }}" data-hatirlatici-id="{{ hatirlatici.id }}" {% if hatirlatici.aktif %}checked{% endif %}>
-                                                                 <label class="form-check-label" for="aktifSwitch-gecmis-{{ hatirlatici.id }}"><span class="badge bg-secondary">Pasif</span></label>
-                                                            </div>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td>
-                                                        <div class="btn-group" role="group">
-                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-hatirlatici-icon" data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal" data-hatirlatici-id="{{ hatirlatici.id }}">
-                                                                <i class="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% else %}
-                                <div class="p-5 text-center">
-                                    <div class="py-5">
-                                        <i class="bi bi-calendar-x text-muted display-1 mb-3"></i>
-                                        <h4>Geçmiş Hatırlatıcı Yok</h4>
-                                        <p class="text-muted">Geçmiş hatırlatıcınız bulunmuyor.</p>
-                                    </div>
-                                </div>
-                            {% endif %}
+                            <!-- Geçmiş hatırlatıcılar için içerik burada gösterilecek -->
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Takvim Görünümü -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
@@ -457,6 +304,35 @@
     min-width: 400px; /* Minimum genişliği biraz daha artır */
     /* İsteğe bağlı: Daha belirgin bir border */
     /* border: 2px solid rgba(0,0,0,0.1); */
+}
+
+.tool-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: box-shadow 0.2s;
+}
+.tool-card {
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.07);
+    border: 1.5px solid #e6e6e6;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    cursor: pointer;
+}
+.tool-card:hover, .tool-card-link:hover .tool-card {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 8px 24px rgba(44,62,80,0.13);
+    border-color: #b3b3b3;
+}
+.active-tool-card {
+    border: 2.5px solid #0d6efd;
+    box-shadow: 0 8px 32px rgba(13,110,253,0.10);
+}
+.tool-icon {
+    font-size: 1.7rem;
+    display: block;
+    margin-bottom: 0.5rem;
 }
 </style>
 

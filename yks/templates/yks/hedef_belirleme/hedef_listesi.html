@@ -5,23 +5,30 @@
 {% block content %}
 <div class="container-fluid py-4">
     <!-- YKS Hazırlık Navigasyon Menüsü -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <nav class="nav nav-pills nav-fill">
-                        <a class="nav-link active" href="{% url 'yks:hedef_listesi' %}">
-                            <i class="bi bi-bullseye me-2"></i> Hedeflerim
-                        </a>
-                        <a class="nav-link" href="{% url 'yks:calisma_plani_listesi' %}">
-                            <i class="bi bi-calendar3-week me-2"></i> Çalışma Planı
-                        </a>
-                        <a class="nav-link" href="{% url 'yks:hatirlatici_listesi' %}">
-                            <i class="bi bi-bell me-2"></i> Hatırlatıcılar
-                        </a>
-                    </nav>
+    <div class="row mb-4 justify-content-center g-3">
+        <div class="col-12 col-md-4">
+            <a href="{% url 'yks:hedef_listesi' %}" class="tool-card-link">
+                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'hedef_listesi' %}active-tool-card{% endif %}">
+                    <i class="bi bi-bullseye tool-icon text-primary mb-2"></i>
+                    <div class="fw-bold">Hedeflerim</div>
                 </div>
-            </div>
+            </a>
+        </div>
+        <div class="col-12 col-md-4">
+            <a href="{% url 'yks:calisma_plani_listesi' %}" class="tool-card-link">
+                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'calisma_plani_listesi' %}active-tool-card{% endif %}">
+                    <i class="bi bi-calendar3-week tool-icon text-success mb-2"></i>
+                    <div class="fw-bold">Çalışma Planı</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-12 col-md-4">
+            <a href="{% url 'yks:hatirlatici_listesi' %}" class="tool-card-link">
+                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'hatirlatici_listesi' %}active-tool-card{% endif %}">
+                    <i class="bi bi-bell tool-icon text-warning mb-2"></i>
+                    <div class="fw-bold">Hatırlatıcılar</div>
+                </div>
+            </a>
         </div>
     </div>
 
@@ -178,6 +185,7 @@
                         <a href="?sekme={{ sekme }}&tur=Özel" class="btn btn-sm {% if tur == 'Özel' %}btn-primary text-white{% else %}btn-outline-primary{% endif %}">Özel</a>
                     </div>
 
+                    <!-- Hedef Kategorileri İçerikler -->
                     {% if sekme == 'aktif' %}
                         {% if hedefler %}
                             <div class="table-responsive">
@@ -672,4 +680,54 @@ function getCookie(name) {
     return cookieValue;
 }
 </script>
+
+<style>
+.tool-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: box-shadow 0.2s;
+}
+.tool-card {
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.07);
+    border: 1.5px solid #e6e6e6;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    cursor: pointer;
+}
+.tool-card:hover, .tool-card-link:hover .tool-card {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 8px 24px rgba(44,62,80,0.13);
+    border-color: #b3b3b3;
+}
+.active-tool-card {
+    border: 2.5px solid #0d6efd;
+    box-shadow: 0 8px 32px rgba(13,110,253,0.10);
+}
+.tool-icon {
+    font-size: 1.7rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Sekme yazılarını daha okunaklı ve koyu yap */
+.nav-tabs .nav-link {
+    color: #222 !important;
+    font-weight: 500;
+    font-size: 1.08rem;
+    opacity: 1 !important;
+    background: #f8f9fa;
+    border: 1.5px solid #e0e0e0;
+    margin-right: 2px;
+    transition: background 0.2s, color 0.2s;
+}
+.nav-tabs .nav-link.active, .nav-tabs .nav-link:focus, .nav-tabs .nav-link:hover {
+    color: #0d6efd !important;
+    background: #fff !important;
+    border-bottom: 2.5px solid #0d6efd !important;
+    font-weight: 600;
+    opacity: 1 !important;
+}
+</style>
 {% endblock %} 

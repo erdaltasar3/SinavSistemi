@@ -1,133 +1,111 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}YKS - Sınav Sistemi{% endblock %}
 
 {% block content %}
+<!-- YENİ YKS ARKA PLAN ve OVERLAY -->
+<div class="yks-bg-overlay position-fixed top-0 start-0 w-100 h-100"></div>
 
-
-<!-- Oturumlar Section -->
-<div class="py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Yaklaşan YKS Oturumları</h2>
-        
-        {% if oturumlar %}
-            <div class="row g-4">
-                {% for oturum in oturumlar %}
-                    <div class="col-md-4">
-                        <a href="{% url 'yks:oturum_dersleri' oturum.kod %}" class="text-decoration-none text-dark">
-                        <div class="card h-100 hover-shadow">
-                            <div class="card-body">
-                                <h3 class="card-title">{{ oturum.ad }}</h3>
-                                <h5 class="card-subtitle mb-2 text-muted">{{ oturum.kod }} - {{ oturum.yil }}</h5>
-                                <p class="card-text">{{ oturum.aciklama|default:"Açıklama bulunmuyor." }}</p>
-                                {% if oturum.sinav_tarihi %}
-                                    <div class="mt-3 d-flex align-items-center">
-                                        <i class="bi bi-calendar-event text-primary me-2"></i>
-                                        <strong>Sınav Tarihi:</strong> 
-                                        <span class="ms-2">{{ oturum.sinav_tarihi|date:"d F Y, H:i" }}</span>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        </a>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="alert alert-info">
-                Henüz YKS oturumu bulunmamaktadır. Lütfen daha sonra tekrar kontrol ediniz.
-            </div>
-        {% endif %}
+<!-- MOTİVASYON BAŞLIK (KÜÇÜK VE SADE) -->
+<section class="hero-section py-3 mb-3">
+    <div class="container text-center">
+        <h2 class="fw-bold text-white mb-1" style="font-size:2rem; letter-spacing:0.5px;">YKS Hazırlık Araçları</h2>
+        <p class="lead text-white-50 mb-0" style="font-size:1.05rem;">Başarı yolculuğunda ihtiyacın olan her şey burada!</p>
     </div>
-</div>
+</section>
 
-<!-- YKS Araçları Section -->
-<div class="py-5 bg-light">
+<!-- YKS ARAÇLARI (ÖZELLİKLER) -->
+<section class="yks-tools-section py-2">
     <div class="container">
-        <h2 class="text-center mb-5">YKS Hazırlık Araçları</h2>
-        <div class="row g-4">
-            <!-- Deneme Sınavları -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="bi bi-clipboard-check text-primary" style="font-size: 2.5rem;"></i>
-                        </div>
-                        <h3 class="card-title h4">Deneme Sınavları</h3>
-                        <p class="card-text">TYT, AYT ve YDT için güncel deneme sınavlarını çözün ve performansınızı ölçün.</p>
-                        <a href="{% url 'yks:deneme_sinav_listesi' %}" class="btn btn-primary mt-3">Denemelere Git</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Sınav Sonuçları & Analiz -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="bi bi-bar-chart-line text-success" style="font-size: 2.5rem;"></i>
-                        </div>
-                        <h3 class="card-title h4">Sınav Sonuçları & Analiz</h3>
-                        <p class="card-text">Sınav sonuçlarınızı analiz edin, güçlü ve zayıf yönlerinizi belirleyin.</p>
-                        <a href="#" class="btn btn-success mt-3">Analizlere Git</a>
-                    </div>
-                </div>
-            </div>
-            
+        <div class="row g-4 justify-content-center">
             <!-- Konu Takip Sistemi -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="bi bi-journal-check text-info" style="font-size: 2.5rem;"></i>
-                        </div>
-                        <h3 class="card-title h4">Konu Takip Sistemi</h3>
-                        <p class="card-text">Çalıştığınız konuları işaretleyin, eksik ve tamamladığınız konuları kolayca görün.</p>
-                        <a href="{% url 'yks:konu_takip_sinav_secim' %}" class="btn btn-info mt-3 text-white">Konuları Takip Et</a>
+            <div class="col-12 col-sm-6 col-lg-3" data-aos="zoom-in" data-aos-delay="100">
+                <a href="{% url 'yks:konu_takip_sinav_secim' %}" class="tool-card-link">
+                <div class="tool-card card h-100 text-center shadow-sm">
+                    <div class="card-body py-4 px-2">
+                        <i class="bi bi-journal-check tool-icon text-info mb-3"></i>
+                        <h5 class="card-title mb-2">Konu Takip Sistemi</h5>
+                        <p class="card-text small">Çalıştığın konuları işaretle, eksiklerini ve tamamladıklarını kolayca takip et.</p>
                     </div>
                 </div>
+                </a>
             </div>
-            
-            <!-- Hedef Belirleme -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="bi bi-calendar-event text-danger" style="font-size: 2.5rem;"></i>
-                        </div>
-                        <h3 class="card-title h4">Hedef Belirleme</h3>
-                        <p class="card-text">Günlük, haftalık ve aylık çalışma hedeflerinizi belirleyin ve takip edin.</p>
-                        <a href="{% url 'yks:hedef_listesi' %}" class="btn btn-danger mt-3">Hedeflere Git</a>
+            <!-- Hedeflerim -->
+            <div class="col-12 col-sm-6 col-lg-3" data-aos="zoom-in" data-aos-delay="200">
+                <a href="{% url 'yks:hedef_listesi' %}" class="tool-card-link">
+                <div class="tool-card card h-100 text-center shadow-sm">
+                    <div class="card-body py-4 px-2">
+                        <i class="bi bi-bullseye tool-icon text-warning mb-3"></i>
+                        <h5 class="card-title mb-2">Hedeflerim</h5>
+                        <p class="card-text small">Kısa ve uzun vadeli hedeflerini belirle, ilerlemeni gör.</p>
                     </div>
                 </div>
+                </a>
+            </div>
+            <!-- Çalışma Planım -->
+            <div class="col-12 col-sm-6 col-lg-3" data-aos="zoom-in" data-aos-delay="300">
+                <a href="{% url 'yks:calisma_plani_listesi' %}" class="tool-card-link">
+                <div class="tool-card card h-100 text-center shadow-sm">
+                    <div class="card-body py-4 px-2">
+                        <i class="bi bi-calendar-week tool-icon text-success mb-3"></i>
+                        <h5 class="card-title mb-2">Çalışma Planım</h5>
+                        <p class="card-text small">Kişisel çalışma planı oluştur, günlük ve haftalık programını takip et.</p>
+                    </div>
+                </div>
+                </a>
+            </div>
+            <!-- Hatırlatıcılar -->
+            <div class="col-12 col-sm-6 col-lg-3" data-aos="zoom-in" data-aos-delay="400">
+                <a href="{% url 'yks:hatirlatici_listesi' %}" class="tool-card-link">
+                <div class="tool-card card h-100 text-center shadow-sm">
+                    <div class="card-body py-4 px-2">
+                        <i class="bi bi-bell tool-icon text-danger mb-3"></i>
+                        <h5 class="card-title mb-2">Hatırlatıcılar</h5>
+                        <p class="card-text small">Çalışma ve sınav hatırlatıcıları kur, hiçbir şeyi kaçırma.</p>
+                    </div>
+                </div>
+                </a>
+            </div>
+            <!-- Deneme Sınavı Takibi -->
+            <div class="col-12 col-sm-6 col-lg-3" data-aos="zoom-in" data-aos-delay="500">
+                <a href="{% url 'yks:deneme_sinav_listesi' %}" class="tool-card-link">
+                <div class="tool-card card h-100 text-center shadow-sm">
+                    <div class="card-body py-4 px-2">
+                        <i class="bi bi-clipboard-check tool-icon text-primary mb-3"></i>
+                        <h5 class="card-title mb-2">Deneme Sınavı Takibi</h5>
+                        <p class="card-text small">Çözdüğün deneme sınavlarını kaydet, analiz et ve gelişimini izle.</p>
+                    </div>
+                </div>
+                </a>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- Features Section -->
-<div class="py-5">
+<!-- YKS OTURUMLARI ve BİLGİLER -->
+<section class="yks-sessions-section py-5">
     <div class="container">
-        <h2 class="text-center mb-5">YKS Hakkında</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100">
+        <h2 class="text-center text-white mb-5" data-aos="fade-up">YKS Oturumları</h2>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4" data-aos="flip-left" data-aos-delay="100">
+                <div class="card h-100 bg-dark text-white shadow">
                     <div class="card-body text-center">
                         <h3 class="card-title h4">TYT</h3>
                         <p class="card-text">Temel Yeterlilik Testi: Türkçe, matematik, fen bilimleri ve sosyal bilimler testlerinden oluşur.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100">
+            <div class="col-md-4" data-aos="flip-left" data-aos-delay="200">
+                <div class="card h-100 bg-dark text-white shadow">
                     <div class="card-body text-center">
                         <h3 class="card-title h4">AYT</h3>
                         <p class="card-text">Alan Yeterlilik Testi: Matematik, fen bilimleri, Türk dili ve edebiyatı-sosyal bilimler testlerinden oluşur.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100">
+            <div class="col-md-4" data-aos="flip-left" data-aos-delay="300">
+                <div class="card h-100 bg-dark text-white shadow">
                     <div class="card-body text-center">
                         <h3 class="card-title h4">YDT</h3>
                         <p class="card-text">Yabancı Dil Testi: İngilizce, Almanca, Fransızca, Rusça veya Arapça dillerinden birinde sınav yapılır.</p>
@@ -136,5 +114,78 @@
             </div>
         </div>
     </div>
-</div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css"/>
+<style>
+.yks-bg-overlay {
+    background: #181c24 url('{% static "images/hero-bg.jpg" %}') no-repeat center center fixed;
+    background-size: cover;
+    opacity: 0.85;
+    z-index: -1;
+}
+.hero-section {
+    position: relative;
+    z-index: 2;
+    background: rgba(0,0,0,0.55);
+    border-radius: 24px;
+    margin-bottom: 2.5rem;
+}
+.hero-section h1, .hero-section p {
+    text-shadow: 0 4px 24px rgba(30,60,114,0.25);
+}
+.yks-tools-section, .yks-sessions-section {
+    position: relative;
+    z-index: 1;
+}
+.tool-card {
+    border-radius: 16px;
+    background: rgba(255,255,255,0.96);
+    transition: transform 0.3s cubic-bezier(.25,.8,.25,1), box-shadow 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 16px rgba(44,62,80,0.10);
+    cursor: pointer;
+    min-height: 260px;
+    max-width: 320px;
+    margin: 0 auto;
+    border: 1.5px solid #e6e6e6;
+}
+.tool-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: box-shadow 0.2s;
+}
+.tool-card:hover, .tool-card-link:hover .tool-card {
+    transform: translateY(-8px) scale(1.04) rotate(-1deg);
+    box-shadow: 0 12px 32px rgba(44,62,80,0.18);
+    border-color: #b3b3b3;
+}
+.tool-icon {
+    font-size: 2.3rem;
+    display: block;
+    transition: transform 0.3s;
+}
+.tool-card:hover .tool-icon {
+    transform: scale(1.15) rotate(-8deg);
+}
+.yks-sessions-section .card {
+    border-radius: 18px;
+    background: rgba(24,28,36,0.97) !important;
+    color: #fff;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.10);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script>
+  AOS.init({
+    duration: 900,
+    once: true
+  });
+</script>
 {% endblock %} 

@@ -177,22 +177,90 @@
     .animate-delay-1 { animation-delay: 0.1s; }
     .animate-delay-2 { animation-delay: 0.2s; }
     .animate-delay-3 { animation-delay: 0.3s; }
+    
+    body {
+        background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+        background-size: cover;
+        background-color: #181c24;
+        position: relative;
+    }
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(24,28,36,0.85);
+        z-index: 0;
+        pointer-events: none;
+    }
+    main, .container, .main-content-wrapper, .features-section, .parallax-section, .cta-section {
+        position: relative;
+        z-index: 1;
+    }
+    .dersler-header {
+        margin-bottom: 1.2rem;
+        margin-top: 0.5rem;
+        text-align: center;
+    }
+    .dersler-header h2, .dersler-header h3, .dersler-header p {
+        color: #fff !important;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.25), 0 1px 0 #222;
+    }
+    .dersler-header h2 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 0.3rem;
+    }
+    .dersler-header h3 {
+        font-size: 1.3rem;
+        font-weight: 500;
+        margin-bottom: 0.2rem;
+    }
+    .dersler-header p {
+        font-size: 1.08rem;
+        margin-bottom: 0.2rem;
+    }
+    .modern-back-btn {
+        position: fixed;
+        top: 90px;
+        left: 32px;
+        z-index: 20;
+        background: rgba(13,110,253,0.92);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 16px rgba(13,110,253,0.13);
+        font-size: 1.7rem;
+        transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+        cursor: pointer;
+        outline: none;
+    }
+    .modern-back-btn:hover {
+        background: #0d6efd;
+        box-shadow: 0 8px 32px rgba(13,110,253,0.22);
+        transform: scale(1.08);
+    }
+    @media (max-width: 700px) {
+        .modern-back-btn { top: 70px; left: 10px; width: 40px; height: 40px; font-size: 1.2rem; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Geri Dön Butonu -->
-<a href="{% url 'yks:konu_takip_sinav_secim' %}" class="back-button">
-    <i class="bi bi-arrow-left"></i>
-</a>
-
-<div class="container py-5">
-    <h2 class="text-center mb-3">Konu Takip Sistemi</h2>
-    <p class="text-center text-muted mb-5">{{ sinav_kodu }} sınavı ders listesi</p>
+<div class="container py-2">
+    <div class="dersler-header">
+        <h2>Konu Takip Sistemi</h2>
+        <h3>{{ alt_tur_dersler.0.alt_tur.ad }}</h3>
+        
+    </div>
     
     {% for alt_tur_data in alt_tur_dersler %}
         <div class="mb-5">
-            <h3 class="alt-tur-title"><i class="bi bi-book me-2 text-primary"></i>{{ alt_tur_data.alt_tur.ad }}</h3>
+            <h3 class="alt-tur-title" style="color:#fff; text-shadow:0 2px 12px rgba(0,0,0,0.25),0 1px 0 #222;"><i class="bi bi-book me-2 text-primary"></i>{{ alt_tur_data.alt_tur.ad }}</h3>
             <div class="row g-4">
                 {% for ders_data in alt_tur_data.dersler %}
                     <div class="col-md-4 animate-card animate-delay-{{ forloop.counter|divisibleby:3|yesno:'3,1,2' }}">

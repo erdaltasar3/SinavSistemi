@@ -3,158 +3,224 @@
 {% block title %}Konu Takip - YKS Oturum Seçimi{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <style>
-    .oturum-card {
-        transition: all 0.4s ease;
-        border-radius: 15px;
+    body {
+        background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+        background-size: cover;
+        background-color: #181c24;
+        position: relative;
+    }
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(120deg, rgba(24,28,36,0.85) 60%, rgba(13,110,253,0.25) 100%);
+        backdrop-filter: blur(2.5px);
+        z-index: 0;
+        pointer-events: none;
+    }
+    .modern-oturum-section {
+        position: relative;
+        z-index: 1;
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-top: 0.5rem;
+        padding-bottom: 1rem;
+    }
+    .yks-oturum-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2.2rem;
+        justify-items: center;
+        align-items: stretch;
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    @media (max-width: 1100px) {
+        .yks-oturum-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    @media (max-width: 700px) {
+        .yks-oturum-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .yks-oturum-card {
+        background: rgba(255,255,255,0.18);
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px 0 rgba(13,110,253,0.10), 0 2px 8px rgba(0,0,0,0.08);
+        padding: 2.5rem 1.5rem 2rem 1.5rem;
+        min-width: 260px;
+        max-width: 340px;
+        width: 100%;
+        text-align: center;
+        transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s, background 0.3s;
+        border: 1.5px solid rgba(13,110,253,0.13);
+        position: relative;
+        color: #fff;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         overflow: hidden;
-        margin-bottom: 20px;
-        position: relative;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        border: none;
-    }
-    
-    .oturum-card:hover {
-        transform: translateY(-10px) scale(1.02);
-        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-    }
-    
-    .oturum-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        min-height: 370px;
         height: 100%;
-        background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.3));
-        opacity: 0;
-        transition: opacity 0.3s ease;
     }
-    
-    .oturum-card:hover::before {
-        opacity: 1;
-    }
-    
-    .oturum-icon {
-        font-size: 5rem;
-        margin-bottom: 20px;
-        color: #0d6efd;
-        transition: all 0.3s ease;
-    }
-    
-    .oturum-card:hover .oturum-icon {
-        transform: scale(1.2);
-    }
-    
-    .oturum-title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-    
-    .oturum-description {
-        color: #6c757d;
-        font-size: 1.1rem;
-    }
-    
-    .header-title {
-        position: relative;
-        display: inline-block;
-    }
-    
-    .header-title::after {
+    .yks-oturum-card::before {
         content: '';
         position: absolute;
-        bottom: -10px;
-        left: 0;
-        width: 100%;
-        height: 4px;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(135deg, rgba(13,110,253,0.08) 0%, rgba(255,255,255,0.10) 100%);
+        z-index: 0;
+        pointer-events: none;
+    }
+    .yks-oturum-card > * { position: relative; z-index: 1; }
+    .yks-oturum-card:hover {
+        box-shadow: 0 18px 48px 0 rgba(13,110,253,0.18), 0 4px 16px rgba(0,0,0,0.10);
+        border-color: #0d6efd;
+        background: rgba(255,255,255,0.28);
+        transform: translateY(-8px) scale(1.04);
+    }
+    .yks-oturum-icon {
+        font-size: 3.2rem;
+        margin-bottom: 1.2rem;
+        color: #0d6efd;
+        display: block;
+    }
+    .yks-oturum-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.7rem;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 1px 0 #222;
+        min-height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .yks-oturum-desc {
+        color: #e0e6ef;
+        font-size: 1.08rem;
+        margin-bottom: 1.7rem;
+        font-weight: 400;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.13);
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .yks-oturum-btn {
         background: linear-gradient(90deg, #0d6efd, #0dcaf0);
-        border-radius: 2px;
+        color: #fff;
+        border: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+        padding: 0.7rem 2.2rem;
+        border-radius: 50px;
+        box-shadow: 0 2px 12px rgba(13,110,253,0.10);
+        transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+        display: inline-block;
+        margin-top: auto;
+    }
+    .yks-oturum-btn:hover {
+        background: linear-gradient(90deg, #0dcaf0, #0d6efd);
+        color: #fff;
+        box-shadow: 0 6px 24px rgba(13,110,253,0.18);
+        transform: scale(1.06);
+    }
+    footer, .footer, .site-footer {
+        background: rgba(24,28,36,0.85) !important;
+        color: #fff !important;
+        text-align: center;
+        padding: 1rem 0;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 -2px 16px rgba(0,0,0,0.10);
+        border-top: 1.5px solid rgba(13,110,253,0.13);
+    }
+    .text-center.mb-5 h3,
+    .text-center.mb-5 p.lead,
+    .lead.text-muted {
+        color: #fff !important;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.25), 0 1px 0 #222;
     }
 </style>
+{{ block.super }}
 {% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="text-center mb-5 header-title">Konu Takip Sistemi</h2>
+<div class="modern-oturum-section">
+  <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="text-center mb-5">
-                <h3 class="mb-4">YKS Oturum Seçimi</h3>
-                <p class="lead text-muted">Hangi sınav oturumuna ait dersleri ve konuları takip etmek istediğinizi seçin.</p>
-            </div>
-            
-            
-            <div class="row g-4 justify-content-center">
-                {% for alt_tur in alt_turler %}
-                <div class="col-md-4">
-                    <a href="{% url 'yks:konu_takip_dersler' alt_tur.kod %}" class="text-decoration-none">
-                        <div class="card oturum-card h-100">
-                            <div class="card-body text-center py-5">
-                                <div class="oturum-icon">
-                                    {% if alt_tur.kod == 'TYT' %}
-                                    <i class="bi bi-journals"></i>
-                                    {% elif alt_tur.kod == 'AYT' %}
-                                    <i class="bi bi-book"></i>
-                                    {% elif alt_tur.kod == 'YDT' %}
-                                    <i class="bi bi-translate"></i>
-                                    {% else %}
-                                    <i class="bi bi-bank"></i>
-                                    {% endif %}
-                                </div>
-                                <h3 class="oturum-title">{{ alt_tur.ad }}</h3>
-                                <p class="oturum-description mb-4">
-                                    {% if alt_tur.kod == 'TYT' %}
-                                    Temel Yeterlilik Testi: Türkçe, Matematik, Fen Bilimleri ve Sosyal Bilimler
-                                    {% elif alt_tur.kod == 'AYT' %}
-                                    Alan Yeterlilik Testi: Matematik, Fen Bilimleri ve Sosyal Bilimler
-                                    {% elif alt_tur.kod == 'YDT' %}
-                                    Yabancı Dil Testi: Dil sınavlarına yönelik yabancı dil dersleri
-                                    {% else %}
-                                    {{ alt_tur.aciklama|default:"Açıklama bulunmuyor." }}
-                                    {% endif %}
-                                </p>
-                                <div class="mt-4">
-                                    <span class="btn btn-primary btn-lg rounded-pill">
-                                        <i class="bi bi-arrow-right me-2"></i> Derslere Git
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                {% empty %}
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle-fill me-2"></i> Henüz YKS sınav oturumu tanımlanmamış.
-                    </div>
-                    
-                    <!-- YKS Alt Tür Butonları - Tanımlı veri yokken manuel erişim için -->
-                    <div class="mt-4 text-center">
-                        <h5 class="mb-3">YKS Oturumları için Hızlı Erişim</h5>
-                        <div class="d-flex justify-content-center gap-3">
-                            <a href="{% url 'yks:konu_takip_dersler' 'TYT' %}" class="btn btn-primary">
-                                TYT Dersleri
-                            </a>
-                            <a href="{% url 'yks:konu_takip_dersler' 'AYT' %}" class="btn btn-success">
-                                AYT Dersleri
-                            </a>
-                            <a href="{% url 'yks:konu_takip_dersler' 'YDT' %}" class="btn btn-info text-white">
-                                YDT Dersleri
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            <div class="text-center mt-5">
-                <a href="{% url 'yks:index' %}" class="btn btn-outline-secondary btn-lg">
-                    <i class="bi bi-house-door me-2"></i> Ana Sayfaya Dön
-                </a>
-            </div>
+      <div class="col-lg-10">
+        <div class="text-center mb-5">
+          <h3 class="mb-4 animate__animated animate__fadeInUp animate__delay-1s">YKS KONU TAKİP SİSTEMİ</h3>
+          <p class="lead text-muted animate__animated animate__fadeInUp animate__delay-2s">Hangi sınav oturumuna ait dersleri ve konuları takip etmek istediğinizi seçin.</p>
         </div>
+        <div class="yks-oturum-grid">
+          {% for alt_tur in alt_turler %}
+          <a href="{% url 'yks:konu_takip_dersler' alt_tur.kod %}" style="text-decoration:none;">
+            <div class="yks-oturum-card">
+              <span class="yks-oturum-icon">
+                {% if alt_tur.kod == 'TYT' %}
+                <i class="bi bi-journals"></i>
+                {% elif alt_tur.kod == 'AYT' %}
+                <i class="bi bi-book"></i>
+                {% elif alt_tur.kod == 'YDT' %}
+                <i class="bi bi-translate"></i>
+                {% else %}
+                <i class="bi bi-bank"></i>
+                {% endif %}
+              </span>
+              <div class="yks-oturum-title">{{ alt_tur.ad }}</div>
+              <div class="yks-oturum-desc">
+                {% if alt_tur.kod == 'TYT' %}
+                Temel Yeterlilik Testi: Türkçe, Matematik, Fen Bilimleri ve Sosyal Bilimler
+                {% elif alt_tur.kod == 'AYT' %}
+                Alan Yeterlilik Testi: Matematik, Fen Bilimleri ve Sosyal Bilimler
+                {% elif alt_tur.kod == 'YDT' %}
+                Yabancı Dil Testi: Dil sınavlarına yönelik yabancı dil dersleri
+                {% else %}
+                {{ alt_tur.aciklama|default:"Açıklama bulunmuyor." }}
+                {% endif %}
+              </div>
+              <span class="yks-oturum-btn">
+                <i class="bi bi-arrow-right me-2"></i> Derslere Git
+              </span>
+            </div>
+          </a>
+          {% empty %}
+          <div class="col-12">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle-fill me-2"></i> Henüz YKS sınav oturumu tanımlanmamış.
+            </div>
+            <div class="mt-4 text-center">
+              <h5 class="mb-3">YKS Oturumları için Hızlı Erişim</h5>
+              <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'yks:konu_takip_dersler' 'TYT' %}" class="btn btn-primary">TYT Dersleri</a>
+                <a href="{% url 'yks:konu_takip_dersler' 'AYT' %}" class="btn btn-success">AYT Dersleri</a>
+                <a href="{% url 'yks:konu_takip_dersler' 'YDT' %}" class="btn btn-info text-white">YDT Dersleri</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="text-center mt-5">
+          <a href="{% url 'yks:index' %}" class="btn btn-outline-secondary btn-lg">
+            <i class="bi bi-house-door me-2"></i> Ana Sayfaya Dön
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %} 

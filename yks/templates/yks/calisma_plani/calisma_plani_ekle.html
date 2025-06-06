@@ -4,26 +4,7 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- YKS Hazırlık Navigasyon Menüsü -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <nav class="nav nav-pills nav-fill">
-                        <a class="nav-link" href="{% url 'yks:hedef_listesi' %}">
-                            <i class="bi bi-bullseye me-2"></i> Hedeflerim
-                        </a>
-                        <a class="nav-link active" href="{% url 'yks:calisma_plani_listesi' %}">
-                            <i class="bi bi-calendar3-week me-2"></i> Çalışma Planı
-                        </a>
-                        <a class="nav-link" href="{% url 'yks:hatirlatici_listesi' %}">
-                            <i class="bi bi-bell me-2"></i> Hatırlatıcılar
-                        </a>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- YKS Hazırlık Navigasyon Menüsü kaldırıldı -->
 
     <div class="row">
         <!-- Sol Sidebar -->
@@ -50,22 +31,7 @@
                     </div>
                 </div>
                 
-                <!-- Hızlı Erişim Menüsü -->
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i> Hızlı Erişim</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="list-group list-group-flush">
-                            <a href="{% url 'yks:calisma_plani_listesi' %}" class="list-group-item list-group-item-action py-3">
-                                <i class="bi bi-arrow-left-circle-fill text-primary me-2"></i> Plan Listesine Dön
-                            </a>
-                            <a href="{% url 'yks:hedef_listesi' %}" class="list-group-item list-group-item-action py-3">
-                                <i class="bi bi-bullseye-fill text-primary me-2"></i> Hedeflerim
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                <!-- Hızlı Erişim Menüsü kaldırıldı -->
                 
                 <!-- İpuçları Kartı -->
                 <div class="card border-0 shadow-sm bg-light">
@@ -123,6 +89,10 @@
                                     </div>
                                 {% endif %}
                                 <div class="form-text">Planın uygulanacağı tarihi seçin.</div>
+                                <div id="tarih-uyari" class="text-danger mt-2" style="display: none;">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                    Geçmiş tarihli bir plan oluşturamazsınız!
+                                </div>
                             </div>
                             
                             <div class="col-12">
@@ -148,7 +118,7 @@
                                     <a href="{% url 'yks:calisma_plani_listesi' %}" class="btn btn-outline-secondary">
                                         <i class="bi bi-x-circle me-2"></i> İptal
                                     </a>
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
                                         <i class="bi bi-plus-circle me-2"></i> Planı Oluştur
                                     </button>
                                 </div>
@@ -159,6 +129,19 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Toast Mesaj Komponenti (Bildirim) -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="liveToast" class="toast hide bg-danger text-white" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="1500">
+    <div class="toast-header">
+      <strong class="me-auto"><i class="bi bi-exclamation-triangle-fill me-1"></i> Uyarı</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Geçmiş tarihli bir plan oluşturamazsınız!
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -173,6 +156,58 @@
                     firstDayOfWeek: 1
                 }
             });
+        }
+        
+        // Tarih alanı ve form
+        const tarihInput = document.getElementById('{{ form.tarih.id_for_label }}');
+        const form = document.querySelector('form');
+        const submitBtn = document.getElementById('submitBtn');
+        const tarihUyari = document.getElementById('tarih-uyari');
+        const toastLiveExample = document.getElementById('liveToast');
+        
+        // Bugün'ün tarihini yyyy-mm-dd formatına çevirme
+        function getBugunFormatted() {
+            const bugun = new Date();
+            const yil = bugun.getFullYear();
+            const ay = String(bugun.getMonth() + 1).padStart(2, '0');
+            const gun = String(bugun.getDate()).padStart(2, '0');
+            return `${yil}-${ay}-${gun}`;
+        }
+        
+        // Tarih alanını kontrol et ve geçmiş tarih seçilmesini engelle
+        function checkDate() {
+            const selectedDate = tarihInput.value;
+            const today = getBugunFormatted();
+            
+            if (selectedDate < today) {
+                tarihUyari.style.display = 'block';
+                submitBtn.disabled = true;
+                
+                // Toast mesajını göster
+                const toast = new bootstrap.Toast(toastLiveExample);
+                toast.show();
+                
+                return false;
+            } else {
+                tarihUyari.style.display = 'none';
+                submitBtn.disabled = false;
+                return true;
+            }
+        }
+        
+        // Tarih değiştiğinde kontrol et
+        tarihInput.addEventListener('change', checkDate);
+        
+        // Form gönderilmeden önce kontrol et
+        form.addEventListener('submit', function(e) {
+            if (!checkDate()) {
+                e.preventDefault();
+            }
+        });
+        
+        // Sayfa yüklendiğinde ilk kontrol
+        if (tarihInput.value) {
+            checkDate();
         }
     });
 </script>

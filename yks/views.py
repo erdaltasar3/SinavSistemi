@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Count, Case, When, IntegerField, Q, Sum, F, Avg, Exists, OuterRef, BooleanField
+from django.db.models import Count, Case, When, IntegerField, Q, Sum, F, Avg, Exists, OuterRef, BooleanField, Value
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from core.models import (
@@ -326,31 +326,57 @@ def hedef_listesi(request):
     """
     Kullanıcının hedeflerini sekme (aktif, tamamlanan, tamamlanmayan) ve tür (Günlük, Haftalık, Özel) filtrelerine göre listeler
     """
+    # Hedeflerin durumunu güncelle: Bitiş tarihi geçmiş hedefleri otomatik tamamlandı/tamamlanmadı yap
+    bugun = timezone.now().date()
+    gecmis_hedefler = Hedef.objects.filter(
+        kullanici=request.user,
+        bitis_tarihi__lt=bugun,
+        hedef_durum__id=1  # Sadece Aktif hedefleri güncelle
+    )
+    
+    for hedef in gecmis_hedefler:
+        # Hedefin tamamlanma oranını kontrol et
+        if hedef.tamamlanma_orani == 100:
+            # %100 tamamlandıysa durumunu "Tamamlandı" yap (ID=2)
+            hedef.hedef_durum_id = 2
+            hedef.save()
+        else:
+            # %100 tamamlanmadıysa durumunu "Tamamlanmadı" yap (ID=3)
+            hedef.hedef_durum_id = 3
+            hedef.save()
+    
     # Parametreleri al
     sekme = request.GET.get('sekme', 'aktif')
     tur = request.GET.get('tur', 'Günlük')
 
     # Temel queryset
     hedefler = Hedef.objects.filter(kullanici=request.user)
-
-    # Sekmeye göre filtrele
+    
+    # İstatistikler için filtrelenmiş sorgu başlat (sadece aktif filtrelere göre)
+    filtrelenmis_hedefler = hedefler
+    
+    # Sekmeye göre filtrele (hem görüntüleme hem de istatistikler için)
     if sekme == 'aktif':
         # Aktif hedefler: Durumu AKTIF olanlar (ID=1)
         hedefler = hedefler.filter(hedef_durum__id=1)
+        filtrelenmis_hedefler = filtrelenmis_hedefler.filter(hedef_durum__id=1)
     elif sekme == 'tamamlanan':
         # Tamamlanan hedefler: Durumu TAMAMLANDI olanlar (ID=2)
         hedefler = hedefler.filter(hedef_durum__id=2)
+        filtrelenmis_hedefler = filtrelenmis_hedefler.filter(hedef_durum__id=2)
     elif sekme == 'tamamlanmayan':
         # Tamamlanmayan hedefler: Durumu TAMAMLANMADI olanlar (ID=3)
         hedefler = hedefler.filter(hedef_durum__id=3)
-
+        filtrelenmis_hedefler = filtrelenmis_hedefler.filter(hedef_durum__id=3)
     else:
         # Varsayılan olarak aktif hedefler gösterilsin (ID=1)
         hedefler = hedefler.filter(hedef_durum__id=1)
+        filtrelenmis_hedefler = filtrelenmis_hedefler.filter(hedef_durum__id=1)
 
-    # Tür filtresi uygula
+    # Tür filtresi uygula (hem görüntüleme hem de istatistikler için)
     if tur != 'Hepsi': 
-         hedefler = hedefler.filter(tur__ad=tur)
+        hedefler = hedefler.filter(tur__ad=tur)
+        filtrelenmis_hedefler = filtrelenmis_hedefler.filter(tur__ad=tur)
 
     # Sıralama
     hedefler = hedefler.order_by('bitis_tarihi', '-oncelik') 
@@ -386,15 +412,11 @@ def hedef_listesi(request):
         elif hedef_data['ilerleme'] == 0 and hedef.tamamlanma_orani > 0:
              hedef_data['ilerleme'] = hedef.tamamlanma_orani
 
-
         hedef_listesi.append(hedef_data)
 
-    # İstatistikler (Tüm hedefler üzerinden hesaplanmalı)
-    toplam_hedef = Hedef.objects.filter(kullanici=request.user).count()
-    tamamlanan_sayisi = Hedef.objects.filter(
-        kullanici=request.user,
-        hedef_durum__id=2 # Tamamlananlar (ID=2)
-    ).count()
+    # İstatistikler (Filtrelere göre hesaplama)
+    toplam_hedef = filtrelenmis_hedefler.count()
+    tamamlanan_sayisi = filtrelenmis_hedefler.filter(tamamlanma_orani=100).count()
     tamamlanma_yuzdesi = (tamamlanan_sayisi / toplam_hedef) * 100 if toplam_hedef > 0 else 0
 
     context = {
@@ -707,8 +729,15 @@ def calisma_plani_detay(request, plan_id):
     tamamlanan_count = oturumlar.filter(tamamlandi=True).count()
     oturumlar.tamamlanan_count = tamamlanan_count
     
-    # Yeni oturum ekleme
-    if request.method == 'POST':
+    # Planın tarihi bugünden önceyse geçmiş plan olarak işaretle
+    gecmis_plan = plan.tarih < timezone.localdate()
+    # Plan gelecek tarihli mi kontrol et
+    gelecek_plan = plan.tarih > timezone.localdate()
+    # Bugünün tarihini geç
+    today = timezone.localdate()
+    
+    # Yeni oturum ekleme (sadece geçmiş plan değilse)
+    if request.method == 'POST' and not gecmis_plan:
         form = CalismaOturumuForm(request.POST)
         if form.is_valid():
             oturum = form.save(commit=False)
@@ -716,6 +745,30 @@ def calisma_plani_detay(request, plan_id):
             
             # Form'un clean() metodunda hesaplanan sure değerini kullan
             oturum.sure = form.cleaned_data['sure']
+            
+            # Çakışan saatlere oturum eklemesini engelle
+            baslangic_saati = form.cleaned_data['baslangic_saati']
+            bitis_saati = form.cleaned_data['bitis_saati']
+            
+            # Aynı plan içinde çakışan saatlere oturumları kontrol et
+            cakisan_oturumlar = CalismaOturumu.objects.filter(
+                plan=plan
+            ).filter(
+                # Başlangıç saati mevcut oturumların arasında
+                (Q(baslangic_saati__lt=bitis_saati) & Q(bitis_saati__gt=baslangic_saati))
+            )
+            
+            if cakisan_oturumlar.exists():
+                messages.error(request, 'Seçtiğiniz saat aralığı mevcut bir oturum ile çakışıyor!')
+                context = {
+                    'plan': plan,
+                    'oturumlar': oturumlar,
+                    'form': form,
+                    'gecmis_plan': gecmis_plan,
+                    'gelecek_plan': gelecek_plan,
+                    'today': today,
+                }
+                return render(request, 'yks/calisma_plani/calisma_plani_detay.html', context)
             
             oturum.save()
             
@@ -734,6 +787,9 @@ def calisma_plani_detay(request, plan_id):
         'plan': plan,
         'oturumlar': oturumlar,
         'form': form,
+        'gecmis_plan': gecmis_plan,  # Geçmiş plan mı bilgisini templatelere gönder
+        'gelecek_plan': gelecek_plan,  # Gelecek plan mı bilgisini templatelere gönder
+        'today': today,  # Bugünün tarihini templatelere gönder
     }
     
     return render(request, 'yks/calisma_plani/calisma_plani_detay.html', context)
@@ -783,6 +839,11 @@ def oturum_sil(request, oturum_id):
     oturum = get_object_or_404(CalismaOturumu, id=oturum_id, plan__kullanici=request.user)
     plan_id = oturum.plan.id
     
+    # Planın tarihi bugünden önceyse işlem yapma
+    if oturum.plan.tarih < timezone.localdate():
+        messages.error(request, 'Geçmiş tarihli planlardaki oturumlar silinemez.')
+        return redirect('yks:calisma_plani_detay', plan_id=plan_id)
+    
     if request.method == 'POST':
         oturum.delete()
         
@@ -813,6 +874,15 @@ def oturum_tamamlandi_yap(request, oturum_id):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
             oturum = get_object_or_404(CalismaOturumu, id=oturum_id, plan__kullanici=request.user)
+            
+            # Planın tarihi bugünden önceyse işlem yapma
+            if oturum.plan.tarih < timezone.localdate():
+                return JsonResponse({'success': False, 'message': 'Geçmiş tarihli planlardaki oturumlar güncellenemez.'}, status=403)
+            
+            # Planın tarihi gelecekteyse oturumları tamamlandı olarak işaretlemeye izin verme
+            if oturum.plan.tarih > timezone.localdate():
+                return JsonResponse({'success': False, 'message': 'Gelecek tarihli planlardaki oturumlar tamamlanamaz.'}, status=403)
+                
             oturum.tamamlandi = True
             oturum.save()
 
@@ -1244,27 +1314,48 @@ def konu_takip_ilerleme(request, hedef_id):
     return render(request, 'yks/hedef_belirleme/konu_takip_ilerleme.html', context)
 
 @login_required
+@csrf_exempt
 def calisma_oturum_geri_al(request, oturum_id):
-    """Çalışma oturumunu geri alma"""
-    oturum = get_object_or_404(CalismaOturumu, id=oturum_id, plan__kullanici=request.user)
-    plan_id = oturum.plan.id
-    
+    """Tamamlanmış çalışma oturumunu geri al (AJAX)"""
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        oturum.tamamlandi = False
-        oturum.save()
-        
-        # Planın toplam süresini güncelle
-        plan = oturum.plan
-        plan.toplam_calisma_suresi = CalismaOturumu.objects.filter(
-            plan=plan
-        ).aggregate(Sum('sure'))['sure__sum'] or 0
-        plan.save()
-        
-        messages.success(request, 'Çalışma oturumu başarıyla geri alındı.')
-        
-        return redirect('yks:calisma_plani_detay', plan_id=plan_id)
-    else:
-        return JsonResponse({'success': False, 'message': 'Geçersiz istek.'})
+        try:
+            oturum = get_object_or_404(CalismaOturumu, id=oturum_id, plan__kullanici=request.user)
+            
+            # Planın tarihi bugünden önceyse işlem yapma
+            if oturum.plan.tarih < timezone.localdate():
+                return JsonResponse({'success': False, 'message': 'Geçmiş tarihli planlardaki oturumlar güncellenemez.'}, status=403)
+            
+            # Planın tarihi gelecekteyse oturumlar zaten tamamlanmış olamaz, durumu değiştirmeye izin verme
+            if oturum.plan.tarih > timezone.localdate():
+                return JsonResponse({'success': False, 'message': 'Gelecek tarihli planlardaki oturumlar güncellenemez.'}, status=403)
+            
+            oturum.tamamlandi = False
+            oturum.save()
+            
+            # Plan toplam süresini güncelle
+            plan = oturum.plan
+            plan.toplam_calisma_suresi = CalismaOturumu.objects.filter(
+                plan=plan
+            ).aggregate(Sum('sure'))['sure__sum'] or 0
+            plan.save()
+            
+            # Güncel tamamlanan ve toplam oturum sayılarını al
+            tamamlanan_oturum_sayisi = CalismaOturumu.objects.filter(
+                plan=plan,
+                tamamlandi=True
+            ).count()
+            toplam_oturum_sayisi = CalismaOturumu.objects.filter(plan=plan).count()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Oturum durumu geri alındı.',
+                'tamamlanan_oturum_sayisi': tamamlanan_oturum_sayisi,
+                'toplam_oturum_sayisi': toplam_oturum_sayisi,
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=400)
+    
+    return JsonResponse({'success': False, 'message': 'Geçersiz istek.'}, status=400)
 
 @login_required
 def profil(request):

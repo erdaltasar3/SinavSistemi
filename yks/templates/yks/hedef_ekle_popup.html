@@ -1,0 +1,45 @@
+{% load static %}
+<div class="modal-header border-0 pb-0">
+    <h5 class="modal-title w-100 text-center fw-bold">Hedef Tipi Seç</h5>
+    <button type="button" class="btn-close" onclick="document.getElementById('hedefEkleModal').style.display='none';"></button>
+</div>
+<div class="modal-body pt-2 pb-4">
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <div class="hedef-tip-card text-center p-4 h-100" onclick="alert('Soru Çözümü Hedefi seçildi!')">
+                <i class="bi bi-journal-check display-4 text-primary mb-2"></i>
+                <div class="fw-bold mb-1">Soru Çözümü Hedefi</div>
+                <div class="text-muted small">Belirli bir derse ait soru çözüm hedefi oluştur.</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="hedef-tip-card text-center p-4 h-100" onclick="alert('Konu Takip Hedefi seçildi!')">
+                <i class="bi bi-list-check display-4 text-success mb-2"></i>
+                <div class="fw-bold mb-1">Konu Takip Hedefi</div>
+                <div class="text-muted small">Ders ve konulara özel takip hedefi oluştur.</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="hedef-tip-card text-center p-4 h-100" onclick="alert('Özel Hedef seçildi!')">
+                <i class="bi bi-star-fill display-4 text-warning mb-2"></i>
+                <div class="fw-bold mb-1">Özel Hedef</div>
+                <div class="text-muted small">Kendi belirlediğin özel bir hedef ekle.</div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.hedef-tip-card {
+    background: #f8f9fb;
+    border-radius: 18px;
+    border: 2px solid #e0e3f0;
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.07);
+}
+.hedef-tip-card:hover {
+    border-color: #4e54c8;
+    box-shadow: 0 8px 32px rgba(78,84,200,0.13);
+    transform: translateY(-4px) scale(1.03);
+}
+</style> 

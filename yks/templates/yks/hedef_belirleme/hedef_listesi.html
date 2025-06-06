@@ -4,33 +4,7 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- YKS Hazırlık Navigasyon Menüsü -->
-    <div class="row mb-4 justify-content-center g-3">
-        <div class="col-12 col-md-4">
-            <a href="{% url 'yks:hedef_listesi' %}" class="tool-card-link">
-                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'hedef_listesi' %}active-tool-card{% endif %}">
-                    <i class="bi bi-bullseye tool-icon text-primary mb-2"></i>
-                    <div class="fw-bold">Hedeflerim</div>
-                </div>
-            </a>
-        </div>
-        <div class="col-12 col-md-4">
-            <a href="{% url 'yks:calisma_plani_listesi' %}" class="tool-card-link">
-                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'calisma_plani_listesi' %}active-tool-card{% endif %}">
-                    <i class="bi bi-calendar3-week tool-icon text-success mb-2"></i>
-                    <div class="fw-bold">Çalışma Planı</div>
-                </div>
-            </a>
-        </div>
-        <div class="col-12 col-md-4">
-            <a href="{% url 'yks:hatirlatici_listesi' %}" class="tool-card-link">
-                <div class="tool-card text-center py-3 px-2 {% if request.resolver_match.url_name == 'hatirlatici_listesi' %}active-tool-card{% endif %}">
-                    <i class="bi bi-bell tool-icon text-warning mb-2"></i>
-                    <div class="fw-bold">Hatırlatıcılar</div>
-                </div>
-            </a>
-        </div>
-    </div>
+    <!-- YKS Hazırlık Navigasyon Menüsü kaldırıldı -->
 
     <div class="row">
         <!-- Sol Sidebar -->

@@ -38,10 +38,11 @@
                             <label for="baslangic_tarihi" class="form-label">Başlangıç Tarihi</label>
                             <input type="date" name="baslangic_tarihi" id="baslangic_tarihi" class="form-control" required>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3" id="bitis_tarihi_group" style="display:none;">
                             <label for="bitis_tarihi" class="form-label">Bitiş Tarihi</label>
-                            <input type="date" name="bitis_tarihi" id="bitis_tarihi" class="form-control" required>
+                            <input type="date" name="bitis_tarihi" id="bitis_tarihi" class="form-control">
                         </div>
+                        <input type="hidden" name="bitis_tarihi" id="bitis_tarihi_hidden">
                         <div class="mb-3">
                             <label for="aciklama" class="form-label">Açıklama</label>
                             <textarea name="aciklama" id="aciklama" class="form-control" rows="3"></textarea>
@@ -56,4 +57,58 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addDays(dateString, days) {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+}
+
+const hedefTuru = document.getElementById('hedef_turu');
+const baslangicTarihi = document.getElementById('baslangic_tarihi');
+const bitisTarihiGroup = document.getElementById('bitis_tarihi_group');
+const bitisTarihi = document.getElementById('bitis_tarihi');
+const bitisTarihiHidden = document.getElementById('bitis_tarihi_hidden');
+
+function updateBitisTarihi() {
+    const tur = hedefTuru.value;
+    const baslangic = baslangicTarihi.value;
+    if (tur === 'Özel') {
+        bitisTarihiGroup.style.display = '';
+        bitisTarihi.type = 'date';
+        bitisTarihi.value = '';
+        bitisTarihi.readOnly = false;
+        bitisTarihi.name = 'bitis_tarihi';
+        bitisTarihiHidden.value = '';
+        bitisTarihiHidden.disabled = true;
+        return;
+    }
+    // Diğer türlerde
+    bitisTarihiGroup.style.display = 'none';
+    bitisTarihiHidden.disabled = false;
+    bitisTarihi.name = '';
+    bitisTarihiHidden.name = 'bitis_tarihi';
+    if (!tur || !baslangic) {
+        bitisTarihiHidden.value = '';
+        return;
+    }
+    let calculated = '';
+    if (tur === 'Günlük') {
+        calculated = addDays(baslangic, 1);
+    } else if (tur === 'Haftalık') {
+        calculated = addDays(baslangic, 7);
+    } else if (tur === 'Aylık') {
+        calculated = addDays(baslangic, 30);
+    }
+    bitisTarihiHidden.value = calculated;
+}
+hedefTuru.addEventListener('change', updateBitisTarihi);
+baslangicTarihi.addEventListener('change', updateBitisTarihi);
+document.addEventListener('DOMContentLoaded', function() {
+    updateBitisTarihi();
+});
+</script>
 {% endblock %}

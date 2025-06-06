@@ -17,6 +17,7 @@ from .models import (
     CalismaOturumu, 
     Hatirlatici,
     SoruCozumHedefi,
+    KonuTakipHedefi,
     KonuTakipHedefKonu,
     HedefDurum,
     DenemeSinavSonucu,

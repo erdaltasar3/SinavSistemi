@@ -8,246 +8,349 @@
     .main-content {
         position: relative;
     }
-    
-    /* Overlay için stil */
-    .feature-blocker {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    
-    /* Mesaj kutusu stili */
-    .coming-soon-message {
-        background-color: white;
-        padding: 30px 50px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        text-align: center;
-        max-width: 500px;
-    }
-    
-    .coming-soon-message h2 {
-        color: #0d6efd;
-        font-size: 28px;
-        font-weight: bold;
-        margin-bottom: 15px;
-    }
-    
-    .coming-soon-message p {
-        color: #555;
-        font-size: 18px;
-        margin-bottom: 20px;
-    }
-    
-    .coming-soon-message .btn-primary {
-        padding: 10px 25px;
-        font-weight: 600;
-    }
-    
-    /* İçerik bulanıklaştırma */
-    .blurred-content {
-        filter: blur(8px);
-        pointer-events: none;
-    }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Overlay mesaj kutusu - sayfanın üstünde sabit -->
-<div class="feature-blocker">
-    <div class="coming-soon-message">
-        <h2>Bu Özellik Çok Yakında Kullanıma Sunulacak</h2>
-        <p>Hatırlatıcılar bölümü üzerinde çalışmalarımız devam ediyor.</p>
-        <a href="/yks/" class="btn btn-primary">Ana Menüye Dön</a>
-    </div>
-</div>
-
-<!-- Bulanıklaştırılmış içerik -->
-<div class="blurred-content">
-    <div class="row">
-        <!-- Sol Sidebar -->
-        <div class="col-lg-3 mb-4">
-            <div class="d-grid gap-3">
-                <!-- Hızlı Erişim Menüsü -->
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-primary text-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Hızlı Erişim</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="list-group list-group-flush">
-                            <a href="{% url 'yks:hedef_listesi' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3 px-3">
-                                <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-center d-flex justify-content-center align-items-center" style="width: 60px; height: 60px;">
-                                    <i class="fas fa-tasks text-success fs-4"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0 fw-semibold">Hedeflerim</h6>
-                                    <small class="text-muted">Hedeflerini görüntüle ve yönet</small>
-                                </div>
-                            </a>
-                            <a href="{% url 'yks:calisma_plani_listesi' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3 px-3">
-                                <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-center d-flex justify-content-center align-items-center" style="width: 60px; height: 60px;">
-                                    <i class="fas fa-calendar-alt text-primary fs-4"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0 fw-semibold">Çalışma Planı</h6>
-                                    <small class="text-muted">Yeni çalışma planı hazırla</small>
-                                </div>
-                            </a>
-                            <a href="{% url 'yks:hatirlatici_listesi' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3 px-3">
-                                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3 text-center d-flex justify-content-center align-items-center" style="width: 60px; height: 60px;">
-                                    <i class="fas fa-bell text-warning fs-4"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0 fw-semibold">Hatırlatıcı</h6>
-                                    <small class="text-muted">Yeni hatırlatıcı ekle</small>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
+{% csrf_token %}
+<div class="row">
+    <!-- Sol Sidebar -->
+    <div class="col-lg-3 mb-4">
+        <div class="d-grid gap-3">
+            <!-- Hızlı Erişim Menüsü -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Hızlı Erişim</h5>
                 </div>
-                
-                <!-- Hatırlatıcı İstatistikleri -->
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Hatırlatıcı İstatistikleri</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="text-muted">Toplam Hatırlatıcı:</div>
-                            <div class="fw-bold">{{ toplam_hatirlatici_sayisi }}</div>
-                        </div>
-                        <div class="progress mb-4" style="height: 8px;">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 75%;" 
-                                aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="text-muted">Bugünkü Hatırlatıcılar:</div>
-                            <div class="fw-bold">{{ bugunku_hatirlatici_sayisi }}</div>
-                        </div>
-                        <div class="progress mb-4" style="height: 8px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 65%;" 
-                                aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="text-muted">Yaklaşan Hatırlatıcılar:</div>
-                            <div class="fw-bold">{{ yaklasan_hatirlatici_sayisi }}</div>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-info" role="progressbar" style="width: 40%;" 
-                                aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- İstatistikler -->
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Çalışma İstatistikleri</h5>
-                    </div>
+                <div class="card-body p-0">
                     <div class="list-group list-group-flush">
-                        <div class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center">
-                            <div>Toplam Çalışma</div>
-                            <span class="badge bg-primary rounded-pill">14</span>
+                        <a href="{% url 'yks:hedef_listesi' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3 px-3">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-center d-flex justify-content-center align-items-center" style="width: 60px; height: 60px;">
+                                <i class="fas fa-tasks text-success fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold">Hedeflerim</h6>
+                                <small class="text-muted">Hedeflerini görüntüle ve yönet</small>
+                            </div>
+                        </a>
+                        <a href="{% url 'yks:calisma_plani_listesi' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3 px-3">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-center d-flex justify-content-center align-items-center" style="width: 60px; height: 60px;">
+                                <i class="fas fa-calendar-alt text-primary fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold">Çalışma Planı</h6>
+                                <small class="text-muted">Yeni çalışma planı hazırla</small>
+                            </div>
+                        </a>
+                        <a href="{% url 'yks:hatirlatici_listesi' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3 px-3">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3 text-center d-flex justify-content-center align-items-center" style="width: 60px; height: 60px;">
+                                <i class="fas fa-bell text-warning fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-semibold">Hatırlatıcı</h6>
+                                <small class="text-muted">Yeni hatırlatıcı ekle</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hatırlatıcı İstatistikleri -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Hatırlatıcı İstatistikleri</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="text-muted">Toplam Hatırlatıcı:</div>
+                        <div class="fw-bold">{{ toplam_hatirlatici_sayisi }}</div>
+                    </div>
+                    <div class="progress mb-4" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 75%;" 
+                            aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="text-muted">Bugünkü Hatırlatıcılar:</div>
+                        <div class="fw-bold">{{ bugunku_hatirlatici_sayisi }}</div>
+                    </div>
+                    <div class="progress mb-4" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 65%;" 
+                            aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="text-muted">Yaklaşan Hatırlatıcılar:</div>
+                        <div class="fw-bold">{{ yaklasan_hatirlatici_sayisi }}</div>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 40%;" 
+                            aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- İstatistikler -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i> Çalışma İstatistikleri</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center">
+                        <div>Toplam Çalışma</div>
+                        <span class="badge bg-primary rounded-pill">14</span>
+                    </div>
+                    <div class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center">
+                        <div>Haftalık Çalışma</div>
+                        <span class="badge bg-warning rounded-pill">5</span>
+                    </div>
+                    <div class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center">
+                        <div>Tamamlanan Görevler</div>
+                        <span class="badge bg-success rounded-pill">9</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Celery Durum Kartı -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-info"></i> Hatırlatıcı Sistemi</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3">
+                            <i class="fas fa-clock text-success fs-5"></i>
                         </div>
-                        <div class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center">
-                            <div>Haftalık Çalışma</div>
-                            <span class="badge bg-warning rounded-pill">5</span>
+                        <div>
+                            <h6 class="mb-0">Hatırlatıcı Zamanlama Sistemi</h6>
+                            <p class="text-muted small mb-0">Celery aktif durumda. Zamanlanmış e-postalar otomatik gönderilecek.</p>
                         </div>
-                        <div class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center">
-                            <div>Tamamlanan Görevler</div>
-                            <span class="badge bg-success rounded-pill">9</span>
+                    </div>
+                    
+                    <div class="alert alert-info small mb-0">
+                        <p class="mb-1"><i class="fas fa-lightbulb me-2"></i> <strong>Bilgi:</strong> Hatırlatıcı eklediğinizde, sistem otomatik olarak belirttiğiniz zamanda e-posta gönderecektir.</p>
+                        <p class="mb-0">Hatırlatıcılar, zamanı geldiğinde otomatik olarak işlenir ve aktif olanlar için e-posta gönderilir.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ana İçerik - Hatırlatıcılar -->
+    <div class="col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2 mb-0">Hatırlatıcılar <span id="liveClock" class="fw-bold ms-4"></span></h1>
+            <a href="{% url 'yks:hatirlatici_ekle' %}" class="btn btn-warning" id="addReminderBtnMain">
+                <i class="fas fa-plus-circle me-2"></i> Yeni Hatırlatıcı Ekle
+            </a>
+        </div>
+
+        <!-- İstatistikler -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 border-start border-5 border-warning">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-bell text-warning fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Toplam Hatırlatıcı</h6>
+                                <h2 class="display-6 fw-bold mb-0">{{ toplam_hatirlatici_sayisi }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 border-start border-5 border-success">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-calendar-check text-success fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Bugünkü Hatırlatıcılar</h6>
+                                <h2 class="display-6 fw-bold mb-0">{{ bugunku_hatirlatici_sayisi }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 border-start border-5 border-info">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                                <i class="fas fa-clock text-info fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Yaklaşan Hatırlatıcılar</h6>
+                                <h2 class="display-6 fw-bold mb-0">{{ yaklasan_hatirlatici_sayisi }}</h2>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Ana İçerik - Hatırlatıcılar -->
-        <div class="col-lg-9">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h2 mb-0">Hatırlatıcılar <span id="liveClock" class="fw-bold ms-4"></span></h1>
-                <a href="{% url 'yks:hatirlatici_ekle' %}" class="btn btn-warning" id="addReminderBtnMain">
-                    <i class="fas fa-plus-circle me-2"></i> Yeni Hatırlatıcı Ekle
-                </a>
+        <!-- Hatırlatıcı İçeriği -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white p-0">
+                <ul class="nav nav-tabs card-header-tabs" id="hatirlaticiTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="bugun-tab" data-bs-toggle="tab" href="#bugun" role="tab">Bugün</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="yaklasan-tab" data-bs-toggle="tab" href="#yaklasan" role="tab">Yaklaşan</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="gecmis-tab" data-bs-toggle="tab" href="#gecmis" role="tab">Geçmiş</a>
+                    </li>
+                </ul>
             </div>
-
-            <!-- İstatistikler -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100 border-start border-5 border-warning">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-                                    <i class="fas fa-bell text-warning fs-4"></i>
-                                </div>
-                                <div>
-                                    <h6 class="text-muted mb-1">Toplam Hatırlatıcı</h6>
-                                    <h2 class="display-6 fw-bold mb-0">{{ toplam_hatirlatici_sayisi }}</h2>
-                                </div>
+            <div class="card-body">
+                <div class="tab-content" id="hatirlaticiTabsContent">
+                    <!-- Bugün Sekmesi -->
+                    <div class="tab-pane fade show active" id="bugun" role="tabpanel" aria-labelledby="bugun-tab">
+                        {% if bugunun_hatirlaticilari %}
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Başlık</th>
+                                            <th>Saat</th>
+                                            <th>Durum</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for hatirlatici in bugunun_hatirlaticilari %}
+                                            <tr>
+                                                <td>{{ hatirlatici.baslik }}</td>
+                                                <td>{{ hatirlatici.hatirlatma_tarihi|date:"H:i" }}</td>
+                                                <td>
+                                                    {% if hatirlatici.aktif %}
+                                                        <span class="badge bg-success">Aktif</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Pasif</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <a href="{% url 'yks:hatirlatici_duzenle' hatirlatici.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <button class="btn btn-sm btn-outline-danger hatirlatici-sil-btn" data-id="{{ hatirlatici.id }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
-                        </div>
+                        {% else %}
+                            <div class="text-center py-4">Bugün için planlanmış hatırlatıcı bulunmuyor.</div>
+                        {% endif %}
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100 border-start border-5 border-success">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                                    <i class="fas fa-calendar-check text-success fs-4"></i>
-                                </div>
-                                <div>
-                                    <h6 class="text-muted mb-1">Bugünkü Hatırlatıcılar</h6>
-                                    <h2 class="display-6 fw-bold mb-0">{{ bugunku_hatirlatici_sayisi }}</h2>
-                                </div>
+                    
+                    <!-- Yaklaşan Sekmesi -->
+                    <div class="tab-pane fade" id="yaklasan" role="tabpanel" aria-labelledby="yaklasan-tab">
+                        {% if yaklasan_hatirlaticilar_tab %}
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Başlık</th>
+                                            <th>Tarih</th>
+                                            <th>Saat</th>
+                                            <th>Durum</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for hatirlatici in yaklasan_hatirlaticilar_tab %}
+                                            <tr>
+                                                <td>{{ hatirlatici.baslik }}</td>
+                                                <td>{{ hatirlatici.hatirlatma_tarihi|date:"d.m.Y" }}</td>
+                                                <td>{{ hatirlatici.hatirlatma_tarihi|date:"H:i" }}</td>
+                                                <td>
+                                                    {% if hatirlatici.aktif %}
+                                                        <span class="badge bg-success">Aktif</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Pasif</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <a href="{% url 'yks:hatirlatici_duzenle' hatirlatici.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <button class="btn btn-sm btn-outline-danger hatirlatici-sil-btn" data-id="{{ hatirlatici.id }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
-                        </div>
+                        {% else %}
+                            <div class="text-center py-4">Yaklaşan hatırlatıcı bulunmuyor.</div>
+                        {% endif %}
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100 border-start border-5 border-info">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
-                                    <i class="fas fa-clock text-info fs-4"></i>
-                                </div>
-                                <div>
-                                    <h6 class="text-muted mb-1">Yaklaşan Hatırlatıcılar</h6>
-                                    <h2 class="display-6 fw-bold mb-0">{{ yaklasan_hatirlatici_sayisi }}</h2>
-                                </div>
+                    
+                    <!-- Geçmiş Sekmesi -->
+                    <div class="tab-pane fade" id="gecmis" role="tabpanel" aria-labelledby="gecmis-tab">
+                        {% if gecmis_hatirlaticilar_tab %}
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Başlık</th>
+                                            <th>Tarih</th>
+                                            <th>Saat</th>
+                                            <th>Durum</th>
+                                            <th>İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for hatirlatici in gecmis_hatirlaticilar_tab %}
+                                            <tr>
+                                                <td>{{ hatirlatici.baslik }}</td>
+                                                <td>{{ hatirlatici.hatirlatma_tarihi|date:"d.m.Y" }}</td>
+                                                <td>{{ hatirlatici.hatirlatma_tarihi|date:"H:i" }}</td>
+                                                <td>
+                                                    {% if hatirlatici.sent %}
+                                                        <span class="badge bg-info">Gönderildi</span>
+                                                    {% elif hatirlatici.aktif %}
+                                                        <span class="badge bg-success">Aktif</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Pasif</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <a href="{% url 'yks:hatirlatici_duzenle' hatirlatici.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <button class="btn btn-sm btn-outline-danger hatirlatici-sil-btn" data-id="{{ hatirlatici.id }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
-                        </div>
+                        {% else %}
+                            <div class="text-center py-4">Geçmiş hatırlatıcı bulunmuyor.</div>
+                        {% endif %}
                     </div>
-                </div>
-            </div>
-            
-            <!-- Hatırlatıcı İçeriği -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white p-0">
-                    <ul class="nav nav-tabs card-header-tabs">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="#">Bugün</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Yaklaşan</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Geçmiş</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-body">
-                    <div class="text-center py-4">Bugün için planlanmış hatırlatıcı bulunmuyor.</div>
                 </div>
             </div>
         </div>
@@ -276,8 +379,55 @@
         setTimeout(updateClock, 1000);
     }
     
+    // Hatırlatıcı silme işlevselliği
+    function setupDeleteButtons() {
+        const deleteButtons = document.querySelectorAll('.hatirlatici-sil-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const hatirlaticiId = this.getAttribute('data-id');
+                if (confirm('Bu hatırlatıcıyı silmek istediğinizden emin misiniz?')) {
+                    // CSRF token'ı alın
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                    
+                    // AJAX isteği gönderin
+                    fetch(`/yks/hatirlaticilar/sil/${hatirlaticiId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Başarılı ise satırı sayfadan kaldır
+                            const row = button.closest('tr');
+                            row.remove();
+                            
+                            // Başarı mesajı göster
+                            alert(data.message);
+                            
+                            // Sayfa yeniden yükle (istatistikleri güncellemek için)
+                            window.location.reload();
+                        } else {
+                            // Hata mesajı göster
+                            alert(data.message || 'Hatırlatıcı silinirken bir hata oluştu.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Hata:', error);
+                        alert('Hatırlatıcı silinirken bir hata oluştu.');
+                    });
+                }
+            });
+        });
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
         updateClock();
+        setupDeleteButtons();
     });
 </script>
 {% endblock %} 

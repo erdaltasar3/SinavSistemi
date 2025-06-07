@@ -1,22 +1,31 @@
 import os
-
 from celery import Celery
+from celery.signals import task_success, task_failure
 
-# Celery programı için varsayılan Django ayarları modülünü ayarla.
+# Django settings modülünü ayarla
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'SinavSistemi.settings')
 
-# Celery uygulamasını oluştur ve yapılandır.
+# Celery uygulamasını oluştur
 app = Celery('SinavSistemi')
 
-# Django ayarlarındaki Celery yapılandırmasını yükle.
-# Namespace='CELERY' yaparak tüm celery ilgili ayarların 'CELERY_' ile başlamasını sağlıyoruz.
+# Django ayarlarından konfigürasyon al (CELERY_ ile başlayanlar)
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-# Uygulama kayıtlı taskları (görevleri) otomatik olarak bulur.
-# Uygulamalarınızdaki tasks.py dosyalarını arar.
+# Task'ları otomatik keşfet
 app.autodiscover_tasks()
 
-# Task hata ayıklama (debug) ayarları için örnek task.
-@app.task(bind=True, ignore_result=True)
+# Başarılı task sonuçlarını logla
+@task_success.connect
+def task_success_handler(sender=None, **kwargs):
+    print(f"✅ Görev başarıyla tamamlandı: {sender.name} (ID: {kwargs.get('task_id')})")
+
+# Başarısız task sonuçlarını logla
+@task_failure.connect
+def task_failure_handler(sender=None, **kwargs):
+    print(f"❌ Görev hatası: {sender.name} (ID: {kwargs.get('task_id')})")
+    print(f"   Hata: {kwargs.get('exception')}")
+
+# Debug için örnek görev
+@app.task(bind=True)
 def debug_task(self):
-    print(f'Request: {self.request!r}') 
+    print(f'Debug görevi çalışıyor: {self.request!r}') 

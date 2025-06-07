@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.utils import timezone
 from django.db.models import Count, Case, When, IntegerField, Q, Sum, F, Avg, Exists, OuterRef, BooleanField, Value
 from django.contrib import messages
@@ -33,7 +33,11 @@ from .forms import (
 )
 from datetime import date, timedelta
 from django.contrib.auth import update_session_auth_hash
-from .tasks import send_reminder_email
+from django.core.paginator import Paginator
+from django.db.models.functions import TruncMonth
+import json
+import calendar
+import os
 
 
 def index(request):
@@ -995,7 +999,7 @@ def hatirlatici_listesi(request):
 
 @login_required
 def hatirlatici_ekle(request):
-    """Yeni hatırlatıcı ekleme görünümü"""
+    """Yeni hatırlatıcı ekle"""
     if request.method == 'POST':
         form = HatirlaticiForm(request.POST)
         if form.is_valid():
@@ -1003,55 +1007,74 @@ def hatirlatici_ekle(request):
             hatirlatici.kullanici = request.user
             hatirlatici.save()
             
-            # Celery görevini zamanla
+            # Celery görevi zamanla
+            from .tasks import send_reminder_email
             send_reminder_email.apply_async(
-                args=[hatirlatici.id], # Göreve hatırlatıcı ID'sini argüman olarak gönder
-                eta=hatirlatici.hatirlatma_tarihi # Görevin çalışacağı tam tarih ve saat
+                args=[hatirlatici.id],
+                eta=hatirlatici.hatirlatma_tarihi
             )
             
-            messages.success(request, 'Hatırlatıcı başarıyla eklendi.')
+            # Kullanıcıya bilgilendirici mesaj göster
+            hatirlama_zamani = hatirlatici.hatirlatma_tarihi.strftime("%d.%m.%Y %H:%M")
+            messages.success(
+                request, 
+                f'Hatırlatıcı başarıyla eklendi. "{hatirlatici.baslik}" başlıklı hatırlatıcı için {hatirlama_zamani} tarihinde e-posta gönderilecek.'
+            )
+            
             return redirect('yks:hatirlatici_listesi')
     else:
         form = HatirlaticiForm()
     
     context = {
-        'form': form,
+        'form': form
     }
     
     return render(request, 'yks/hatirlaticilar/hatirlatici_ekle.html', context)
 
 @login_required
 def hatirlatici_duzenle(request, hatirlatici_id):
-    """Hatırlatıcı düzenleme görünümü"""
+    """Hatırlatıcı düzenle"""
     hatirlatici = get_object_or_404(Hatirlatici, id=hatirlatici_id, kullanici=request.user)
+    eski_tarih = hatirlatici.hatirlatma_tarihi
+    eski_aktif = hatirlatici.aktif
     
     if request.method == 'POST':
         form = HatirlaticiForm(request.POST, instance=hatirlatici)
         if form.is_valid():
+            # Hatırlatıcının önceki durumlarını kaydet
             form.save()
-
-            # Eğer hatırlatma tarihi veya aktiflik durumu değiştiyse Celery görevini güncelle
-            # Mevcut görevi iptal edip yenisini zamanlamak en basit yaklaşımdır.
-            # Gerçek senaryolarda görev ID'sini saklayıp iptal etmek daha iyi olabilir.
-            # Şimdilik, her düzenlemede yeni bir görev zamanlıyoruz ve task içindeki kontrolle tekrar gönderimi engelliyoruz.
             
-            # E-posta daha önce gönderilmemişse ve hatırlatma tarihi gelecekteyse veya bugünse
-            if not hatirlatici.sent and hatirlatici.hatirlatma_tarihi >= timezone.now():
-                 send_reminder_email.apply_async(
-                    args=[hatirlatici.id],
-                    eta=hatirlatici.hatirlatma_tarihi
-                )
-            # Eğer e-posta daha önce gönderilmişse ama tarih geleceğe alındıysa, sent=False yapıp yeni görev zamanlamak gerekebilir.
-            # Ancak mevcut mantıkta sent=True olanlar tekrar gönderilmeyecek, bu da sorun olmaz.
-            # Eğer aktiflik durumu False yapıldıysa da task içindeki kontrol onu göndermeyecektir.
-
-
-            messages.success(request, 'Hatırlatıcı başarıyla güncellendi.')
-            # Celery görevini zamanla (eğer tarihi değiştiyse veya ilk defa zamanlanıyorsa)
-            from .tasks import send_reminder_email # Import task here if not already imported globally
-            print(f"DEBUG: Attempting to schedule Celery task for reminder ID {hatirlatici.id} at {form.instance.hatirlatma_tarihi}")
-            send_reminder_email.apply_async(args=[form.instance.id], eta=form.instance.hatirlatma_tarihi)
-            print(f"DEBUG: Celery task scheduled for reminder ID {form.instance.id}")
+            # Eğer tarih veya aktiflik değiştiyse Celery görevini güncelle
+            if eski_tarih != hatirlatici.hatirlatma_tarihi or eski_aktif != hatirlatici.aktif:
+                # Yeni görevi zamanla (eski görev zaten devre dışı kalacak)
+                from .tasks import send_reminder_email
+                
+                # Eğer hatırlatıcı hala aktifse ve gönderilmediyse
+                if hatirlatici.aktif and not hatirlatici.sent:
+                    # Zamanı geçmediyse yeni görev planla
+                    if hatirlatici.hatirlatma_tarihi > timezone.now():
+                        send_reminder_email.apply_async(
+                            args=[hatirlatici.id],
+                            eta=hatirlatici.hatirlatma_tarihi
+                        )
+                        hatirlama_zamani = hatirlatici.hatirlatma_tarihi.strftime("%d.%m.%Y %H:%M")
+                        messages.success(
+                            request, 
+                            f'Hatırlatıcı güncellendi. "{hatirlatici.baslik}" başlıklı hatırlatıcı için {hatirlama_zamani} tarihinde e-posta gönderilecek.'
+                        )
+                    else:
+                        messages.warning(
+                            request,
+                            f'Hatırlatıcı güncellendi, ancak belirlediğiniz zaman geçmiş olduğu için e-posta gönderilmeyecek.'
+                        )
+                else:
+                    if not hatirlatici.aktif:
+                        messages.info(request, 'Hatırlatıcı pasif durumda olduğu için e-posta gönderilmeyecek.')
+                    elif hatirlatici.sent:
+                        messages.info(request, 'Bu hatırlatıcı için zaten e-posta gönderilmiş.')
+            else:
+                messages.success(request, 'Hatırlatıcı başarıyla güncellendi.')
+            
             return redirect('yks:hatirlatici_listesi')
     else:
         form = HatirlaticiForm(instance=hatirlatici)

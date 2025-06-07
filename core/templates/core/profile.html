@@ -2,179 +2,95 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
-{% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-lg border-0 rounded-lg">
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <h3 class="mb-0">Profil Bilgileri</h3>
-                </div>
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
-                        {% csrf_token %}
-                        
-                        <div class="text-center mb-4">
-                            <div class="profile-picture-container position-relative d-inline-block">
-                                {% if user.userprofile.profile_picture %}
-                                    <img src="{{ user.userprofile.profile_picture.url }}" alt="Profil Fotoğrafı" 
-                                         class="rounded-circle profile-picture" id="profilePreview">
-                                {% else %}
-                                    <img src="{% static 'images/default-profile.svg' %}" alt="Varsayılan Profil" 
-                                         class="rounded-circle profile-picture" id="profilePreview">
-                                {% endif %}
-                                <div class="profile-picture-overlay">
-                                    <label for="id_profile_picture" class="btn btn-light btn-sm">
-                                        <i class="fas fa-camera"></i>
-                                    </label>
-                                </div>
-                            </div>
-                            <input type="file" name="profile_picture" id="id_profile_picture" 
-                                   class="d-none" accept="image/*">
-                        </div>
-
-                        {{ form.first_name|as_crispy_field }}
-                        {{ form.last_name|as_crispy_field }}
-
-                        {{ form.email|as_crispy_field }}
-                        {% if not user.userprofile.email_verified %}
-                            <p class="text-danger mt-1"><i class="fas fa-exclamation-circle me-1"></i>E-posta adresiniz doğrulanmadı. <a href="#" id="verifyEmailLink">Hemen doğrula</a></p>
-                        {% else %}
-                            <p class="text-success mt-1"><i class="fas fa-check-circle me-1"></i>E-posta adresiniz doğrulandı.</p>
-                        {% endif %}
-
-                        {{ form.phone_number|as_crispy_field }}
-                         {% if not user.userprofile.phone_number_verified %}
-                            <p class="text-danger mt-1"><i class="fas fa-exclamation-circle me-1"></i>Telefon numaranız doğrulanmadı. <a href="#" id="verifyPhoneLink">Hemen doğrula</a></p>
-                        {% else %}
-                            <p class="text-success mt-1"><i class="fas fa-check-circle me-1"></i>Telefon numaranız doğrulandı.</p>
-                        {% endif %}
-                        {{ form.date_of_birth|as_crispy_field }}
-
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-save me-2"></i>Değişiklikleri Kaydet
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Email Verification Modal (for initial verification) -->
-<div class="modal fade" id="emailVerificationModal" tabindex="-1" aria-labelledby="emailVerificationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="emailVerificationModalLabel">E-posta Doğrulama</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="modalEmailInput" class="form-label">E-posta Adresiniz</label>
-                    <input type="email" class="form-control" id="modalEmailInput" value="{{ user.email }}" readonly>
-                </div>
-                <div class="mb-3 d-flex align-items-center">
-                    <button type="button" class="btn btn-secondary me-2" id="sendVerificationCodeBtn">Doğrulama kodu gönder</button>
-                    <span id="emailVerificationTimer" class="text-muted" style="display: none;">180s</span>
-                </div>
-                 <div class="mb-3">
-                    <label for="verificationCodeInput" class="form-label">Doğrulama Kodu</label>
-                    <input type="text" class="form-control" id="verificationCodeInput" placeholder="Doğrulama kodunu girin">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" id="verifyEmailBtn">Doğrula</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Email Change Verification Modal -->
-<div class="modal fade" id="emailChangeVerificationModal" tabindex="-1" aria-labelledby="emailChangeVerificationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="emailChangeVerificationModalLabel">E-posta Adresini Değiştir ve Doğrula</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                 <div class="mb-3">
-                    <label for="modalChangeEmailInput" class="form-label">Yeni E-posta Adresiniz</label>
-                    <input type="email" class="form-control" id="modalChangeEmailInput" value="{{ user.email }}">
-                </div>
-                 <div class="mb-3 d-flex align-items-center">
-                    <button type="button" class="btn btn-secondary me-2" id="sendChangeVerificationCodeBtn">Doğrulama kodu gönder</button>
-                     <span id="emailChangeVerificationTimer" class="text-muted" style="display: none;">180s</span>
-                </div>
-                 <div class="mb-3">
-                    <label for="changeVerificationCodeInput" class="form-label">Doğrulama Kodu</label>
-                    <input type="text" class="form-control" id="changeVerificationCodeInput" placeholder="Doğrulama kodunu girin">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" id="verifyChangeEmailBtn">Doğrula</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<!-- Phone Verification Modal -->
-<div class="modal fade" id="phoneVerificationModal" tabindex="-1" aria-labelledby="phoneVerificationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="phoneVerificationModalLabel">Telefon Numarası Doğrulama</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="modalPhoneInput" class="form-label">Telefon Numaranız</label>
-                    <input type="tel" class="form-control" id="modalPhoneInput" value="{{ user.userprofile.phone_number }}">
-                </div>
-                <div class="mb-3 d-flex align-items-center">
-                    <button type="button" class="btn btn-secondary me-2" id="sendPhoneVerificationCodeBtn">Doğrulama kodu gönder</button>
-                    <span id="phoneVerificationTimer" class="text-muted" style="display: none;">180s</span>
-                </div>
-                 <div class="mb-3">
-                    <label for="phoneVerificationCodeInput" class="form-label">Doğrulama Kodu</label>
-                    <input type="text" class="form-control" id="phoneVerificationCodeInput" placeholder="Doğrulama kodunu girin">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" id="verifyPhoneBtn">Doğrula</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
+{% block extra_css %}
 <style>
+/* Body arka plan override */
+body {
+    background: #181c24 url('{% static "images/hero-bg.jpg" %}') no-repeat center center fixed !important;
+    background-size: cover !important;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(24,28,36,0.7) !important;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Sayfa içeriğini öne çıkar */
+.container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Form stilleri için daha koyu ve göze rahat renkler */
+.card {
+    transition: transform 0.3s ease;
+    background-color: rgba(35, 48, 68, 0.9); /* Daha koyu mavi-gri ton */
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: rgba(13, 110, 253, 0.9) !important; /* Bootstrap primary mavi tonu */
+    border-bottom: none;
+}
+
+.card-body {
+    background-color: rgba(35, 48, 68, 0.9); /* Ana kart ile aynı */
+    color: #e6e6e6; /* Açık gri metin rengi */
+}
+
+/* Form elemanları */
+.form-control, .form-select {
+    background-color: rgba(50, 65, 85, 0.9) !important;
+    border: 1px solid rgba(80, 100, 140, 0.5);
+    color: #ffffff !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: rgba(60, 75, 100, 0.9) !important;
+    border-color: rgba(100, 130, 200, 0.8);
+    box-shadow: 0 0 0 0.25rem rgba(100, 130, 200, 0.25);
+    color: #ffffff !important;
+}
+
+/* Label ve yardımcı metinler */
+label, .form-text, .text-muted {
+    color: #b0b8c4 !important; /* Daha açık, okunabilir mavi-gri ton */
+}
+
+/* Profil resmi stilleri */
 .profile-picture-container {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     margin: 0 auto;
     position: relative;
     transition: transform 0.3s ease;
+    border: 4px solid rgba(100, 130, 200, 0.5);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    background-color: rgba(25, 38, 58, 0.7);
 }
 
 .profile-picture-container:hover {
     transform: scale(1.05);
+    border-color: rgba(100, 130, 200, 0.8);
+    box-shadow: 0 0 25px rgba(100, 130, 200, 0.4);
 }
 
 .profile-picture {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border: 3px solid #fff;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border: 3px solid rgba(80, 100, 140, 0.5);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
+    border-radius: 50%;
 }
 
 .profile-picture-overlay {
@@ -182,7 +98,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.7);
     padding: 8px;
     border-bottom-left-radius: 50%;
     border-bottom-right-radius: 50%;
@@ -194,28 +110,25 @@
     opacity: 1;
 }
 
-.card {
-    transition: transform 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.form-floating input:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
-}
-
+/* Buton stilleri */
 .btn-primary {
+    background-color: rgba(13, 110, 253, 0.9);
+    border: none;
     transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(13,110,253,0.3);
+    background-color: rgba(13, 110, 253, 1);
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
 }
 
+/* Doğrulama metinleri */
+.text-danger, .text-success {
+    font-weight: 500;
+}
+
+/* Toasts */
 .toast-container.centralized {
     top: 20% !important;
     left: 50% !important;
@@ -223,412 +136,471 @@
     right: auto !important;
     bottom: auto !important;
 }
+
+/* Link renkleri */
+a {
+    color: #3d8bfd; /* Daha açık mavi */
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: #6ea8fe; /* Hover durumunda daha da açık mavi */
+    text-decoration: underline;
+}
 </style>
+{% endblock %}
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Profil fotoğrafı önizleme
-    const profileInput = document.getElementById('id_profile_picture');
-    const profilePreview = document.getElementById('profilePreview');
-
-    profileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                profilePreview.src = e.target.result;
-                profilePreview.classList.add('animate__animated', 'animate__fadeIn');
-            }
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // Form doğrulama
-    const form = document.querySelector('form');
-    // Remove AJAX submit listener
-    // form.removeEventListener('submit', ...);
-
-     // Re-add standard form validation (if needed, though Django handles much of it)
-     // form.addEventListener('submit', function(event) {
-     //     if (!form.checkValidity()) {
-     //         event.preventDefault();
-     //         event.stopPropagation();
-     //     }
-     //     form.classList.add('was-validated');
-     // });
-
-
-    // Helper function to show Bootstrap Toast messages
-    function showToast(message, type = 'success', delay = 2000) {
-        const toastContainer = document.getElementById('toastContainer');
-        if (!toastContainer) return; // Exit if container not found
-
-        // Clear previous toasts if needed (optional, uncomment if only one toast should be visible at a time)
-        // toastContainer.innerHTML = '';
-
-        const toastId = `toast-${Date.now()}`;
-        const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header text-white text-center py-4">
+                    <h3 class="mb-0">Profil Bilgileri</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Sol taraf: Profil fotoğrafı -->
+                            <div class="col-md-4 mb-4 text-center">
+                                <div class="profile-picture-container position-relative d-inline-block">
+                                    {% if user.userprofile.profile_picture %}
+                                        <img src="{{ user.userprofile.profile_picture.url }}" alt="Profil Fotoğrafı" 
+                                             class="rounded-circle profile-picture" id="profilePreview">
+                                    {% else %}
+                                        <img src="{% static 'images/default-profile.svg' %}" alt="Varsayılan Profil" 
+                                             class="rounded-circle profile-picture" id="profilePreview">
+                                    {% endif %}
+                                    <div class="profile-picture-overlay">
+                                        <label for="id_profile_picture" class="btn btn-light btn-sm">
+                                            <i class="fas fa-camera"></i>
+                                        </label>
+                                    </div>
+                                </div>
+                                <input type="file" name="profile_picture" id="id_profile_picture" 
+                                       class="d-none" accept="image/*">
+                                <div class="mt-3 text-center">
+                                    <i class="fas fa-arrow-up text-info fs-5"></i>
+                                    <p class="small mt-1">Profil fotoğrafı yüklemek için tıklayın</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Sağ taraf: Form alanları -->
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.first_name|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.last_name|as_crispy_field }}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.email|as_crispy_field }}
+                                        {% if not user.userprofile.email_verified %}
+                                            <p class="text-danger mt-1"><i class="fas fa-exclamation-circle me-1"></i>E-posta adresiniz doğrulanmadı. <a href="#" id="verifyEmailLink">Hemen doğrula</a></p>
+                                        {% else %}
+                                            <p class="text-success mt-1"><i class="fas fa-check-circle me-1"></i>E-posta adresiniz doğrulandı.</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.phone_number|as_crispy_field }}
+                                        {% if not user.userprofile.phone_number_verified %}
+                                            <p class="text-danger mt-1"><i class="fas fa-exclamation-circle me-1"></i>Telefon numaranız doğrulanmadı. <a href="#" id="verifyPhoneLink">Hemen doğrula</a></p>
+                                        {% else %}
+                                            <p class="text-success mt-1"><i class="fas fa-check-circle me-1"></i>Telefon numaranız doğrulandı.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="id_date_of_birth" class="form-label">Doğum Tarihi</label>
+                                        <input type="date" id="id_date_of_birth" name="date_of_birth" class="form-control" 
+                                               value="{{ user.userprofile.date_of_birth|date:'Y-m-d' }}">
+                                       
+                                    </div>
+                                    <div class="col-md-6 mb-3 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                                            <i class="fas fa-save me-2"></i>Değişiklikleri Kaydet
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-        `;
-        toastContainer.innerHTML += toastHtml;
+        </div>
+    </div>
+</div>
 
-        const toastElement = document.getElementById(toastId);
-        const toast = new bootstrap.Toast(toastElement, {
-            delay: delay // Use passed in delay
-        });
+<!-- Custom Email Verification Modal -->
+<div id="customVerificationModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); z-index: 9999;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #233044; color: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h5 style="margin: 0;">E-posta Doğrulama</h5>
+            <button type="button" onclick="closeCustomModal()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        
+        <!-- Gizli e-posta input'u -->
+        <input type="hidden" id="userEmail" value="{{ user.email }}">
+        
+        <div style="margin-bottom: 20px;">
+            <label for="verificationCodeInput" style="display: block; margin-bottom: 5px;">Doğrulama Kodu</label>
+            <input type="text" id="verificationCodeInput" placeholder="Doğrulama kodunu girin" style="width: 100%; padding: 8px; background-color: #34465e; border: 1px solid #4d6282; color: white; border-radius: 4px;">
+        </div>
 
-        toast.show();
+        <div style="margin-bottom: 20px; display: flex; align-items: center;">
+            <button type="button" id="resendCodeBtn" onclick="resendVerificationCode()" disabled style="background-color: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Tekrar gönder</button>
+            <span id="emailVerificationTimer" style="color: #adb5bd;">180s</span>
+        </div>
 
-        // Remove the toast element from the DOM after it's hidden
-        toastElement.addEventListener('hidden.bs.toast', function () {
-            toastElement.remove();
-        });
-    }
+        <div style="display: flex; justify-content: flex-end;">
+            <button type="button" onclick="closeCustomModal()" style="background-color: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">İptal</button>
+            <button type="button" onclick="verifyEmailCode()" style="background-color: #0d6efd; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Doğrula</button>
+        </div>
+    </div>
+</div>
 
-    // Variables to store timer end times
-    let emailTimerEndTime = null;
-    let emailChangeTimerEndTime = null;
-    let phoneTimerEndTime = null;
+<!-- Center Message Container -->
+<div id="centerMessageContainer" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; padding: 10px 20px; color: white; border-radius: 5px; font-weight: bold;"></div>
+{% endblock %}
 
-    // Function to start countdown timer
-    function startTimer(duration, displayElement, buttonElement, endTimeVariable) {
-        const endTime = Date.now() + duration * 1000;
-        if (endTimeVariable === 'email') {
-            emailTimerEndTime = endTime;
-        } else if (endTimeVariable === 'changeEmail') {
-            emailChangeTimerEndTime = endTime;
-        } else if (endTimeVariable === 'phone') {
-            phoneTimerEndTime = endTime;
-        }
+{% block extra_js %}
+<script>
+// Temel değişkenler ve DOM elementleri
+let timerInterval;
+let secondsLeft = 0;
+const END_TIME_KEY = 'emailVerificationEndTime';
 
-        displayElement.style.display = 'inline'; // Show the timer element
-        buttonElement.disabled = true; // Disable the button
-
-        function updateTimer() {
-            const now = Date.now();
-            const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-
-            if (remaining <= 0) {
-                clearInterval(countdown);
-                displayElement.style.display = 'none'; // Hide the timer element
-                buttonElement.disabled = false; // Enable the button
-                displayElement.textContent = ''; // Clear timer text
-                 // Clear the timer end time variable
-                 if (endTimeVariable === 'email') emailTimerEndTime = null;
-                 else if (endTimeVariable === 'changeEmail') emailChangeTimerEndTime = null;
-                 else if (endTimeVariable === 'phone') phoneTimerEndTime = null;
-
-            } else {
-                displayElement.textContent = remaining + 's';
-            }
-        }
-
-        updateTimer(); // Initial display
-        const countdown = setInterval(updateTimer, 1000);
-    }
-
-    // Function to check and resume timer on modal open
-    function checkAndResumeTimer(endTimeVariable, duration, displayElement, buttonElement) {
-        let endTime;
-        if (endTimeVariable === 'email') endTime = emailTimerEndTime;
-        else if (endTimeVariable === 'changeEmail') endTime = emailChangeTimerEndTime;
-        else if (endTimeVariable === 'phone') endTime = phoneTimerEndTime;
-
-        const now = Date.now();
-        const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
-
-        if (endTime && remaining > 0) {
-            displayElement.style.display = 'inline';
-            buttonElement.disabled = true;
-            displayElement.textContent = remaining + 's';
-
-             // Restart the timer interval based on the remaining time
-            let timer = remaining;
-             const countdown = setInterval(function () {
-                timer = Math.max(0, Math.floor((endTime - Date.now()) / 1000)); // Calculate remaining based on original endTime
-
-                 if (timer <= 0) {
-                     clearInterval(countdown);
-                     displayElement.style.display = 'none';
-                     buttonElement.disabled = false;
-                     displayElement.textContent = '';
-                      if (endTimeVariable === 'email') emailTimerEndTime = null;
-                      else if (endTimeVariable === 'changeEmail') emailChangeTimerEndTime = null;
-                      else if (endTimeVariable === 'phone') phoneTimerEndTime = null;
-                 } else {
-                    displayElement.textContent = timer + 's';
-                 }
-             }, 1000);
-
-        } else {
-            // No active timer, ensure button is enabled and display hidden
-            displayElement.style.display = 'none';
-            buttonElement.disabled = false;
-            displayElement.textContent = '';
-             if (endTimeVariable === 'email') emailTimerEndTime = null;
-             else if (endTimeVariable === 'changeEmail') emailChangeTimerEndTime = null;
-             else if (endTimeVariable === 'phone') phoneTimerEndTime = null;
-        }
-    }
-
-    // Email verification modal handling (for initial verification)
+// Sayfa yüklendiğinde çalışacak kod
+document.addEventListener('DOMContentLoaded', function() {
+    // Profil fotoğrafı önizleme
+    setupProfilePicturePreview();
+    
+    // "Hemen doğrula" linkine tıklama olayı
     const verifyEmailLink = document.getElementById('verifyEmailLink');
-    const emailVerificationModal = new bootstrap.Modal(document.getElementById('emailVerificationModal'));
-    const modalEmailInput = document.getElementById('modalEmailInput');
-    const verificationCodeInput = document.getElementById('verificationCodeInput');
-    const sendVerificationCodeBtn = document.getElementById('sendVerificationCodeBtn');
-    const verifyEmailBtn = document.getElementById('verifyEmailBtn');
-    const emailVerificationTimerDisplay = document.getElementById('emailVerificationTimer');
-
     if (verifyEmailLink) {
         verifyEmailLink.addEventListener('click', function(e) {
             e.preventDefault();
-            modalEmailInput.value = "{{ user.email }}";
-             // Check and resume timer when modal is shown
-             checkAndResumeTimer('email', 180, emailVerificationTimerDisplay, sendVerificationCodeBtn);
-            emailVerificationModal.show();
+            showCustomModal();
         });
     }
-
-    // Email change verification modal handling
-    const emailChangeVerificationModal = new bootstrap.Modal(document.getElementById('emailChangeVerificationModal'));
-    const modalChangeEmailInput = document.getElementById('modalChangeEmailInput');
-    const changeVerificationCodeInput = document.getElementById('changeVerificationCodeInput');
-    const sendChangeVerificationCodeBtn = document.getElementById('sendChangeVerificationCodeBtn');
-    const verifyChangeEmailBtn = document.getElementById('verifyChangeEmailBtn');
-     const emailChangeVerificationTimerDisplay = document.getElementById('emailChangeVerificationTimer');
-
-    // Phone verification modal handling
-    const verifyPhoneLink = document.getElementById('verifyPhoneLink');
-    const phoneVerificationModal = new bootstrap.Modal(document.getElementById('phoneVerificationModal'));
-    const modalPhoneInput = document.getElementById('modalPhoneInput');
-    const phoneVerificationCodeInput = document.getElementById('phoneVerificationCodeInput');
-    const sendPhoneVerificationCodeBtn = document.getElementById('sendPhoneVerificationCodeBtn');
-    const verifyPhoneBtn = document.getElementById('verifyPhoneBtn');
-    const phoneVerificationTimerDisplay = document.getElementById('phoneVerificationTimer');
-
-    if (verifyPhoneLink) {
-        verifyPhoneLink.addEventListener('click', function(e) {
+    
+    // Doğum tarihi alanını düzelt
+    fixDateOfBirthField();
+    
+    // Form submit işlemi
+    const profileForm = document.querySelector('form');
+    if (profileForm) {
+        profileForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            modalPhoneInput.value = "{{ user.userprofile.phone_number|default:'' }}";
-            // Check and resume timer when modal is shown
-            checkAndResumeTimer('phone', 180, phoneVerificationTimerDisplay, sendPhoneVerificationCodeBtn);
-            phoneVerificationModal.show();
-        });
-    }
-
-    // Handle send email verification code button click (initial verification)
-    if (sendVerificationCodeBtn) {
-        sendVerificationCodeBtn.addEventListener('click', function() {
-            const email = modalEmailInput.value;
-            console.log('E-posta doğrulama kodu gönder butonuna tıklandı (İlk Doğrulama):', email);
-
-            // Start the timer
-            startTimer(180, emailVerificationTimerDisplay, sendVerificationCodeBtn, 'email');
-
-            // Send AJAX request to send verification email
-            fetch('{% url "core:send_verification_email" %}', {
+            
+            // Form verilerini al ve gönder
+            const formData = new FormData(this);
+            
+            fetch(window.location.href, {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: new URLSearchParams({
-                    'email': email
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                } else {
-                    showToast('Hata: ' + data.message, 'danger');
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Başarılı mesajı göster
+                showCenterMessage('Bilgileriniz başarıyla güncellendi', true);
+                
+                // 1 saniye sonra sayfayı yenile
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
             })
             .catch(error => {
                 console.error('Error:', error);
-                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
+                showCenterMessage('Bir hata oluştu', false);
             });
         });
     }
+    
+    // Django mesajlarını gizle
+    hideDefaultMessages();
+    
+    // Konsola test mesajı
+    console.log('Profil sayfası JS kodu yüklendi');
+});
 
-    // Handle verify email code button click (initial verification)
-    if (verifyEmailBtn) {
-        verifyEmailBtn.addEventListener('click', function() {
-            const email = modalEmailInput.value;
-            const code = verificationCodeInput.value;
-            console.log('E-posta doğrula butonuna tıklandı (İlk Doğrulama). Email:', email, 'Code:', code);
+// Doğum tarihi alanı düzeltme fonksiyonu
+function fixDateOfBirthField() {
+    const dateInput = document.getElementById('id_date_of_birth');
+    if (!dateInput) return;
+    
+    // Değerin boş olup olmadığını kontrol et
+    if (!dateInput.value) {
+        console.log('Doğum tarihi alanı boş');
+        return;
+    }
+    
+    console.log('Mevcut doğum tarihi:', dateInput.value);
+    
+    // Değer varsa, direkt input type=date'in beklediği formatta (YYYY-MM-DD) olduğunu kontrol et
+    try {
+        // Tarih geçerli mi kontrol et
+        const date = new Date(dateInput.value);
+        if (isNaN(date.getTime())) {
+            console.error('Geçersiz tarih formatı:', dateInput.value);
+            return;
+        }
+        
+        // YYYY-MM-DD formatına çevir
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        const formattedDate = `${year}-${month}-${day}`;
+        
+        // Eğer mevcut değer doğru formatta değilse, düzelt
+        if (dateInput.value !== formattedDate) {
+            console.log('Tarih formatı düzeltildi:', formattedDate);
+            dateInput.value = formattedDate;
+        }
+    } catch (e) {
+        console.error('Tarih işlenirken hata oluştu:', e);
+    }
+}
 
-            // Send AJAX request to verify email code
-            fetch('{% url "core:verify_email_code" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: new URLSearchParams({
-                    'email': email,
-                    'code': code
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    emailVerificationModal.hide();
-                    // window.location.reload(); // Removed immediate reload here
-                } else {
-                    showToast('Hata: ' + data.message, 'danger');
+// Django mesajlarını gizleme fonksiyonu
+function hideDefaultMessages() {
+    // Django mesaj containerı
+    const messages = document.querySelectorAll('.alert');
+    if (messages.length > 0) {
+        messages.forEach(message => {
+            message.style.display = 'none';
+        });
+    }
+}
+
+// Profil fotoğrafı önizleme fonksiyonu
+function setupProfilePicturePreview() {
+    const profileInput = document.getElementById('id_profile_picture');
+    const profilePreview = document.getElementById('profilePreview');
+    
+    if (profileInput && profilePreview) {
+        profileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePreview.src = e.target.result;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
-            });
-        });
-    }
-
-    // Handle send email verification code button click (for changing email)
-    const verifyEmailLinkChange = document.getElementById('verifyEmailLinkChange');
-    if (sendChangeVerificationCodeBtn) {
-         sendChangeVerificationCodeBtn.addEventListener('click', function() {
-            const email = modalChangeEmailInput.value;
-            console.log('E-posta doğrulama kodu gönder butonuna tıklandı (Değişiklik için):', email);
-
-             // Start the timer
-            startTimer(180, emailChangeVerificationTimerDisplay, sendChangeVerificationCodeBtn, 'changeEmail');
-
-            // Send AJAX request to send verification email
-            fetch('{% url "core:send_verification_email" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: new URLSearchParams({
-                    'email': email
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                } else {
-                    showToast('Hata: ' + data.message, 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
-            });
-        });
-    }
-
-    // Handle verify email code button click (for changing email)
-    if (verifyChangeEmailBtn) {
-        verifyChangeEmailBtn.addEventListener('click', function() {
-            const email = modalChangeEmailInput.value;
-            const code = changeVerificationCodeInput.value;
-             console.log('E-posta doğrula butonuna tıklandı (Değişiklik için). Email:', email, 'Code:', code);
-
-            // Send AJAX request to verify email code
-            fetch('{% url "core:verify_email_code" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: new URLSearchParams({
-                    'email': email,
-                    'code': code
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    emailChangeVerificationModal.hide();
-                     // alert('E-posta adresi başarıyla doğrulandı. Değişikliği kaydetmek için lütfen profili güncelleyin.'); // Removed alert
-                     // window.location.reload(); // Removed immediate reload
-
-                } else {
-                    showToast('Hata: ' + data.message, 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
-            });
-        });
-    }
-
-    // Handle send phone verification code button click (Placeholder)
-     if (sendPhoneVerificationCodeBtn) {
-        sendPhoneVerificationCodeBtn.addEventListener('click', function() {
-            const phone_number = modalPhoneInput.value;
-            console.log('Telefon doğrulama kodu gönder butonuna tıklandı:', phone_number);
-            // TODO: Implement code to send verification SMS via AJAX
-            showToast('Telefon doğrulama kodu gönderme işlevi henüz aktif değil.', 'info');
-             // Start the timer for phone (if implemented)
-             startTimer(180, phoneVerificationTimerDisplay, sendPhoneVerificationCodeBtn, 'phone');
-        });
-    }
-
-    // Handle verify phone code button click (Placeholder)
-     if (verifyPhoneBtn) {
-        verifyPhoneBtn.addEventListener('click', function() {
-            const phone_number = modalPhoneInput.value;
-            const code = phoneVerificationCodeInput.value;
-            console.log('Telefon doğrula butonuna tıklandı. Phone:', phone_number, 'Code:', code);
-            // TODO: Implement code to verify phone with code via AJAX
-             showToast('Telefon doğrulama işlevi henüz aktif değil.', 'info');
-        });
-    }
-
-    // Add event listeners to reload the page when modals are hidden
-    const modalsToReload = document.querySelectorAll('.modal');
-    modalsToReload.forEach(modalElement => {
-        modalElement.addEventListener('hidden.bs.modal', function (event) {
-             // Prevent double reload if one modal hides another
-            if (!event.relatedTarget) {
-                window.location.reload();
+                reader.readAsDataURL(file);
             }
         });
+    }
+}
+
+// Custom modal gösterme fonksiyonu
+function showCustomModal() {
+    const modal = document.getElementById('customVerificationModal');
+    if (modal) {
+        modal.style.display = 'block';
+        
+        // Mevcut sayacı kontrol et
+        if (!checkExistingTimer()) {
+            // Mevcut sayaç yoksa e-posta doğrulama kodu gönder
+            sendVerificationCode();
+        }
+    }
+}
+
+// Custom modal kapatma fonksiyonu
+function closeCustomModal() {
+    const modal = document.getElementById('customVerificationModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// E-posta doğrulama kodu gönderme fonksiyonu
+function sendVerificationCode() {
+    const email = document.getElementById('userEmail').value;
+    
+    // CSRF token'ı al
+    const csrfToken = getCsrfToken();
+    
+    // AJAX isteği
+    fetch('/send-verification-email/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: 'email=' + encodeURIComponent(email)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Başarılı mesajı göster
+            showCenterMessage('Doğrulama kodu gönderildi', true);
+            
+            // Sayacı başlat
+            startCountdown(180);
+        } else {
+            showCenterMessage(data.message || 'Bir hata oluştu', false);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showCenterMessage('Bir hata oluştu', false);
     });
+}
 
-    // Check for Django messages and display them as Toasts on page load
-    {% if messages %}
-        {% for message in messages %}
-            // Display success message with larger toast if it's a success message after save
-            {% if message.tags == 'success' and "Profil bilgileriniz başarıyla güncellendi." in message %}
-                 // Show a larger, more prominent toast for profile update success
-                showToast("Profil bilgileriniz başarıyla güncellendi.", "success", 3000); // Show for 3 seconds
-            {% elif message.tags == 'success' %}
-                 // Show standard success toast for other success messages
-                showToast("{{ message|escapejs }}", "success");
-            {% elif message.tags == 'error' %}
-                 // Show error toast
-                showToast("{{ message|escapejs }}", "danger");
-            {% else %}
-                 // Show info/warning toasts
-                showToast("{{ message|escapejs }}", "info"); // Use info or warning based on message.tags
-            {% endif %}
-        {% endfor %}
-    {% endif %}
+// Tekrar kod gönderme fonksiyonu (butona bağlı)
+function resendVerificationCode() {
+    sendVerificationCode();
+}
 
-});
+// E-posta doğrulama kodu kontrol fonksiyonu
+function verifyEmailCode() {
+    const email = document.getElementById('userEmail').value;
+    const code = document.getElementById('verificationCodeInput').value.trim();
+    
+    if (!code) {
+        showCenterMessage('Lütfen doğrulama kodunu girin', false);
+        return;
+    }
+    
+    // CSRF token'ı al
+    const csrfToken = getCsrfToken();
+    
+    // AJAX isteği
+    fetch('/verify-email-code/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: 'email=' + encodeURIComponent(email) + '&code=' + encodeURIComponent(code)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Başarılı mesajı göster
+            showCenterMessage('Doğrulama işlemi başarılı', true);
+            
+            // 1 saniye sonra modalı kapat ve sayfayı yenile
+            setTimeout(function() {
+                closeCustomModal();
+                localStorage.removeItem(END_TIME_KEY);
+                window.location.reload();
+            }, 1000);
+        } else {
+            // Hata mesajı göster
+            showCenterMessage(data.message || 'Doğrulama kodu yanlış', false);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showCenterMessage('Bir hata oluştu', false);
+    });
+}
+
+// Sayaç başlatma fonksiyonu
+function startCountdown(seconds) {
+    // Önceki sayacı temizle
+    clearInterval(timerInterval);
+    
+    // Yeni sayaç için değerleri ayarla
+    secondsLeft = seconds;
+    const resendBtn = document.getElementById('resendCodeBtn');
+    const timerElement = document.getElementById('emailVerificationTimer');
+    
+    if (resendBtn) resendBtn.disabled = true;
+    if (timerElement) timerElement.textContent = secondsLeft + 's';
+    
+    // Bitiş zamanını localStorage'a kaydet
+    const endTime = Date.now() + (seconds * 1000);
+    localStorage.setItem(END_TIME_KEY, endTime);
+    
+    // Sayaç interval'i başlat
+    timerInterval = setInterval(function() {
+        secondsLeft--;
+        
+        if (timerElement) timerElement.textContent = secondsLeft + 's';
+        
+        if (secondsLeft <= 0) {
+            // Sayaç bitti
+            clearInterval(timerInterval);
+            if (resendBtn) resendBtn.disabled = false;
+            localStorage.removeItem(END_TIME_KEY);
+        }
+    }, 1000);
+}
+
+// Mevcut sayacı kontrol etme fonksiyonu
+function checkExistingTimer() {
+    const savedEndTime = localStorage.getItem(END_TIME_KEY);
+    
+    if (savedEndTime) {
+        const now = Date.now();
+        const endTime = parseInt(savedEndTime);
+        
+        if (now < endTime) {
+            // Kalan süreyi hesapla ve sayacı başlat
+            const remainingSeconds = Math.floor((endTime - now) / 1000);
+            if (remainingSeconds > 0) {
+                startCountdown(remainingSeconds);
+                return true;
+            }
+        } else {
+            // Süre dolmuş, localStorage'ı temizle
+            localStorage.removeItem(END_TIME_KEY);
+        }
+    }
+    return false;
+}
+
+// Sayfa ortasında mesaj gösterme fonksiyonu
+function showCenterMessage(message, isSuccess = true) {
+    const messageContainer = document.getElementById('centerMessageContainer');
+    
+    if (messageContainer) {
+        // Mesaj özelliklerini ayarla
+        messageContainer.textContent = message;
+        messageContainer.style.backgroundColor = isSuccess ? '#198754' : '#dc3545';
+        messageContainer.style.display = 'block';
+        
+        // 1 saniye sonra mesajı gizle
+        setTimeout(function() {
+            messageContainer.style.display = 'none';
+        }, 1000);
+    }
+}
+
+// CSRF token'ı alma fonksiyonu
+function getCsrfToken() {
+    // Formdan CSRF token'ı al
+    const tokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (tokenElement) {
+        return tokenElement.value;
+    }
+    
+    // Cookie'den CSRF token'ı al (yedek yöntem)
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+            return value;
+        }
+    }
+    
+    return '';
+}
 </script>
-
-<!-- Toast Container -->
-<div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 centralized" id="toastContainer">
-    <!-- Toasts will be added here -->
-</div>
-
 {% endblock %} 

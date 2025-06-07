@@ -8,6 +8,11 @@ urlpatterns = [
     path('oturum/<str:oturum_kodu>/', views.oturum_dersleri, name='oturum_dersleri'),
     path('profil/', views.profil, name='profil'),
     
+    # Yeni özellikler
+    path('sinav-analizleri/', views.sinav_analizleri, name='sinav_analizleri'),
+    path('pomodoro/', views.pomodoro_timer, name='pomodoro_timer'),
+    path('motivasyon/', views.motivasyon_sistemi, name='motivasyon_sistemi'),
+    
     # Konu Takip URL'leri
     path('konu-takip/', views.konu_takip_sinav_secim, name='konu_takip_sinav_secim'),
     path('konu-takip/dersler/<str:sinav_kodu>/', views.konu_takip_dersler, name='konu_takip_dersler'),

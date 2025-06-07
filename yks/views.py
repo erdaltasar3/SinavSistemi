@@ -1555,3 +1555,21 @@ def deneme_sinav_detay(request, sonuc_id):
     }
 
     return render(request, 'yks/deneme_sinav_detay.html', context)
+
+@login_required
+def sinav_analizleri(request):
+    """Sınav Analizleri sayfası görünümü"""
+    context = {}
+    return render(request, 'yks/sinav_analizleri/index.html', context)
+
+@login_required
+def pomodoro_timer(request):
+    """Pomodoro Çalışma Tekniği sayfası görünümü"""
+    context = {}
+    return render(request, 'yks/pomodoro/index.html', context)
+
+@login_required
+def motivasyon_sistemi(request):
+    """Motivasyon Sistemi sayfası görünümü"""
+    context = {}
+    return render(request, 'yks/motivasyon/index.html', context)

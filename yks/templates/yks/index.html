@@ -73,8 +73,47 @@
                 <div class="tool-card card h-100 text-center shadow-sm">
                     <div class="card-body py-4 px-2">
                         <i class="bi bi-clipboard-check tool-icon text-primary mb-3"></i>
-                        <h5 class="card-title mb-2">Deneme Sınavı Takibi</h5>
+                        <h5 class="card-title mb-2">Denemelerim</h5>
                         <p class="card-text small">Çözdüğün deneme sınavlarını kaydet, analiz et ve gelişimini izle.</p>
+                    </div>
+                </div>
+                </a>
+            </div>
+            
+            <!-- Sınav Analizleri (YENİ) -->
+            <div class="col-12 col-sm-6 col-lg-3" data-aos="zoom-in" data-aos-delay="600">
+                <a href="{% url 'yks:sinav_analizleri' %}" class="tool-card-link">
+                <div class="tool-card card h-100 text-center shadow-sm">
+                    <div class="card-body py-4 px-2">
+                        <i class="bi bi-bar-chart-line tool-icon text-purple mb-3"></i>
+                        <h5 class="card-title mb-2">Sınav Analizleri</h5>
+                        <p class="card-text small">Deneme sınavlarındaki performansını analiz et, güçlü ve zayıf yönlerini keşfet.</p>
+                    </div>
+                </div>
+                </a>
+            </div>
+            
+            <!-- Pomodoro Çalışma Tekniği (YENİ) -->
+            <div class="col-12 col-sm-6 col-lg-3" data-aos="zoom-in" data-aos-delay="700">
+                <a href="{% url 'yks:pomodoro_timer' %}" class="tool-card-link">
+                <div class="tool-card card h-100 text-center shadow-sm">
+                    <div class="card-body py-4 px-2">
+                        <i class="bi bi-alarm tool-icon text-orange mb-3"></i>
+                        <h5 class="card-title mb-2">Pomodoro Tekniği</h5>
+                        <p class="card-text small">Zamanını etkin yönet, konsantrasyonunu artır ve daha verimli çalış.</p>
+                    </div>
+                </div>
+                </a>
+            </div>
+            
+            <!-- Motivasyon Sistemi (YENİ) -->
+            <div class="col-12 col-sm-6 col-lg-3" data-aos="zoom-in" data-aos-delay="800">
+                <a href="{% url 'yks:motivasyon_sistemi' %}" class="tool-card-link">
+                <div class="tool-card card h-100 text-center shadow-sm">
+                    <div class="card-body py-4 px-2">
+                        <i class="bi bi-trophy tool-icon text-teal mb-3"></i>
+                        <h5 class="card-title mb-2">Motivasyon Sistemi</h5>
+                        <p class="card-text small">Motivasyonunu yüksek tut, başarılarını ödüllendir ve hedeflerine daha hızlı ulaş.</p>
                     </div>
                 </div>
                 </a>
@@ -176,6 +215,17 @@
     background: rgba(24,28,36,0.97) !important;
     color: #fff;
     box-shadow: 0 4px 24px rgba(44,62,80,0.10);
+}
+
+/* Yeni eklenen renkler */
+.text-purple {
+    color: #8a2be2;
+}
+.text-orange {
+    color: #ff7f50;
+}
+.text-teal {
+    color: #20b2aa;
 }
 </style>
 {% endblock %}

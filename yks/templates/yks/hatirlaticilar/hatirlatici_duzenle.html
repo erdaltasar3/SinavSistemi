@@ -147,6 +147,21 @@
                                 <div class="form-text">Hatırlatıcının gösterileceği tarih ve saat.</div>
                             </div>
                             
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    {{ form.aktif }}
+                                    <label class="form-check-label" for="{{ form.aktif.id_for_label }}">
+                                        Bu hatırlatıcıyı aktif et
+                                    </label>
+                                    {% if form.aktif.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.aktif.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">İşaretli değilse, e-posta gönderilmeyecektir.</div>
+                                </div>
+                            </div>
+                            
                             {% comment %}
                             <div class="col-md-6">
                                 <div id="tekrarDetay" class="mt-4" style="display: block;">

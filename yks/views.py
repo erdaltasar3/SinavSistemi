@@ -957,26 +957,34 @@ def konular_json(request, ders_id):
 def hatirlatici_listesi(request):
     """Kullanıcının hatırlatıcılarını listeler"""
     
+    # Şu anki zaman (yerel saat dilimine göre)
+    now = timezone.localtime()
+    
     # Bugünün tarihi (saat bilgisini içermeden karşılaştırma yapmak için date() kullanıyoruz)
-    bugun_date = timezone.localdate()
-
-    # Bugünkü tüm hatırlatıcılar
+    bugun_date = now.date()
+    
+    # Bugünkü tüm hatırlatıcılar (şu andan öncekiler de dahil)
     bugunun_hatirlaticilari = Hatirlatici.objects.filter(
         kullanici=request.user,
         hatirlatma_tarihi__date=bugun_date
     ).order_by('hatirlatma_tarihi')
     
-    # Bugünden sonraki tüm hatırlatıcılar (Yaklaşan)
-    yaklasan_hatirlaticilar = Hatirlatici.objects.filter(
-        kullanici=request.user,
-        hatirlatma_tarihi__date__gt=bugun_date
-    ).order_by('hatirlatma_tarihi')
-    
-    # Bugünden önceki tüm hatırlatıcılar (Geçmiş)
+    # Geçmiş hatırlatıcılar (bugün ama şu andan önceki saatler + önceki günler)
     gecmis_hatirlaticilar = Hatirlatici.objects.filter(
         kullanici=request.user,
-        hatirlatma_tarihi__date__lt=bugun_date
+        hatirlatma_tarihi__lt=now
     ).order_by('-hatirlatma_tarihi')
+    
+    # Yaklaşan hatırlatıcılar (şu andan sonrakiler)
+    yaklasan_hatirlaticilar = Hatirlatici.objects.filter(
+        kullanici=request.user,
+        hatirlatma_tarihi__gt=now
+    ).order_by('hatirlatma_tarihi')
+    
+    # Bugün kategorisinde sadece şu andan sonraki hatırlatıcıları göster
+    bugunun_hatirlaticilari_filtrelenmis = bugunun_hatirlaticilari.filter(
+        hatirlatma_tarihi__gt=now
+    )
     
     # Kullanıcının e-posta doğrulama durumunu al
     email_verified = request.user.userprofile.email_verified if hasattr(request.user, 'userprofile') else False
@@ -988,7 +996,7 @@ def hatirlatici_listesi(request):
         'yaklasan_hatirlatici_sayisi': yaklasan_hatirlaticilar.count(),
         
         # Tab içerikleri için
-        'bugunun_hatirlaticilari': bugunun_hatirlaticilari,
+        'bugunun_hatirlaticilari': bugunun_hatirlaticilari_filtrelenmis,
         'yaklasan_hatirlaticilar_tab': yaklasan_hatirlaticilar,
         'gecmis_hatirlaticilar_tab': gecmis_hatirlaticilar,
         
@@ -1005,21 +1013,42 @@ def hatirlatici_ekle(request):
         if form.is_valid():
             hatirlatici = form.save(commit=False)
             hatirlatici.kullanici = request.user
+            
+            # Tarihin timezone bilgisini kontrol et ve gerekirse düzelt
+            from django.utils.timezone import is_aware, make_aware
+            import pytz
+            
+            turkey_timezone = pytz.timezone('Europe/Istanbul')
+            if not is_aware(hatirlatici.hatirlatma_tarihi):
+                hatirlatici.hatirlatma_tarihi = make_aware(hatirlatici.hatirlatma_tarihi, turkey_timezone)
+            
+            # Debug bilgileri
+            print(f"Kaydedilen tarih: {hatirlatici.hatirlatma_tarihi}")
+            
             hatirlatici.save()
             
             # Celery görevi zamanla
-            from .tasks import send_reminder_email
-            send_reminder_email.apply_async(
-                args=[hatirlatici.id],
-                eta=hatirlatici.hatirlatma_tarihi
-            )
-            
-            # Kullanıcıya bilgilendirici mesaj göster
-            hatirlama_zamani = hatirlatici.hatirlatma_tarihi.strftime("%d.%m.%Y %H:%M")
-            messages.success(
-                request, 
-                f'Hatırlatıcı başarıyla eklendi. "{hatirlatici.baslik}" başlıklı hatırlatıcı için {hatirlama_zamani} tarihinde e-posta gönderilecek.'
-            )
+            try:
+                from .tasks import send_reminder_email
+                send_reminder_email.apply_async(
+                    args=[hatirlatici.id],
+                    eta=hatirlatici.hatirlatma_tarihi
+                )
+                
+                # Kullanıcıya bilgilendirici mesaj göster
+                from django.utils.timezone import localtime
+                yerel_tarih = localtime(hatirlatici.hatirlatma_tarihi)
+                hatirlama_zamani = yerel_tarih.strftime("%d.%m.%Y %H:%M")
+                messages.success(
+                    request, 
+                    f'Hatırlatıcı başarıyla eklendi. "{hatirlatici.baslik}" başlıklı hatırlatıcı için {hatirlama_zamani} tarihinde e-posta gönderilecek.'
+                )
+            except Exception as e:
+                # Celery görevini zamanlarken bir hata oluşursa hata mesajı göster
+                messages.warning(
+                    request,
+                    f'Hatırlatıcı eklendi, ancak otomatik e-posta gönderimi şu anda ayarlanamadı: {str(e)}'
+                )
             
             return redirect('yks:hatirlatici_listesi')
     else:
@@ -1042,36 +1071,57 @@ def hatirlatici_duzenle(request, hatirlatici_id):
         form = HatirlaticiForm(request.POST, instance=hatirlatici)
         if form.is_valid():
             # Hatırlatıcının önceki durumlarını kaydet
-            form.save()
+            hatirlatici = form.save(commit=False)
+            
+            # Tarihin timezone bilgisini kontrol et ve gerekirse düzelt
+            from django.utils.timezone import is_aware, make_aware
+            import pytz
+            
+            turkey_timezone = pytz.timezone('Europe/Istanbul')
+            if not is_aware(hatirlatici.hatirlatma_tarihi):
+                hatirlatici.hatirlatma_tarihi = make_aware(hatirlatici.hatirlatma_tarihi, turkey_timezone)
+            
+            # Debug bilgileri
+            print(f"Düzenlenen tarih: {hatirlatici.hatirlatma_tarihi}")
+            
+            hatirlatici.save()
             
             # Eğer tarih veya aktiflik değiştiyse Celery görevini güncelle
             if eski_tarih != hatirlatici.hatirlatma_tarihi or eski_aktif != hatirlatici.aktif:
-                # Yeni görevi zamanla (eski görev zaten devre dışı kalacak)
-                from .tasks import send_reminder_email
-                
-                # Eğer hatırlatıcı hala aktifse ve gönderilmediyse
-                if hatirlatici.aktif and not hatirlatici.sent:
-                    # Zamanı geçmediyse yeni görev planla
-                    if hatirlatici.hatirlatma_tarihi > timezone.now():
-                        send_reminder_email.apply_async(
-                            args=[hatirlatici.id],
-                            eta=hatirlatici.hatirlatma_tarihi
-                        )
-                        hatirlama_zamani = hatirlatici.hatirlatma_tarihi.strftime("%d.%m.%Y %H:%M")
-                        messages.success(
-                            request, 
-                            f'Hatırlatıcı güncellendi. "{hatirlatici.baslik}" başlıklı hatırlatıcı için {hatirlama_zamani} tarihinde e-posta gönderilecek.'
-                        )
+                try:
+                    # Yeni görevi zamanla (eski görev zaten devre dışı kalacak)
+                    from .tasks import send_reminder_email
+                    
+                    # Eğer hatırlatıcı hala aktifse ve gönderilmediyse
+                    if hatirlatici.aktif and not hatirlatici.sent:
+                        # Zamanı geçmediyse yeni görev planla
+                        if hatirlatici.hatirlatma_tarihi > timezone.now():
+                            send_reminder_email.apply_async(
+                                args=[hatirlatici.id],
+                                eta=hatirlatici.hatirlatma_tarihi
+                            )
+                            from django.utils.timezone import localtime
+                            yerel_tarih = localtime(hatirlatici.hatirlatma_tarihi)
+                            hatirlama_zamani = yerel_tarih.strftime("%d.%m.%Y %H:%M")
+                            messages.success(
+                                request, 
+                                f'Hatırlatıcı güncellendi. "{hatirlatici.baslik}" başlıklı hatırlatıcı için {hatirlama_zamani} tarihinde e-posta gönderilecek.'
+                            )
+                        else:
+                            messages.warning(
+                                request,
+                                f'Hatırlatıcı güncellendi, ancak belirlediğiniz zaman geçmiş olduğu için e-posta gönderilmeyecek.'
+                            )
                     else:
-                        messages.warning(
-                            request,
-                            f'Hatırlatıcı güncellendi, ancak belirlediğiniz zaman geçmiş olduğu için e-posta gönderilmeyecek.'
-                        )
-                else:
-                    if not hatirlatici.aktif:
-                        messages.info(request, 'Hatırlatıcı pasif durumda olduğu için e-posta gönderilmeyecek.')
-                    elif hatirlatici.sent:
-                        messages.info(request, 'Bu hatırlatıcı için zaten e-posta gönderilmiş.')
+                        if not hatirlatici.aktif:
+                            messages.info(request, 'Hatırlatıcı pasif durumda olduğu için e-posta gönderilmeyecek.')
+                        elif hatirlatici.sent:
+                            messages.info(request, 'Bu hatırlatıcı için zaten e-posta gönderilmiş.')
+                except Exception as e:
+                    messages.warning(
+                        request,
+                        f'Hatırlatıcı güncellendi, ancak otomatik e-posta gönderimi şu anda ayarlanamadı: {str(e)}'
+                    )
             else:
                 messages.success(request, 'Hatırlatıcı başarıyla güncellendi.')
             

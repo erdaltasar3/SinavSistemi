@@ -148,6 +148,14 @@ class CalismaOturumuForm(forms.ModelForm):
 
 class HatirlaticiForm(forms.ModelForm):
     """Hatırlatıcı ekleme formu"""
+    
+    # Aktif alanını varsayılan olarak True yap
+    aktif = forms.BooleanField(
+        required=False,  # Zorunlu olmamalı ki kullanıcı kapatabilsin
+        initial=True,    # Varsayılan olarak aktif
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    
     class Meta:
         model = Hatirlatici
         fields = ['baslik', 'aciklama', 'hatirlatma_tarihi', 'aktif']
@@ -155,7 +163,7 @@ class HatirlaticiForm(forms.ModelForm):
             'baslik': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Hatırlatıcı başlığını girin'}),
             'aciklama': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Hatırlatıcı açıklamasını girin'}),
             'hatirlatma_tarihi': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'aktif': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            # aktif alanı yukarıda özelleştirildi
         }
 
 class UserProfileForm(forms.ModelForm):

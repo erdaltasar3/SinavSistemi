@@ -1,6 +1,7 @@
 import os
 from celery import Celery
 from celery.signals import task_success, task_failure
+import pytz
 
 # Django settings modülünü ayarla
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'SinavSistemi.settings')
@@ -10,6 +11,10 @@ app = Celery('SinavSistemi')
 
 # Django ayarlarından konfigürasyon al (CELERY_ ile başlayanlar)
 app.config_from_object('django.conf:settings', namespace='CELERY')
+
+# Zaman dilimini ayarla
+app.conf.timezone = 'Europe/Istanbul'
+app.conf.enable_utc = False
 
 # Task'ları otomatik keşfet
 app.autodiscover_tasks()

@@ -1,23 +1,218 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Sınav Türü Seçimi{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* YKS Arka plan stili */
+    .yks-bg-overlay {
+        background: #181c24 url('{% static "images/hero-bg.jpg" %}') no-repeat center center fixed;
+        background-size: cover;
+        opacity: 0.85;
+        z-index: -1;
+    }
+    
+    .exam-type-container {
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        padding: 25px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .page-header {
+        text-align: center;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .page-header h2 {
+        color: #fff;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .page-header p {
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 600px;
+        margin: 10px auto 0;
+    }
+    
+    .exam-type-cards {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+    
+    .exam-type-card {
+        width: 180px;
+        height: 180px;
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #333;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .exam-type-card:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, #3a7bd5, #00d2ff);
+    }
+    
+    .exam-type-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .exam-type-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(58, 123, 213, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .exam-type-card:hover .exam-type-icon {
+        background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+    }
+    
+    .exam-type-icon i {
+        font-size: 28px;
+        color: #3a7bd5;
+        transition: all 0.3s ease;
+    }
+    
+    .exam-type-card:hover .exam-type-icon i {
+        color: white;
+    }
+    
+    .exam-type-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+    
+    .exam-type-code {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        background: transparent;
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        border-radius: 30px;
+        padding: 8px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
+    
+    .back-button:hover {
+        background: rgba(58, 123, 213, 0.8);
+        color: white;
+        border-color: transparent;
+    }
+    
+    .back-button i {
+        margin-right: 8px;
+    }
+    
+    /* Arka plan için stil */
+    .exam-selection-page {
+        position: relative;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Yeni Deneme Sınavı Ekle - Sınav Türü Seçimi</h2>
-    
-    <p>Lütfen sonuçlarını girmek istediğiniz sınav türünü seçin:</p>
-    
-    <div class="list-group">
-        {% for sinav_turu in sinav_alt_turleri %}
-            <a href="{% url 'yks:deneme_sinav_ekle_ders_sonuclari' sinav_turu.kod %}" class="list-group-item list-group-item-action">
-                {{ sinav_turu.ad }} ({{ sinav_turu.kod }})
+<!-- YKS Arka plan overlay'ı -->
+<div class="yks-bg-overlay position-fixed top-0 start-0 w-100 h-100"></div>
+
+<div class="container mt-5 exam-selection-page">
+    <div class="exam-type-container">
+        <div class="page-header">
+            <h2><i class="fas fa-clipboard-check me-2"></i>Yeni Deneme Sınavı Ekle</h2>
+            <p>Sonuçlarını girmek istediğiniz sınav türünü aşağıdan seçin</p>
+        </div>
+        
+        <div class="exam-type-cards">
+            {% for sinav_turu in sinav_alt_turleri %}
+                <a href="{% url 'yks:deneme_sinav_ekle_ders_sonuclari' sinav_turu.kod %}" class="exam-type-card">
+                    <div class="exam-type-icon">
+                        {% if sinav_turu.kod == 'TYT' %}
+                            <i class="fas fa-file-alt"></i>
+                        {% elif sinav_turu.kod == 'AYT' %}
+                            <i class="fas fa-book-open"></i>
+                        {% elif sinav_turu.kod == 'YDT' %}
+                            <i class="fas fa-globe"></i>
+                        {% else %}
+                            <i class="fas fa-pencil-alt"></i>
+                        {% endif %}
+                    </div>
+                    <div class="exam-type-name">{{ sinav_turu.ad }}</div>
+                    <div class="exam-type-code">{{ sinav_turu.kod }}</div>
+                </a>
+            {% empty %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Sınav türü bulunamadı. Lütfen sistem yöneticinizle iletişime geçin.
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center">
+            <a href="{% url 'yks:deneme_sinav_listesi' %}" class="btn back-button">
+                <i class="fas fa-arrow-left"></i> Denemelerime Geri Dön
             </a>
-        {% empty %}
-            <p>Sınav türü bulunamadı.</p>
-        {% endfor %}
+        </div>
     </div>
-    
-    <a href="{% url 'yks:deneme_sinav_listesi' %}" class="btn btn-secondary mt-3">Geri Dön</a>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Sayfa yüklendiğinde animasyon efekti
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.exam-type-card');
+        
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100 * index);
+        });
+    });
+</script>
 {% endblock %} 

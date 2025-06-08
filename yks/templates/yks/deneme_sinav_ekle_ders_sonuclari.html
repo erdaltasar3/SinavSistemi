@@ -1,49 +1,275 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ sinav_alt_tur.ad }} Deneme Sonucu Ekle{% endblock %}
 
-{% block content %}
-<div class="container mt-4">
-    <h2>{{ sinav_alt_tur.ad }} Deneme Sonucu Ekle</h2>
+{% block extra_css %}
+<style>
+    /* YKS Arka plan stili */
+    .yks-bg-overlay {
+        background: #181c24 url('{% static "images/hero-bg.jpg" %}') no-repeat center center fixed;
+        background-size: cover;
+        opacity: 0.85;
+        z-index: -1;
+    }
     
-    <form method="post">
-        {% csrf_token %}
-        
-        <div id="ders-sonuclari-form">
-            {% for ders in dersler %}
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ ders.ad }} (Toplam Soru: {{ ders.soru_sayisi }})</h5>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="dogru-{{ ders.id }}">Doğru Sayısı:</label>
-                                    <input type="number" class="form-control" id="dogru-{{ ders.id }}" name="dogru_{{ ders.id }}" min="0" value="{{ submitted_data.dogru|default:0 }}">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="yanlis-{{ ders.id }}">Yanlış Sayısı:</label>
-                                    <input type="number" class="form-control" id="yanlis-{{ ders.id }}" name="yanlis_{{ ders.id }}" min="0" value="{{ submitted_data.yanlis|default:0 }}">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="bos-{{ ders.id }}">Boş Sayısı:</label>
-                                    <input type="number" class="form-control" id="bos-{{ ders.id }}" name="bos_{{ ders.id }}" min="0" value="{{ submitted_data.bos|default:0 }}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% empty %}
-                <p>Bu sınav türüne ait ders bulunamadı.</p>
-            {% endfor %}
+    .exam-results-container {
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        padding: 25px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .page-header {
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-header h2 {
+        color: #fff;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .subject-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 15px;
+    }
+    
+    .subject-card {
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+        border-left: 4px solid #3a7bd5;
+        padding: 15px;
+        backdrop-filter: blur(5px);
+    }
+    
+    .subject-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        background-color: rgba(255, 255, 255, 0.85);
+        transform: translateY(-3px);
+    }
+    
+    .subject-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .subject-icon {
+        width: 35px;
+        height: 35px;
+        background: rgba(58, 123, 213, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+    }
+    
+    .subject-icon i {
+        color: #3a7bd5;
+        font-size: 0.9rem;
+    }
+    
+    .subject-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin: 0;
+        color: #333;
+    }
+    
+    .subject-total {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 2px;
+    }
+    
+    .input-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 5px;
+        padding: 5px 8px;
+    }
+    
+    .input-group label {
+        width: 85px;
+        font-size: 0.85rem;
+        margin-bottom: 0;
+        font-weight: 500;
+        color: #444;
+    }
+    
+    .input-group input {
+        width: 70px;
+        height: 32px;
+        padding: 4px 8px;
+        border: 1px solid rgba(206, 212, 218, 0.7);
+        border-radius: 5px;
+        font-size: 0.9rem;
+        background: rgba(255, 255, 255, 0.8);
+    }
+    
+    .input-group input:focus {
+        outline: none;
+        border-color: #3a7bd5;
+        box-shadow: 0 0 0 3px rgba(58, 123, 213, 0.2);
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .save-btn {
+        background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+        border: none;
+        border-radius: 30px;
+        padding: 8px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: white;
+    }
+    
+    .save-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    }
+    
+    .back-btn {
+        background: transparent;
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        border-radius: 30px;
+        padding: 8px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .back-btn:hover {
+        background: rgba(58, 123, 213, 0.8);
+        color: white;
+        border-color: transparent;
+    }
+    
+    .back-btn i {
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- YKS Arka plan overlay'ı -->
+<div class="yks-bg-overlay position-fixed top-0 start-0 w-100 h-100"></div>
+
+<div class="container mt-5">
+    <div class="exam-results-container">
+        <div class="page-header">
+            <h2><i class="fas fa-clipboard-check me-2"></i>{{ sinav_alt_tur.ad }} Sonuçları</h2>
         </div>
         
-        <button type="submit" class="btn btn-success mt-3">Sonuçları Kaydet</button>
-    </form>
-    
-    <a href="{% url 'yks:deneme_sinav_ekle_sinav_secim' %}" class="btn btn-secondary mt-3">Geri Dön</a>
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="subject-grid">
+                {% for ders in dersler %}
+                    <div class="subject-card">
+                        <div class="subject-header">
+                            <div class="subject-icon">
+                                {% if 'Matematik' in ders.ad %}
+                                    <i class="fas fa-calculator"></i>
+                                {% elif 'Türkçe' in ders.ad or 'Edebiyat' in ders.ad %}
+                                    <i class="fas fa-book"></i>
+                                {% elif 'Fizik' in ders.ad %}
+                                    <i class="fas fa-atom"></i>
+                                {% elif 'Kimya' in ders.ad %}
+                                    <i class="fas fa-flask"></i>
+                                {% elif 'Biyoloji' in ders.ad %}
+                                    <i class="fas fa-dna"></i>
+                                {% elif 'Tarih' in ders.ad %}
+                                    <i class="fas fa-landmark"></i>
+                                {% elif 'Coğrafya' in ders.ad %}
+                                    <i class="fas fa-globe-americas"></i>
+                                {% elif 'Felsefe' in ders.ad or 'Sosyoloji' in ders.ad %}
+                                    <i class="fas fa-brain"></i>
+                                {% elif 'İngilizce' in ders.ad or 'Almanca' in ders.ad or 'Fransızca' in ders.ad %}
+                                    <i class="fas fa-language"></i>
+                                {% else %}
+                                    <i class="fas fa-book-open"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="subject-title">{{ ders.ad }}</div>
+                                <div class="subject-total">Toplam: {{ ders.soru_sayisi }} soru</div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="dogru-{{ ders.id }}">Doğru:</label>
+                            <input type="number" id="dogru-{{ ders.id }}" name="dogru_{{ ders.id }}" min="0" value="{{ submitted_data.dogru|default:0 }}">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="yanlis-{{ ders.id }}">Yanlış:</label>
+                            <input type="number" id="yanlis-{{ ders.id }}" name="yanlis_{{ ders.id }}" min="0" value="{{ submitted_data.yanlis|default:0 }}">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="bos-{{ ders.id }}">Boş:</label>
+                            <input type="number" id="bos-{{ ders.id }}" name="bos_{{ ders.id }}" min="0" value="{{ submitted_data.bos|default:0 }}">
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Bu sınav türüne ait ders bulunamadı. Lütfen sistem yöneticinizle iletişime geçin.
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn save-btn">
+                    <i class="fas fa-save me-2"></i>Sonuçları Kaydet
+                </button>
+                
+                <a href="{% url 'yks:deneme_sinav_ekle_sinav_secim' %}" class="btn back-btn">
+                    <i class="fas fa-arrow-left"></i> Geri Dön
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Sayfa yüklendiğinde animasyon efekti
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.subject-card');
+        
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 50 * index);
+        });
+    });
+</script>
 {% endblock %} 

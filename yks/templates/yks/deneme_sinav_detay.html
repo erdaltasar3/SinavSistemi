@@ -1,25 +1,433 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ deneme_sonucu.sinav_alt_tur.ad }} Detayları{% endblock %}
+{% block title %}Deneme Sınavı Detayları{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* YKS Arka plan stili */
+    .yks-bg-overlay {
+        background: #181c24 url('{% static "images/hero-bg.jpg" %}') no-repeat center center fixed;
+        background-size: cover;
+        opacity: 0.85;
+        z-index: -1;
+    }
+    
+    .exam-detail-container {
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        padding: 25px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .page-header h2 {
+        color: #fff;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .back-btn {
+        background: transparent;
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        border-radius: 30px;
+        padding: 8px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .back-btn:hover {
+        background: rgba(58, 123, 213, 0.8);
+        color: white;
+        border-color: transparent;
+    }
+    
+    .back-btn i {
+        margin-right: 8px;
+    }
+    
+    .exam-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .info-card {
+        flex: 1 1 200px;
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .info-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .info-icon i {
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .info-content .label {
+        color: #666;
+        font-size: 0.85rem;
+        margin-bottom: 3px;
+    }
+    
+    .info-content .value {
+        font-weight: 600;
+        font-size: 1.2rem;
+        color: #333;
+    }
+    
+    .result-heading {
+        font-weight: 600;
+        font-size: 1.3rem;
+        margin: 30px 0 15px 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .subjects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 15px;
+    }
+    
+    .subject-card {
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+        border-left: 4px solid #3a7bd5;
+        padding: 15px;
+        backdrop-filter: blur(5px);
+    }
+    
+    .subject-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        background-color: rgba(255, 255, 255, 0.85);
+        transform: translateY(-3px);
+    }
+    
+    .subject-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .subject-icon {
+        width: 35px;
+        height: 35px;
+        background: rgba(58, 123, 213, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+    }
+    
+    .subject-icon i {
+        color: #3a7bd5;
+        font-size: 0.9rem;
+    }
+    
+    .subject-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin: 0;
+        color: #333;
+    }
+    
+    .stats-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .stat-value {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .stat-value.correct {
+        color: #28a745;
+    }
+    
+    .stat-value.wrong {
+        color: #dc3545;
+    }
+    
+    .stat-value.empty {
+        color: #ffc107;
+    }
+    
+    .stat-value.net {
+        color: #3a7bd5;
+    }
+    
+    .chart-container {
+        margin-top: 30px;
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        backdrop-filter: blur(5px);
+    }
+    
+    .progress-container {
+        height: 8px;
+        background-color: rgba(230, 230, 230, 0.7);
+        border-radius: 4px;
+        margin-bottom: 5px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        border-radius: 4px;
+    }
+    
+    .progress-bar.correct {
+        background-color: #28a745;
+    }
+    
+    .progress-bar.wrong {
+        background-color: #dc3545;
+    }
+    
+    .progress-bar.empty {
+        background-color: #ffc107;
+    }
+    
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 40px 20px;
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 10px;
+        margin-top: 20px;
+        backdrop-filter: blur(5px);
+    }
+    
+    .no-results i {
+        font-size: 3rem;
+        color: #ccc;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>{{ deneme_sonucu.sinav_alt_tur.ad }} Detayları <small class="text-muted">({{ deneme_sonucu.sinav_tarihi|date:"d.m.Y" }})</small></h2>
+<!-- YKS Arka plan overlay'ı -->
+<div class="yks-bg-overlay position-fixed top-0 start-0 w-100 h-100"></div>
 
-    <h3>Ders Sonuçları:</h3>
-
-    {% if ders_sonuclari %}
-        <ul class="list-group">
-            {% for ders_sonuc in ders_sonuclari %}
-                <li class="list-group-item">
-                    <strong>{{ ders_sonuc.ders.ad }}:</strong> Doğru: {{ ders_sonuc.dogru }}, Yanlış: {{ ders_sonuc.yanlis }}, Boş: {{ ders_sonuc.bos }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Bu deneme sınavına ait ders sonucu bulunamadı.</p>
-    {% endif %}
-
-    <a href="{% url 'yks:deneme_sinav_listesi' %}" class="btn btn-secondary mt-3">Denemelerime Geri Dön</a>
+<div class="container mt-5">
+    <div class="exam-detail-container">
+        <div class="page-header">
+            <h2><i class="fas fa-clipboard-check me-2"></i>{{ deneme_sonucu.sinav_alt_tur.ad }} Sonuçları</h2>
+            <a href="{% url 'yks:deneme_sinav_listesi' %}" class="btn back-btn">
+                <i class="fas fa-arrow-left"></i> Denemelerime Dön
+            </a>
+        </div>
+        
+        <!-- Özet Bilgiler -->
+        <div class="exam-info">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="far fa-calendar-alt"></i>
+                </div>
+                <div class="info-content">
+                    <div class="label">Sınav Tarihi</div>
+                    <div class="value">{{ deneme_sonucu.sinav_tarihi|date:"d.m.Y" }}</div>
+                </div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="info-content">
+                    <div class="label">Toplam Net</div>
+                    <div class="value">{{ deneme_sonucu.toplam_net }}</div>
+                </div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="info-content">
+                    <div class="label">Başarı Oranı</div>
+                    <div class="value">{{ deneme_sonucu.basari_yuzdesi|floatformat:1 }}%</div>
+                </div>
+            </div>
+        </div>
+        
+        {% if ders_sonuclari %}
+            <div class="result-heading">
+                <i class="fas fa-book me-2"></i>Ders Sonuçları
+            </div>
+            
+            <div class="subjects-grid">
+                {% for ders_sonuc in ders_sonuclari %}
+                    <div class="subject-card">
+                        <div class="subject-header">
+                            <div class="subject-icon">
+                                {% if 'Matematik' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-calculator"></i>
+                                {% elif 'Türkçe' in ders_sonuc.ders.ad or 'Edebiyat' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-book"></i>
+                                {% elif 'Fizik' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-atom"></i>
+                                {% elif 'Kimya' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-flask"></i>
+                                {% elif 'Biyoloji' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-dna"></i>
+                                {% elif 'Tarih' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-landmark"></i>
+                                {% elif 'Coğrafya' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-globe-americas"></i>
+                                {% elif 'Felsefe' in ders_sonuc.ders.ad or 'Sosyoloji' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-brain"></i>
+                                {% elif 'İngilizce' in ders_sonuc.ders.ad or 'Almanca' in ders_sonuc.ders.ad or 'Fransızca' in ders_sonuc.ders.ad %}
+                                    <i class="fas fa-language"></i>
+                                {% else %}
+                                    <i class="fas fa-book-open"></i>
+                                {% endif %}
+                            </div>
+                            <div class="subject-title">{{ ders_sonuc.ders.ad }}</div>
+                        </div>
+                        
+                        <ul class="stats-list">
+                            <li class="stat-item">
+                                <span class="stat-label">Doğru</span>
+                                <span class="stat-value correct">{{ ders_sonuc.dogru }}</span>
+                            </li>
+                            <li class="stat-item">
+                                <span class="stat-label">Yanlış</span>
+                                <span class="stat-value wrong">{{ ders_sonuc.yanlis }}</span>
+                            </li>
+                            <li class="stat-item">
+                                <span class="stat-label">Boş</span>
+                                <span class="stat-value empty">{{ ders_sonuc.bos }}</span>
+                            </li>
+                            <li class="stat-item">
+                                <span class="stat-label">Net</span>
+                                <span class="stat-value net">{{ ders_sonuc.net }}</span>
+                            </li>
+                        </ul>
+                        
+                        <!-- İlerleme Çubukları -->
+                        <div class="mt-2">
+                            <div class="progress-container">
+                                <div class="progress-bar correct" style="width: {{ ders_sonuc.dogru_yuzde }}%"></div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar wrong" style="width: {{ ders_sonuc.yanlis_yuzde }}%"></div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar empty" style="width: {{ ders_sonuc.bos_yuzde }}%"></div>
+                            </div>
+                            <div class="progress-label">
+                                <span>0</span>
+                                <span>{{ ders_sonuc.ders.soru_sayisi }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-results">
+                <i class="fas fa-exclamation-circle"></i>
+                <h4>Detaylı sonuç bilgisi bulunamadı.</h4>
+                <p>Bu deneme sınavına ait ders bazlı sonuçlar henüz eklenmemiş veya bir hata oluşmuş olabilir.</p>
+            </div>
+        {% endif %}
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ders sonuç kartları için animasyon
+        const cards = document.querySelectorAll('.subject-card');
+        
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 50 * index);
+        });
+        
+        // Özet bilgiler için animasyon
+        const infoCards = document.querySelectorAll('.info-card');
+        
+        infoCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100 * index);
+        });
+    });
+</script>
 {% endblock %} 

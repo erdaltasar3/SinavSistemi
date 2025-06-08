@@ -1,28 +1,234 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Denemelerim{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* YKS Arka plan stili */
+    .yks-bg-overlay {
+        background: #181c24 url('{% static "images/hero-bg.jpg" %}') no-repeat center center fixed;
+        background-size: cover;
+        opacity: 0.85;
+        z-index: -1;
+    }
+    
+    .exam-list-container {
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        padding: 25px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .page-header h2 {
+        color: #fff;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .add-exam-btn {
+        background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+        border: none;
+        border-radius: 30px;
+        padding: 10px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .add-exam-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+    
+    .exam-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .exam-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        margin-bottom: 10px;
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+        border-left: 4px solid #3a7bd5;
+        backdrop-filter: blur(5px);
+    }
+    
+    .exam-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        background-color: rgba(255, 255, 255, 0.85);
+    }
+    
+    .exam-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .exam-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .exam-icon i {
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .exam-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin: 0;
+        margin-bottom: 3px;
+        color: #333;
+    }
+    
+    .exam-date {
+        font-size: 0.85rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+    }
+    
+    .exam-date i {
+        margin-right: 5px;
+        font-size: 0.8rem;
+    }
+    
+    .view-details-btn {
+        background-color: transparent;
+        color: #3a7bd5;
+        border: 2px solid #3a7bd5;
+        border-radius: 20px;
+        padding: 5px 15px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .view-details-btn:hover {
+        background-color: #3a7bd5;
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        background-color: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        margin-top: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: #ccc;
+        margin-bottom: 15px;
+    }
+    
+    .container {
+        position: relative;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Denemelerim</h2>
-    
-    <a href="{% url 'yks:deneme_sinav_ekle_sinav_secim' %}" class="btn btn-primary mb-3">Yeni Deneme Ekle</a>
-    
-    <div id="deneme-listesi">
+<!-- YKS Arka plan overlay'ı -->
+<div class="yks-bg-overlay position-fixed top-0 start-0 w-100 h-100"></div>
+
+<div class="container mt-5">
+    <div class="exam-list-container">
+        <div class="page-header">
+            <h2><i class="fas fa-clipboard-list me-2"></i>Denemelerim</h2>
+            <a href="{% url 'yks:deneme_sinav_ekle_sinav_secim' %}" class="btn add-exam-btn">
+                <i class="fas fa-plus-circle me-2"></i>Yeni Deneme Ekle
+            </a>
+        </div>
+        
         {% if deneme_sonuclari %}
-            <ul class="list-group">
+            <ul class="exam-list">
                 {% for sonuc in deneme_sonuclari %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            {{ sonuc.sinav_alt_tur.ad }} - {{ sonuc.sinav_tarihi|date:"d.m.Y" }}
+                    <li class="exam-item">
+                        <div class="exam-info">
+                            <div class="exam-icon">
+                                {% if sonuc.sinav_alt_tur.kod == 'TYT' %}
+                                    <i class="fas fa-file-alt"></i>
+                                {% elif sonuc.sinav_alt_tur.kod == 'AYT' %}
+                                    <i class="fas fa-book-open"></i>
+                                {% elif sonuc.sinav_alt_tur.kod == 'YDT' %}
+                                    <i class="fas fa-globe"></i>
+                                {% else %}
+                                    <i class="fas fa-pencil-alt"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="exam-title">{{ sonuc.sinav_alt_tur.ad }}</div>
+                                <div class="exam-date">
+                                    <i class="far fa-calendar-alt"></i>
+                                    {{ sonuc.sinav_tarihi|date:"d.m.Y" }}
+                                </div>
+                            </div>
                         </div>
-                        <a href="{% url 'yks:deneme_sinav_detay' sonuc.id %}" class="btn btn-info btn-sm">Detaylar</a>
+                        <a href="{% url 'yks:deneme_sinav_detay' sonuc.id %}" class="btn view-details-btn">
+                            Detaylar
+                        </a>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p>Henüz kaydedilmiş bir deneme sınavı sonucunuz bulunmamaktadır.</p>
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <h4>Henüz kaydedilmiş bir deneme sınavı sonucunuz bulunmamaktadır.</h4>
+                <p>Yeni bir deneme sınavı eklemek için yukarıdaki "Yeni Deneme Ekle" butonuna tıklayın.</p>
+            </div>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Sayfa yüklendiğinde animasyon efekti
+    document.addEventListener('DOMContentLoaded', function() {
+        const items = document.querySelectorAll('.exam-item');
+        
+        items.forEach((item, index) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            
+            setTimeout(() => {
+                item.style.opacity = '1';
+                item.style.transform = 'translateX(0)';
+            }, 50 * index);
+        });
+    });
+</script>
 {% endblock %} 

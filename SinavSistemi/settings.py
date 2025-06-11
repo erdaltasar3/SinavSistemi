@@ -39,23 +39,8 @@ def get_secret(setting, secrets=secrets):
         env_val = os.environ.get(setting)
         if env_val:
             return env_val
-        # Geliştirme ortamındaki varsayılan değerler
-        if setting == 'SECRET_KEY':
-            return "django-insecure-tqbc&smii9qlsngbq4_k9nqr!-p@)+o%#^13p@f(219&zmu&@j"
-        elif setting == 'DB_PASSWORD':
-            return "Erdal0608*"
-        elif setting == 'EMAIL_HOST_PASSWORD':
-            return "zpoa gopk smnh qwuc"
-        elif setting == 'DEBUG':
-            return 'True' # Varsayılan olarak debug modunu etkinleştir
-        elif setting == 'ALLOWED_HOSTS':
-            return 'localhost,127.0.0.1'
-        
-        # Diğer tüm durumlarda hata fırlat
-        if setting not in ['DB_ENGINE', 'DB_NAME', 'DB_USER', 'DB_HOST', 'DB_PORT',
-                          'EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_HOST_USER']:
-            raise ImproperlyConfigured(f"Set the {setting} environment variable")
-        return ''
+        # Varsayılan değerleri kaldırıyoruz, doğrudan hata fırlatıyoruz
+        raise ImproperlyConfigured(f"Set the {setting} environment variable or secrets.json entry.")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/

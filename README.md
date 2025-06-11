@@ -62,7 +62,7 @@ Sınav Sistemi, öğrencilerin YKS ve diğer merkezi sınavlara hazırlanmasın�
 
 ## 📷 Ekran Görüntüleri
 
-![Ana Sayfa](staticfiles/images/1.png)
+![Ana Sayfa](static\images/1.png)
 ![Konu Takip](screenshots/konu-takip.png)
 ![Çalışma Planı](screenshots/calisma-plani.png)
 

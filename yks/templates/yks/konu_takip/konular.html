@@ -99,12 +99,15 @@
         border-color: #198754;
     }
     
-    /* Yeni şirin geri dön butonu - sabit pozisyonlu */
-    .cute-back-button {
-        position: fixed;
-        top: 85px;
+    /* Özel Back Button - işaretlenen alanda */
+    .back-button-area {
+        position: absolute;
+        top: 20px;
         left: 20px;
         z-index: 1000;
+    }
+    
+    .back-button {
         display: flex;
         align-items: center;
         padding: 8px 15px;
@@ -119,7 +122,7 @@
         border: 2px solid rgba(255, 255, 255, 0.2);
     }
     
-    .cute-back-button:hover {
+    .back-button:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4);
         background: linear-gradient(145deg, #66b5ff, #0a58ca);
@@ -127,7 +130,7 @@
         text-decoration: none;
     }
     
-    .cute-back-button i {
+    .back-button i {
         margin-right: 5px;
         font-size: 1rem;
     }
@@ -263,14 +266,16 @@
 <!-- CSRF token için gizli form -->
 {% csrf_token %}
 
-<!-- Geri dön butonu - Sabit konumda -->
-<a href="javascript:history.back()" class="cute-back-button">
-    <i class="bi bi-arrow-left-circle-fill"></i> Geri Dön
-</a>
-
 <div class="container py-5">
     <div class="ders-header">
         <h2 class="ders-baslik">{{ ders.ad }} <span class="badge bg-primary">{{ ders.kod }}</span></h2>
+        
+        <!-- İşaretlenen area'ya geri dön butonu eklendi -->
+        <div class="back-button-area">
+            <a href="#" id="geri-don-butonu" class="back-button">
+                <i class="bi bi-arrow-left-circle-fill"></i> Geri Dön
+            </a>
+        </div>
     </div>
     
     <!-- Ders Genel Bakış -->
@@ -389,6 +394,29 @@
         // Sayfa yüklendiğinde istatistikleri hesapla
         updateSayfaIstatistikleri();
         
+        // Geri dön butonu işlevi
+        const geriDonButonu = document.getElementById('geri-don-butonu');
+        if (geriDonButonu) {
+            geriDonButonu.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Sayfadaki güncel istatistikleri kaydet
+                const dersId = '{{ ders.id }}';
+                const toplamKonu = document.getElementById('toplam-konu-sayisi').textContent;
+                const tamamlananKonu = document.getElementById('tamamlanan-konu-sayisi').textContent;
+                const tamamlanmaYuzdesi = document.getElementById('tamamlanma-yuzdesi').textContent;
+                
+                // Bu bilgileri localStorage'a kaydet
+                localStorage.setItem('ders_' + dersId + '_toplam', toplamKonu);
+                localStorage.setItem('ders_' + dersId + '_tamamlanan', tamamlananKonu);
+                localStorage.setItem('ders_' + dersId + '_yuzde', tamamlanmaYuzdesi);
+                localStorage.setItem('ders_istatistik_guncelle', 'true');
+                
+                // Sayfadan geri git
+                history.back();
+            });
+        }
+        
         // Ünite başlıklarına tıklama işlevi
         const uniteHeaders = document.querySelectorAll('.unite-header');
         
@@ -492,16 +520,22 @@
                 
                 // Ünite başlığındaki istatistikleri güncelle
                 const uniteInfo = uniteCard.querySelector('.unite-header p');
-                uniteInfo.textContent = `${uniteTamamlanan} / ${uniteToplam} konu tamamlandı`;
+                if (uniteInfo) {
+                    uniteInfo.textContent = `${uniteTamamlanan} / ${uniteToplam} konu tamamlandı`;
+                }
                 
                 // Ünite yüzdesini güncelle
                 const uniteYuzde = uniteCard.querySelector('.fw-bold');
-                uniteYuzde.textContent = `%${Math.round(uniteTamamlanmaYuzdesi)}`;
+                if (uniteYuzde) {
+                    uniteYuzde.textContent = `%${Math.round(uniteTamamlanmaYuzdesi)}`;
+                }
                 
                 // Ünite ilerlemesini güncelle
                 const uniteProgressBar = uniteCard.querySelector('.progress-bar');
-                uniteProgressBar.style.width = `${uniteTamamlanmaYuzdesi}%`;
-                uniteProgressBar.setAttribute('aria-valuenow', Math.round(uniteTamamlanmaYuzdesi));
+                if (uniteProgressBar) {
+                    uniteProgressBar.style.width = `${uniteTamamlanmaYuzdesi}%`;
+                    uniteProgressBar.setAttribute('aria-valuenow', Math.round(uniteTamamlanmaYuzdesi));
+                }
                 
                 // Genel toplamları güncelle
                 toplamKonu += uniteToplam;

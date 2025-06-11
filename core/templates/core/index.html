@@ -7,19 +7,35 @@
 <!-- Özel auth mesajı için container -->
 <div id="auth-message-container" style="display:none; position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 400px; max-width: 90%; padding: 15px 20px; border-radius: 8px; text-align: center; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.2);"></div>
 
-<!-- HERO SECTION -->
+{% if user.is_authenticated %}
+<!-- HERO SECTION (GİRİŞ YAPILMIŞ) -->
+<section class="hero-section position-relative d-flex align-items-center justify-content-center text-center" style="min-height: 60vh;">
+    <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100" style="background: rgba(24,28,36,0.7);"></div>
+    <div class="container position-relative z-2">
+        <h1 class="display-4 fw-bold text-white mb-3 animate__animated animate__fadeInDown">Hoş Geldin, <span class="text-warning">{{ user.first_name|default:user.username }}</span>!</h1>
+        <p class="lead text-white mb-4 animate__animated animate__fadeInUp animate__delay-1s">Çalışmana kaldığın yerden devam et veya yeni bir deneme sınavı çöz.</p>
+        <div class="d-flex justify-content-center gap-4 animate__animated animate__fadeInUp animate__delay-2s">
+            <a href="{%url 'yks:index'%}" class="btn btn-warning btn-lg shadow-lg px-5 py-3">Çalışmaya Başla</a>
+            
+        </div>
+    </div>
+    <div class="parallax-stars position-absolute w-100 h-100 top-0 start-0"></div>
+</section>
+{% else %}
+<!-- HERO SECTION (NORMAL) -->
 <section class="hero-section position-relative d-flex align-items-center justify-content-center text-center" style="min-height: 60vh;">
     <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100" style="background: rgba(24,28,36,0.7);"></div>
     <div class="container position-relative z-2">
         <h1 class="display-4 fw-bold text-white mb-3 animate__animated animate__fadeInDown">YKS'de <span class="text-warning">Başarıya</span> Bir Adım Daha Yaklaş!</h1>
         <p class="lead text-white mb-4 animate__animated animate__fadeInUp animate__delay-1s">Türkiye'nin en yenilikçi YKS hazırlık ve analiz platformu ile hedeflerine ulaş!</p>
         <div class="d-flex justify-content-center gap-4 animate__animated animate__fadeInUp animate__delay-2s">
-            <a href="{% url 'core:kayit' %}" class="btn btn-warning btn-lg shadow-lg px-5 py-3">Hemen Üye Ol</a>
-            <a href="{% url 'core:giris' %}" class="btn btn-outline-light btn-lg shadow-lg px-5 py-3">Giriş Yap</a>
+            <a href="{%url 'core:kayit'%}" class="btn btn-warning btn-lg shadow-lg px-5 py-3">Hemen Üye Ol</a>
+            <a href="{%url 'core:giris'%}" class="btn btn-outline-light btn-lg shadow-lg px-5 py-3">Giriş Yap</a>
         </div>
     </div>
     <div class="parallax-stars position-absolute w-100 h-100 top-0 start-0"></div>
 </section>
+{% endif %}
 
 <!-- YKS AVANTAJLARI -->
 <section class="features-section py-5">
@@ -54,32 +70,37 @@
 <!-- YKS İSTATİSTİKLERİ ve MOTİVASYON -->
 <section class="parallax-section position-relative py-5 w-100" style="background: rgba(24,28,36,0.7);">
     <div class="w-100 text-center text-white" style="max-width: 1200px; margin: 0 auto;">
-        <h2 class="display-6 fw-bold mb-4 animate__animated animate__fadeInLeft">YKS'de Başarıya Giden Yolda <span class="text-warning">Yalnız Değilsin!</span></h2>
-        <p class="lead mb-5 animate__animated animate__fadeInRight">Sınav Sistemi ile binlerce öğrenci YKS'de hedeflerine ulaşıyor. Sen de aramıza katıl!</p>
+        {% if user.is_authenticated %}
+        <h2 class="display-6 fw-bold mb-4 animate__animated animate__fadeInLeft">YKS Hazırlığında <span class="text-warning">Doğru Adımlar</span></h2>
+        <p class="lead mb-5 animate__animated animate__fadeInRight">Düzenli çalışma ve doğru stratejilerle hedefine ulaşmak artık daha kolay!</p>
+        {% else %}
+        <h2 class="display-6 fw-bold mb-4 animate__animated animate__fadeInLeft">YKS'de <span class="text-warning">Fark Yaratan</span> Hazırlık</h2>
+        <p class="lead mb-5 animate__animated animate__fadeInRight">Binlerce öğrenci gibi sen de stratejik çalışmayla başarıya ulaşabilirsin!</p>
+        {% endif %}
         <div class="row justify-content-center">
-            <div class="col-md-3 mb-4">
-                <div class="stat-card bg-white text-primary rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-1s">
-                    <h2 class="display-4 fw-bold mb-0" data-count="12000">0</h2>
-                    <p class="mb-0">YKS Öğrencisi</p>
+            <div class="col-md-4 mb-4">
+                <div class="stat-card bg-white rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-1s">
+                    <h2 class="h3 text-primary mb-3">KİŞİSEL İLERLEME</h2>
+                    <p class="mb-0">Güçlü ve zayıf yönlerini tespit et, ilerleme grafiklerini takip et.</p>
                 </div>
             </div>
-            <div class="col-md-3 mb-4">
-                <div class="stat-card bg-white text-success rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-2s">
-                    <h2 class="display-4 fw-bold mb-0" data-count="85000">0</h2>
-                    <p class="mb-0">Çözülmüş YKS Sorusu</p>
+            <div class="col-md-4 mb-4">
+                <div class="stat-card bg-white rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-2s">
+                    <h2 class="h3 text-success mb-3">AKILLI SORU HAVUZU</h2>
+                    <p class="mb-0">Tam ihtiyacın olan konulardan seçilmiş özgün sorular çöz.</p>
                 </div>
             </div>
-            <div class="col-md-3 mb-4">
-                <div class="stat-card bg-white text-warning rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-3s">
-                    <h2 class="display-4 fw-bold mb-0" data-count="97">0</h2>
-                    <p class="mb-0">% YKS Memnuniyet</p>
+            <div class="col-md-4 mb-4">
+                <div class="stat-card bg-white rounded shadow-lg p-4 animate__animated animate__fadeInUp animate__delay-3s">
+                    <h2 class="h3 text-warning mb-3">HEDEF NETLER</h2>
+                    <p class="mb-0">Hayalindeki bölüm için gereken netlere adım adım yaklaş.</p>
                 </div>
             </div>
         </div>
         <div class="row mt-5">
-            <div class="col-md-6 mx-auto">
+            <div class="col-md-8 mx-auto">
                 <div class="alert alert-info bg-opacity-75 animate__animated animate__fadeInUp">
-                    <strong>Motivasyon:</strong> "Başarı, hazırlanmış olanlarındır! YKS'de hedefin için bugün bir adım at!"
+                    <strong>Bilgi:</strong> "Her gün yapılan küçük çalışmalar, zaman içinde büyük başarılar getirir!"
                 </div>
             </div>
         </div>
@@ -98,7 +119,7 @@
                     <div class="card-body">
                         <h3 class="card-title h5">Temel Yeterlilik Testi (TYT)</h3>
                         <p class="card-text">YKS'nin ilk adımı olan TYT için en güncel kaynaklar ve analizler burada.</p>
-                        <a href="{% url 'yks:index' %}" class="btn btn-primary">Detaylar</a>
+                        <a href="{%url 'yks:index'%}" class="btn btn-primary">Detaylar</a>
                     </div>
                 </div>
             </div>
@@ -108,7 +129,7 @@
                     <div class="card-body">
                         <h3 class="card-title h5">Alan Yeterlilik Testi (AYT)</h3>
                         <p class="card-text">AYT'de başarıya ulaşmak için ihtiyacın olan her şey burada.</p>
-                        <a href="{% url 'yks:index' %}" class="btn btn-primary">Detaylar</a>
+                        <a href="{%url 'yks:index'%}" class="btn btn-primary">Detaylar</a>
                     </div>
                 </div>
             </div>
@@ -118,7 +139,7 @@
                     <div class="card-body">
                         <h3 class="card-title h5">Yabancı Dil Testi (YDT)</h3>
                         <p class="card-text">YDT'ye hazırlık için en iyi kaynaklar ve analizler.</p>
-                        <a href="{% url 'yks:index' %}" class="btn btn-primary">Detaylar</a>
+                        <a href="{%url 'yks:index'%}" class="btn btn-primary">Detaylar</a>
                     </div>
                 </div>
             </div>
@@ -129,8 +150,13 @@
 <!-- CALL TO ACTION -->
 <section class="cta-section py-5 w-100" style="background: linear-gradient(135deg, #23272f, #3498db);">
     <div class="w-100 text-center" style="max-width: 900px; margin: 0 auto;">
+        {% if user.is_authenticated %}
+        <h2 class="mb-4 animate__animated animate__fadeIn text-white">Çalışma Programını Oluştur!</h2>
+        <a href="{%url 'yks:index'%}" class="btn btn-warning btn-lg animate__animated animate__pulse animate__infinite">Çalışmaya Başla</a>
+        {% else %}
         <h2 class="mb-4 animate__animated animate__fadeIn text-white">Sen de YKS Başarı Hikayeni Yaz!</h2>
-        <a href="{% url 'core:kayit' %}" class="btn btn-warning btn-lg animate__animated animate__pulse animate__infinite">Ücretsiz Üye Ol</a>
+        <a href="{%url 'core:kayit'%}" class="btn btn-warning btn-lg animate__animated animate__pulse animate__infinite">Ücretsiz Üye Ol</a>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

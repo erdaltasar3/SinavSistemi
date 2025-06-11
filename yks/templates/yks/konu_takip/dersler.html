@@ -247,6 +247,86 @@
     @media (max-width: 700px) {
         .modern-back-btn { top: 70px; left: 10px; width: 40px; height: 40px; font-size: 1.2rem; }
     }
+    
+    /* İlerleme çubuğu */
+    .progress-container {
+        width: 80%;
+        max-width: 500px;
+        height: 30px;
+        background-color: #e0e0e0;
+        border-radius: 15px;
+        margin: 20px auto;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+        border-radius: 15px;
+        text-align: center;
+        line-height: 30px;
+        color: #fff;
+        font-weight: bold;
+        transition: width 0.5s ease;
+    }
+    
+    /* Yaklaşan sınavlar */
+    .upcoming-exams {
+        margin: 20px auto;
+        padding: 15px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        max-width: 500px;
+    }
+    
+    .upcoming-exams h3 {
+        margin-bottom: 10px;
+        font-size: 1.2em;
+    }
+    
+    .upcoming-exams ul {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .upcoming-exams li {
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Buton stilleri */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 25px 0;
+        flex-wrap: wrap;
+    }
+    
+    .btn-primary {
+        background-color: #FFD700;
+        color: #333;
+    }
+    
+    .btn-secondary {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+    
+    .btn-light {
+        background-color: #fff;
+        color: #2c3e50;
+    }
+    
+    /* Kullanıcı karşılama bölümü */
+    .highlight {
+        color: #FFD700;
+    }
+    
+    .subtitle {
+        margin: 15px 0;
+        font-size: 1.2em;
+    }
 </style>
 {% endblock %}
 
@@ -264,7 +344,7 @@
             <div class="row g-4">
                 {% for ders_data in alt_tur_data.dersler %}
                     <div class="col-md-4 animate-card animate-delay-{{ forloop.counter|divisibleby:3|yesno:'3,1,2' }}">
-                        <div class="card ders-card h-100">
+                        <div class="card ders-card h-100" data-ders-id="{{ ders_data.ders.id }}">
                             <div class="card-body p-4">
                                 <h4 class="card-title h5 mb-4">{{ ders_data.ders.ad }}</h4>
                                 
@@ -296,7 +376,7 @@
                                 </div>
                                 
                                 <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <span class="text-muted">
+                                    <span class="text-muted konu-ilerlemesi">
                                         <i class="bi bi-check-circle-fill text-success me-1"></i> 
                                         <strong>{{ ders_data.tamamlanan_konu }}</strong> / {{ ders_data.toplam_konu }} konu
                                     </span>
@@ -378,6 +458,69 @@
                 circle.style.strokeDashoffset = dashoffset;
             });
         }, 300);
+        
+        // localStorage değişikliklerini dinle
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'ders_istatistik_guncelle' && event.newValue === 'true') {
+                // localStorage'dan tüm ders kartlarındaki istatistikleri güncelle
+                const dersKartlari = document.querySelectorAll('.ders-card');
+                
+                dersKartlari.forEach(kart => {
+                    const dersId = kart.getAttribute('data-ders-id');
+                    
+                    if (dersId) {
+                        const toplamKonu = localStorage.getItem('ders_' + dersId + '_toplam');
+                        const tamamlananKonu = localStorage.getItem('ders_' + dersId + '_tamamlanan');
+                        const tamamlanmaYuzdesi = localStorage.getItem('ders_' + dersId + '_yuzde');
+                        
+                        if (toplamKonu && tamamlananKonu && tamamlanmaYuzdesi) {
+                            // İlerleme metnini güncelle
+                            const progressText = kart.querySelector('.konu-ilerlemesi');
+                            if (progressText) {
+                                progressText.textContent = '';
+                                const icon = document.createElement('i');
+                                icon.className = 'bi bi-check-circle-fill text-success me-1';
+                                progressText.appendChild(icon);
+                                
+                                const strong = document.createElement('strong');
+                                strong.textContent = tamamlananKonu;
+                                progressText.appendChild(strong);
+                                
+                                progressText.appendChild(document.createTextNode(' / ' + toplamKonu + ' konu'));
+                            }
+                            
+                            // Yüzde değerini güncelle
+                            const yuzdeText = kart.querySelector('.progress-percentage');
+                            if (yuzdeText) {
+                                yuzdeText.textContent = `%${tamamlanmaYuzdesi}`;
+                            }
+                            
+                            // İlerleme çubuğunu güncelle
+                            const progressBar = kart.querySelector('.progress-bar');
+                            if (progressBar) {
+                                progressBar.style.width = `${tamamlanmaYuzdesi}%`;
+                                progressBar.setAttribute('aria-valuenow', tamamlanmaYuzdesi);
+                            }
+                            
+                            // SVG çemberi güncelle
+                            const progressRing = kart.querySelector('.progress-ring__circle-progress');
+                            if (progressRing) {
+                                progressRing.setAttribute('data-progress', tamamlanmaYuzdesi);
+                                
+                                // SVG çemberi yeniden çiz
+                                const circumference = 2 * Math.PI * 36;
+                                const dashoffset = circumference - (parseFloat(tamamlanmaYuzdesi) / 100) * circumference;
+                                progressRing.style.strokeDasharray = circumference;
+                                progressRing.style.strokeDashoffset = dashoffset;
+                            }
+                        }
+                    }
+                });
+                
+                // localStorage'daki güncelleme değişkenini temizle
+                localStorage.removeItem('ders_istatistik_guncelle');
+            }
+        });
     });
 </script>
 {% endblock %} 

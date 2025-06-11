@@ -33,4 +33,4 @@ services:
 databases:
   - name: sinavsistemi-db
     databaseName: sinav_sistemi
-    user: postgres 
+    user: sinavsistemi_user 

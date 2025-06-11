@@ -7,21 +7,30 @@ from .models import Ders, Konu, Unite, UserProfile
 class KayitFormu(UserCreationForm):
     """Kullanıcı kayıt formu"""
     email = forms.EmailField(
-        required=True,
-        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-posta Adresi'})
+        required=False,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'E-posta Adresi (İsteğe bağlı)'})
     )
     first_name = forms.CharField(
         required=True, max_length=30,
+        error_messages={'required': 'Adınızı girmelisiniz.'},
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Adınız'})
     )
     last_name = forms.CharField(
         required=True, max_length=30,
+        error_messages={'required': 'Soyadınızı girmelisiniz.'},
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Soyadınız'})
     )
     
     class Meta:
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'password1', 'password2')
+        error_messages = {
+            'username': {
+                'required': 'Kullanıcı adı girmelisiniz.',
+                'unique': 'Bu kullanıcı adı zaten kullanılıyor.',
+                'invalid': 'Geçerli bir kullanıcı adı giriniz (sadece harfler, rakamlar ve @/./+/-/_ karakterleri).'
+            }
+        }
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -29,20 +38,36 @@ class KayitFormu(UserCreationForm):
         self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Şifre'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Şifre (Tekrar)'})
         
+        # Şifre alanları için özel hata mesajları
+        self.fields['password1'].error_messages = {
+            'required': 'Şifre girmelisiniz.',
+        }
+        self.fields['password2'].error_messages = {
+            'required': 'Şifre tekrarını girmelisiniz.',
+        }
+        
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise ValidationError('Bu e-posta adresi zaten kullanılıyor.')
+        if email:  # Sadece e-posta girilmişse kontrol et
+            if User.objects.filter(email=email).exists():
+                raise ValidationError('Bu e-posta adresi zaten kullanılıyor.')
         return email
 
 class GirisFormu(AuthenticationForm):
     """Kullanıcı giriş formu"""
     username = forms.CharField(
+        error_messages={'required': 'Kullanıcı adınızı girmelisiniz.'},
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Kullanıcı Adı'})
     )
     password = forms.CharField(
+        error_messages={'required': 'Şifrenizi girmelisiniz.'},
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Şifre'})
     )
+    
+    error_messages = {
+        'invalid_login': 'Lütfen doğru bir kullanıcı adı ve şifre girin.',
+        'inactive': 'Bu hesap aktif değil.',
+    }
 
 # Ders, Ünite ve Konu modülleri için formlar
 class DersForm(forms.ModelForm):

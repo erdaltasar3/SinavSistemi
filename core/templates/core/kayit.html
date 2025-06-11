@@ -1,6 +1,127 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Kayıt Ol - Sınav Sistemi{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #181c24 url('{% static "images/hero-bg.jpg" %}') no-repeat center center fixed !important;
+        background-size: cover !important;
+    }
+    
+    /* Form stili */
+    .card {
+        background-color: rgba(44, 62, 80, 0.85) !important;
+        border: none;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, rgba(52, 152, 219, 0.9), rgba(44, 62, 80, 0.9)) !important;
+        border-bottom: none;
+    }
+    
+    .card-body {
+        color: #ffffff;
+    }
+    
+    .card-footer {
+        background-color: rgba(44, 62, 80, 0.9);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+    
+    .form-control {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff !important;
+    }
+    
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+    
+    .form-control:focus {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-color: rgba(52, 152, 219, 0.5);
+        color: #ffffff;
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    }
+    
+    .form-label {
+        color: #ffffff;
+    }
+    
+    .form-text {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2980b9, #3498db);
+    }
+    
+    .card-footer a {
+        color: #3498db;
+        text-decoration: none;
+    }
+    
+    .card-footer a:hover {
+        color: #2ecc71;
+        text-decoration: underline;
+    }
+    
+    .text-danger {
+        color: #e74c3c !important;
+    }
+    
+    .text-muted {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+    
+    .optional-field {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-left: 5px;
+    }
+    
+    /* Hata mesajı konteyner stili */
+    .error-message-container {
+        min-height: 50px; /* Sabit yükseklik */
+        position: relative;
+        margin-bottom: 15px;
+    }
+    
+    /* Hata mesajı stili */
+    .register-alert {
+        background-color: rgba(231, 76, 60, 0.8);
+        color: white;
+        border: none;
+        padding: 12px 15px;
+        margin-bottom: 0; /* Margin'i kaldırdık */
+        border-radius: 8px;
+        font-weight: 500;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeOut {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-10px); }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -11,13 +132,17 @@
                     <h3 class="mb-0">Yeni Hesap Oluştur</h3>
                 </div>
                 <div class="card-body p-4">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                    <div class="error-message-container">
+                        {% if messages %}
+                            {% with messages_list=messages|slice:":1" %}
+                                {% for message in messages_list %}
+                                    <div id="single-error-message" class="register-alert">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endwith %}
+                        {% endif %}
+                    </div>
                     
                     <form method="post" novalidate>
                         {% csrf_token %}
@@ -26,9 +151,9 @@
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.first_name.id_for_label }}" class="form-label">Adınız</label>
                                 {{ form.first_name }}
-                                {% if form.first_name.errors %}
-                                    <div class="text-danger">
-                                        {{ form.first_name.errors }}
+                                {% if form.first_name.errors and not messages %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.first_name.errors.0 }}
                                     </div>
                                 {% endif %}
                             </div>
@@ -36,9 +161,9 @@
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.last_name.id_for_label }}" class="form-label">Soyadınız</label>
                                 {{ form.last_name }}
-                                {% if form.last_name.errors %}
-                                    <div class="text-danger">
-                                        {{ form.last_name.errors }}
+                                {% if form.last_name.errors and not messages %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.last_name.errors.0 }}
                                     </div>
                                 {% endif %}
                             </div>
@@ -47,29 +172,34 @@
                         <div class="mb-3">
                             <label for="{{ form.username.id_for_label }}" class="form-label">Kullanıcı Adı</label>
                             {{ form.username }}
-                            {% if form.username.errors %}
-                                <div class="text-danger">
-                                    {{ form.username.errors }}
+                            {% if form.username.errors and not messages %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.username.errors.0 }}
                                 </div>
                             {% endif %}
                         </div>
                         
                         <div class="mb-3">
-                            <label for="{{ form.email.id_for_label }}" class="form-label">E-posta Adresi</label>
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                E-posta Adresi <span class="optional-field">(İsteğe bağlı)</span>
+                            </label>
                             {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="text-danger">
-                                    {{ form.email.errors }}
+                            {% if form.email.errors and not messages %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.email.errors.0 }}
                                 </div>
                             {% endif %}
+                            <div class="form-text">
+                                E-posta adresiniz isteğe bağlıdır. Daha sonra profilinizden ekleyebilirsiniz.
+                            </div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="{{ form.password1.id_for_label }}" class="form-label">Şifre</label>
                             {{ form.password1 }}
-                            {% if form.password1.errors %}
-                                <div class="text-danger">
-                                    {{ form.password1.errors }}
+                            {% if form.password1.errors and not messages %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.password1.errors.0 }}
                                 </div>
                             {% endif %}
                             <div class="form-text">
@@ -80,9 +210,9 @@
                         <div class="mb-3">
                             <label for="{{ form.password2.id_for_label }}" class="form-label">Şifre (Tekrar)</label>
                             {{ form.password2 }}
-                            {% if form.password2.errors %}
-                                <div class="text-danger">
-                                    {{ form.password2.errors }}
+                            {% if form.password2.errors and not messages %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.password2.errors.0 }}
                                 </div>
                             {% endif %}
                         </div>
@@ -99,4 +229,23 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Hata mesajının otomatik kapanması
+        const errorMessage = document.getElementById('single-error-message');
+        if (errorMessage) {
+            // 1 saniye sonra fade-out animasyonunu başlat
+            setTimeout(function() {
+                errorMessage.style.animation = 'fadeOut 0.3s ease-in forwards';
+                // Animasyon tamamlandıktan sonra elementi gizle
+                setTimeout(function() {
+                    errorMessage.style.display = 'none';
+                }, 300);
+            }, 1000);
+        }
+    });
+</script>
 {% endblock %} 

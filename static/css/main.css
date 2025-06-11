@@ -2,6 +2,8 @@
     background: linear-gradient(135deg, #2c3e50, #3498db);
     box-shadow: 0 2px 15px rgba(0,0,0,0.1);
     padding: 1rem 0;
+    position: relative;
+    z-index: 2000;
 }
 
 .navbar-brand {
@@ -70,6 +72,7 @@ ul.nav-tabs.card-header-tabs > li > .nav-link[aria-disabled="true"] {
     border: none;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     border-radius: 10px;
+    z-index: 2100;
 }
 
 .dropdown-item {

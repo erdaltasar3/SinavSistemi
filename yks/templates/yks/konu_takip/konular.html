@@ -5,6 +5,28 @@
 
 {% block extra_css %}
 <style>
+    /* Arka plan resmi */
+    body {
+        background: #181c24 url('{% static "images/hero-bg.jpg" %}') no-repeat center center fixed !important;
+        background-size: cover !important;
+        background-attachment: fixed !important;
+    }
+    
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(24,28,36,0.5) !important; /* Overlay'i biraz daha hafif yaptım */
+        z-index: 0;
+        pointer-events: none;
+    }
+    
+    .container {
+        position: relative;
+        z-index: 5;
+        padding-top: 20px;
+    }
+    
     .konu-item {
         border-left: 4px solid #dee2e6;
         padding-left: 15px;
@@ -77,32 +99,37 @@
         border-color: #198754;
     }
     
-    .back-button {
+    /* Yeni şirin geri dön butonu - sabit pozisyonlu */
+    .cute-back-button {
         position: fixed;
-        top: 80px;
+        top: 85px;
         left: 20px;
         z-index: 1000;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background-color: #0d6efd;
-        color: white;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         display: flex;
         align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-    
-    .back-button:hover {
-        transform: scale(1.1);
-        background-color: #0a58ca;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-    }
-    
-    .back-button i {
-        font-size: 1.6rem;
+        padding: 8px 15px;
+        background: linear-gradient(145deg, #7cc2ff, #0d6efd);
         color: white;
+        border-radius: 25px;
+        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .cute-back-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4);
+        background: linear-gradient(145deg, #66b5ff, #0a58ca);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .cute-back-button i {
+        margin-right: 5px;
+        font-size: 1rem;
     }
     
     .collapse-icon {
@@ -114,7 +141,7 @@
     }
     
     .ders-overview {
-        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+        background: linear-gradient(to right, rgba(248, 249, 250, 0.9), rgba(233, 236, 239, 0.9));
         border-radius: 15px;
         padding: 20px;
         margin-bottom: 30px;
@@ -197,6 +224,38 @@
         background-color: #198754;
         color: white;
     }
+    
+    /* Ders başlığı */
+    .ders-baslik {
+        color: white;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    /* Alert stilleri */
+    .alert {
+        background-color: rgba(255, 255, 255, 0.9);
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Butonlar */
+    .btn {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Ders başlığı ve butonları içeren flex konteyneri */
+    .ders-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
 </style>
 {% endblock %}
 
@@ -204,14 +263,14 @@
 <!-- CSRF token için gizli form -->
 {% csrf_token %}
 
-<!-- Geri Dön Butonu -->
-<a href="{% url 'yks:konu_takip_dersler' ders.alt_tur.kod %}" class="back-button">
-    <i class="bi bi-arrow-left"></i>
+<!-- Geri dön butonu - Sabit konumda -->
+<a href="javascript:history.back()" class="cute-back-button">
+    <i class="bi bi-arrow-left-circle-fill"></i> Geri Dön
 </a>
 
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>{{ ders.ad }} <span class="badge bg-primary">{{ ders.kod }}</span></h2>
+    <div class="ders-header">
+        <h2 class="ders-baslik">{{ ders.ad }} <span class="badge bg-primary">{{ ders.kod }}</span></h2>
     </div>
     
     <!-- Ders Genel Bakış -->

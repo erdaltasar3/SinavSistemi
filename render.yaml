@@ -1,0 +1,39 @@
+services:
+  # Web uygulaması
+  - type: web
+    name: sinavsistemi
+    env: python
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn SinavSistemi.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: WEB_CONCURRENCY
+        value: 2
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sinavsistemi-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*.onrender.com,sinavsistemi.onrender.com"
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_HOST_USER
+        value: sinav.merkezim.tr@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+    
+    # Deploy sonrası veritabanını başlatma işlemi
+    postDeploy: python manage.py init_render_db
+
+# PostgreSQL veritabanı
+databases:
+  - name: sinavsistemi-db
+    databaseName: sinav_sistemi
+    user: postgres 

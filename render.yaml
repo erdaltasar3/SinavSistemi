@@ -28,9 +28,6 @@ services:
         value: sinav.merkezim.tr@gmail.com
       - key: EMAIL_HOST_PASSWORD
         sync: false
-    
-    # Deploy sonrası veritabanını başlatma işlemi
-    postDeploy: python manage.py init_render_db
 
 # PostgreSQL veritabanı
 databases:

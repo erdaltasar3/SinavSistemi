@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load yks_extras %}
 
 {% block title %}{{ sinav_alt_tur.ad }} Deneme Sonucu Ekle{% endblock %}
 
@@ -169,6 +170,11 @@
     .back-btn i {
         margin-right: 8px;
     }
+
+    .input-error {
+        border: 2px solid #d32f2f !important;
+        background: #fff0f0 !important;
+    }
 </style>
 {% endblock %}
 
@@ -176,17 +182,22 @@
 <!-- YKS Arka plan overlay'ı -->
 <div class="yks-bg-overlay position-fixed top-0 start-0 w-100 h-100"></div>
 
+<!-- Fazla girilen dersler için animasyonlu hata mesajı -->
+<div id="custom-error-message" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9999; background:#fff; color:#d32f2f; border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:32px 48px; font-size:1.3rem; font-weight:600; text-align:center;"></div>
+
 <div class="container mt-5">
     <div class="exam-results-container">
         <div class="page-header">
             <h2><i class="fas fa-clipboard-check me-2"></i>{{ sinav_alt_tur.ad }} Sonuçları</h2>
         </div>
-        
-        <form method="post">
+        <form method="post" autocomplete="off">
             {% csrf_token %}
-            
             <div class="subject-grid">
                 {% for ders in dersler %}
+                    {% with hatali=0 %}
+                    {% for f in fazla_girilen_dersler %}
+                        {% if f.id == ders.id %}{% with hatali=1 %}{% endwith %}{% endif %}
+                    {% endfor %}
                     <div class="subject-card">
                         <div class="subject-header">
                             <div class="subject-icon">
@@ -217,22 +228,20 @@
                                 <div class="subject-total">Toplam: {{ ders.soru_sayisi }} soru</div>
                             </div>
                         </div>
-                        
                         <div class="input-group">
                             <label for="dogru-{{ ders.id }}">Doğru:</label>
-                            <input type="number" id="dogru-{{ ders.id }}" name="dogru_{{ ders.id }}" min="0" value="{{ submitted_data.dogru|default:0 }}">
+                            <input type="number" id="dogru-{{ ders.id }}" name="dogru_{{ ders.id }}" min="0" max="{{ ders.soru_sayisi }}" value="{{ submitted_data|dict_get:'dogru_'|add:ders.id|stringformat:'s'|default_if_none:0 }}" class="dogru-input ders-{{ ders.id }} {% if hatali %}input-error{% endif %}" data-ders-id="{{ ders.id }}" data-max="{{ ders.soru_sayisi }}">
                         </div>
-                        
                         <div class="input-group">
                             <label for="yanlis-{{ ders.id }}">Yanlış:</label>
-                            <input type="number" id="yanlis-{{ ders.id }}" name="yanlis_{{ ders.id }}" min="0" value="{{ submitted_data.yanlis|default:0 }}">
+                            <input type="number" id="yanlis-{{ ders.id }}" name="yanlis_{{ ders.id }}" min="0" max="{{ ders.soru_sayisi }}" value="{{ submitted_data|dict_get:'yanlis_'|add:ders.id|stringformat:'s'|default_if_none:0 }}" class="yanlis-input ders-{{ ders.id }} {% if hatali %}input-error{% endif %}" data-ders-id="{{ ders.id }}" data-max="{{ ders.soru_sayisi }}">
                         </div>
-                        
                         <div class="input-group">
                             <label for="bos-{{ ders.id }}">Boş:</label>
-                            <input type="number" id="bos-{{ ders.id }}" name="bos_{{ ders.id }}" min="0" value="{{ submitted_data.bos|default:0 }}">
+                            <input type="number" id="bos-{{ ders.id }}" name="bos_{{ ders.id }}" min="0" max="{{ ders.soru_sayisi }}" value="{{ submitted_data|dict_get:'bos_'|add:ders.id|stringformat:'s'|default_if_none:0 }}" class="bos-input ders-{{ ders.id }} {% if hatali %}input-error{% endif %}" data-ders-id="{{ ders.id }}" data-max="{{ ders.soru_sayisi }}">
                         </div>
                     </div>
+                    {% endwith %}
                 {% empty %}
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -240,12 +249,10 @@
                     </div>
                 {% endfor %}
             </div>
-            
             <div class="button-group">
                 <button type="submit" class="btn save-btn">
                     <i class="fas fa-save me-2"></i>Sonuçları Kaydet
                 </button>
-                
                 <a href="{% url 'yks:deneme_sinav_ekle_sinav_secim' %}" class="btn back-btn">
                     <i class="fas fa-arrow-left"></i> Geri Dön
                 </a>
@@ -257,19 +264,77 @@
 
 {% block extra_js %}
 <script>
-    // Sayfa yüklendiğinde animasyon efekti
     document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.subject-card');
-        
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, 50 * index);
+        const errorList = JSON.parse("{{ fazla_girilen_dersler|default:'[]'|escapejs }}");
+        const hataMesaji = "{{ hata_mesaji|default:''|escapejs }}";
+        const errorDiv = document.getElementById('custom-error-message');
+        if (errorList && errorList.length > 0 && hataMesaji !== '') {
+            let idx = 0;
+            function showNextError() {
+                if (idx < errorList.length) {
+                    errorDiv.innerHTML = `<i class='fas fa-exclamation-circle' style='font-size:2rem;'></i><br><br>"${errorList[idx].ad}" dersi için girilen toplam sayı, dersin toplam soru sayısından fazla! (En fazla ${errorList[idx].max})`;
+                    errorDiv.style.display = 'block';
+                    setTimeout(() => {
+                        errorDiv.style.display = 'none';
+                        idx++;
+                        setTimeout(showNextError, 300);
+                    }, 1000);
+                }
+            }
+            showNextError();
+        }
+
+        // Her input için blur eventinde sadece kendi max kontrolü
+        document.querySelectorAll('.subject-card').forEach(function(card) {
+            const max = parseInt(card.querySelector('input').dataset.max);
+            const dogruInput = card.querySelector('.dogru-input');
+            const yanlisInput = card.querySelector('.yanlis-input');
+            const bosInput = card.querySelector('.bos-input');
+            [dogruInput, yanlisInput, bosInput].forEach(function(input) {
+                input.addEventListener('blur', function() {
+                    let val = parseInt(input.value) || 0;
+                    if (val > max) input.value = max;
+                    if (val < 0) input.value = 0;
+                });
+            });
         });
+
+        // Form submit öncesi toplam kontrolü: toplam fazla ise son input azaltılır
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                document.querySelectorAll('.subject-card').forEach(function(card) {
+                    const max = parseInt(card.querySelector('input').dataset.max);
+                    const dogruInput = card.querySelector('.dogru-input');
+                    const yanlisInput = card.querySelector('.yanlis-input');
+                    const bosInput = card.querySelector('.bos-input');
+                    let d = parseInt(dogruInput.value) || 0;
+                    let y = parseInt(yanlisInput.value) || 0;
+                    let b = parseInt(bosInput.value) || 0;
+                    // Her inputun kendi max'ı
+                    if (d > max) dogruInput.value = max;
+                    if (y > max) yanlisInput.value = max;
+                    if (b > max) bosInput.value = max;
+                    if (d < 0) dogruInput.value = 0;
+                    if (y < 0) yanlisInput.value = 0;
+                    if (b < 0) bosInput.value = 0;
+                    // Toplam kontrolü
+                    d = parseInt(dogruInput.value) || 0;
+                    y = parseInt(yanlisInput.value) || 0;
+                    b = parseInt(bosInput.value) || 0;
+                    let toplam = d + y + b;
+                    if (toplam > max) {
+                        // Son inputu azalt
+                        let inputs = [dogruInput, yanlisInput, bosInput];
+                        let lastInput = document.activeElement;
+                        if (!inputs.includes(lastInput)) lastInput = bosInput; // fallback
+                        let val = parseInt(lastInput.value) || 0;
+                        let fark = toplam - max;
+                        lastInput.value = Math.max(0, val - fark);
+                    }
+                });
+            });
+        }
     });
 </script>
 {% endblock %} 

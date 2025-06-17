@@ -1478,139 +1478,82 @@ def deneme_sinav_ekle_sinav_secim(request):
 
 @login_required
 def deneme_sinav_ekle_ders_sonuclari(request, sinav_kodu):
-    """Seçilen sınav türüne ait dersleri listeler ve doğru/yanlış/boş girişi için form sunar."""
-    
-    # Sınav Alt Türünü al (GET ve POST istekleri için ortak)
     try:
         sinav_alt_tur = get_object_or_404(SinavAltTur, kod=sinav_kodu)
+        dersler = Ders.objects.filter(alt_tur=sinav_alt_tur).order_by('ad')
     except:
-        messages.error(request, "Geçersiz sınav kodu.")
         return redirect('yks:deneme_sinav_ekle_sinav_secim')
-        
-    # Dersleri al (GET ve POST istekleri için ortak)
-    dersler = Ders.objects.filter(alt_tur=sinav_alt_tur).order_by('ad')
-    
+
+    fazla_girilen_dersler = []
+    hata_mesaji = None
     if request.method == 'POST':
-        # Form gönderildiğinde yapılacak işlemler
-        try:
-            # Sınav Alt Türünü al
-            sinav_alt_tur = get_object_or_404(SinavAltTur, kod=sinav_kodu)
-            
-            # Dersleri al (Doğrulama ve kaydetme için kullanılacak)
-            dersler = Ders.objects.filter(alt_tur=sinav_alt_tur).order_by('ad')
-            
-            # Doğrulama bayrağı
-            validation_successful = True
-            
-            # Her ders için doğru/yanlış/boş sayılarını al ve doğrula
+        validation_successful = True
+        for ders in dersler:
+            dogru_key = f'dogru_{ders.id}'
+            yanlis_key = f'yanlis_{ders.id}'
+            bos_key = f'bos_{ders.id}'
+            try:
+                dogru = int(request.POST.get(dogru_key, 0))
+            except ValueError:
+                dogru = 0
+            try:
+                yanlis = int(request.POST.get(yanlis_key, 0))
+            except ValueError:
+                yanlis = 0
+            try:
+                bos = int(request.POST.get(bos_key, 0))
+            except ValueError:
+                bos = 0
+            girilen_toplam = dogru + yanlis + bos
+            toplam_soru_sayisi = ders.soru_sayisi
+            if girilen_toplam > toplam_soru_sayisi:
+                fazla_girilen_dersler.append({'id': ders.id, 'ad': ders.ad, 'max': toplam_soru_sayisi})
+                validation_successful = False
+        if validation_successful:
+            deneme_sonucu = DenemeSinavSonucu.objects.create(
+                kullanici=request.user,
+                sinav_alt_tur=sinav_alt_tur,
+                sinav_tarihi=timezone.now().date()
+            )
             for ders in dersler:
-                dogru_key = f'dogru_{ders.id}'
-                yanlis_key = f'yanlis_{ders.id}'
-                bos_key = f'bos_{ders.id}'
-                
-                # POST verisinden sayıları güvenli bir şekilde al, yoksa 0 varsay
                 try:
-                    dogru = int(request.POST.get(dogru_key, 0))
+                    dogru = int(request.POST.get(f'dogru_{ders.id}', 0))
                 except ValueError:
                     dogru = 0
-                    
                 try:
-                    yanlis = int(request.POST.get(yanlis_key, 0))
+                    yanlis = int(request.POST.get(f'yanlis_{ders.id}', 0))
                 except ValueError:
                     yanlis = 0
-                    
                 try:
-                    bos = int(request.POST.get(bos_key, 0))
+                    bos = int(request.POST.get(f'bos_{ders.id}', 0))
                 except ValueError:
                     bos = 0
-                
-                # Hata ayıklama çıktıları - Başlangıç
-                print(f"Ders ID: {ders.id}, Ders Adı: {ders.ad}")
-                print(f"Formdan Okunan Doğru: {request.POST.get(dogru_key)}")
-                print(f"Formdan Okunan Yanlış: {request.POST.get(yanlis_key)}")
-                print(f"Formdan Okunan Boş: {request.POST.get(bos_key)}")
-                print(f"Integer'a Çevrilen Doğru: {dogru}")
-                print(f"Integer'a Çevrilen Yanlış: {yanlis}")
-                print(f"Integer'a Çevrilen Boş: {bos}")
-                print(f"Hesaplanan Toplam: {dogru + yanlis + bos}")
-                print(f"Veritabanındaki Toplam Soru: {ders.soru_sayisi}")
-                # Hata ayıklama çıktıları - Son
-                
-                # Toplam girilen soru sayısı
-                girilen_toplam = dogru + yanlis + bos
-                
-                # Dersin toplam soru sayısını al
                 toplam_soru_sayisi = ders.soru_sayisi
-                
-                # Doğrulama: Girilen toplam dersin toplam soru sayısına eşit mi?
-                if girilen_toplam != toplam_soru_sayisi:
-                    messages.error(request, f"{ders.ad} dersi için girdiğiniz doğru ({dogru}) + yanlış ({yanlis}) + boş ({bos}) sayısı ({girilen_toplam}), dersin toplam soru sayısı ({toplam_soru_sayisi}) ile uyuşmuyor. Lütfen kontrol ediniz.")
-                    validation_successful = False
-                    # Hata bulunduğunda döngüyü kırarak sadece ilk hatayı göster
-                    break 
-                    
-            # Eğer doğrulama başarılı ise kaydetme işlemine geç
-            if validation_successful:
-                # Yeni DenemeSinavSonucu objesi oluştur
-                deneme_sonucu = DenemeSinavSonucu.objects.create(
-                    kullanici=request.user,
-                    sinav_alt_tur=sinav_alt_tur, # SinavAltTur objesini kullan
-                    sinav_tarihi=timezone.now().date() # Şimdilik güncel tarihi alalım
+                if dogru + yanlis + bos == 0:
+                    bos = toplam_soru_sayisi
+                    dogru = 0
+                    yanlis = 0
+                elif dogru + yanlis + bos < toplam_soru_sayisi:
+                    bos = toplam_soru_sayisi - (dogru + yanlis)
+                if dogru + yanlis + bos > toplam_soru_sayisi:
+                    continue
+                DenemeSinavDersSonucu.objects.create(
+                    deneme_sinav_sonucu=deneme_sonucu,
+                    ders=ders,
+                    dogru=dogru,
+                    yanlis=yanlis,
+                    bos=bos
                 )
-                
-                # Her ders için doğru/yanlış/boş sayılarını al ve kaydet
-                for ders in dersler:
-                     # Sayıları tekrar alıyoruz çünkü yukarıda sadece doğrulama için almıştık
-                    try:
-                         dogru = int(request.POST.get(f'dogru_{ders.id}', 0))
-                    except ValueError:
-                         dogru = 0
-                         
-                    try:
-                         yanlis = int(request.POST.get(f'yanlis_{ders.id}', 0))
-                    except ValueError:
-                         yanlis = 0
-                         
-                    try:
-                         bos = int(request.POST.get(f'bos_{ders.id}', 0))
-                    except ValueError:
-                         bos = 0
-                         
-                    if dogru + yanlis + bos > 0: # Eğer ders için herhangi bir giriş yapıldıysa kaydet
-                        DenemeSinavDersSonucu.objects.create(
-                            deneme_sinav_sonucu=deneme_sonucu,
-                            ders=ders,
-                            dogru=dogru,
-                            yanlis=yanlis,
-                            bos=bos
-                        )
-                        
-                messages.success(request, f"{sinav_alt_tur.ad} deneme sınavı sonucunuz başarıyla kaydedildi.")
-                return redirect('yks:deneme_sinav_listesi') # Denemelerim sayfasına yönlendir
-            # else: # Doğrulama başarısız ise herhangi bir şey yapma, form tekrar gösterilecek
-
-        except Exception as e:
-            # Beklenmeyen bir hata oluşursa
-            messages.error(request, f"Sonuç kaydedilirken beklenmedik bir hata oluştu: {e}")
-            # Hata durumunda form tekrar gösterilecek (aşağıdaki return render ile)
-            
-    # GET isteği veya POST hatası/doğrulama başarısızlığı durumunda formu ve ders listesini göster
-    
-    # sinav_alt_tur ve dersler GET isteği veya POST hatası durumunda tekrar alınmalı
-    try:
-         sinav_alt_tur = get_object_or_404(SinavAltTur, kod=sinav_kodu)
-         dersler = Ders.objects.filter(alt_tur=sinav_alt_tur).order_by('ad')
-    except:
-         messages.error(request, "Geçersiz sınav kodu.")
-         return redirect('yks:deneme_sinav_ekle_sinav_secim')
-
+            return redirect('yks:deneme_sinav_listesi')
+        else:
+            hata_mesaji = 'Bazı derslerde toplam giriş, dersin soru sayısından fazla!'
     context = {
         'sinav_alt_tur': sinav_alt_tur,
         'dersler': dersler,
-        # POST isteği ve hata durumunda gönderilen veriyi context'e ekle
         'submitted_data': request.POST if request.method == 'POST' else None,
+        'fazla_girilen_dersler': fazla_girilen_dersler,
+        'hata_mesaji': hata_mesaji,
     }
-    
     return render(request, 'yks/deneme_sinav_ekle_ders_sonuclari.html', context)
 
 @login_required

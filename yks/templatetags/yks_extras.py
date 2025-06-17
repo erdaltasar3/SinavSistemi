@@ -14,4 +14,11 @@ def completion_percentage(oturumlar):
     if total == 0:
         return 0
     completed = oturumlar.filter(tamamlandi=True).count()
-    return (completed / total) * 100 
+    return (completed / total) * 100
+
+@register.filter
+def dict_get(d, key):
+    try:
+        return d.get(key, '')
+    except Exception:
+        return '' 

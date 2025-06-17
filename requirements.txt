@@ -13,7 +13,7 @@ whitenoise==6.9.0
 gunicorn==23.0.0
 psycopg2-binary==2.9.9
 celery==5.3.4
-Pillow==10.2.0
+# Pillow==10.2.0
 python-bidi==0.4.2
 pytz==2023.3
 python-dotenv==1.0.1

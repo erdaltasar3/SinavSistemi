@@ -62,10 +62,30 @@ Sınav Sistemi, öğrencilerin YKS ve diğer merkezi sınavlara hazırlanmasın�
 
 ## 📷 Ekran Görüntüleri
 
-![Ana Sayfa](static/images/1.png)
-![Konu Takip](static/images/2.png)
-![Denemeler](static/images/3.png)
+# 1-) Kayıt Ol ve Giriş Yap 
 
+![Kayıt Ol](static/images/5.png)
+![Giriş Yap](static/images/4.png)
+
+# 2-) YKS Modüller Sayfası
+   ![Modüller](static/images/6.png)
+   
+# 3-) Konu Takip Sistemi
+   ![Konu Takip Sistemi](static/images/7.png)
+   ![Konu Takip Sistemi](static/images/8.png)
+   
+# 4-) Hedeflerim
+   ![Hedeflerim](static/images/9.png)
+
+# 4-) Çalışma Planı
+   ![Çalışma Planı](static/images/10.png)
+
+# 5-) Denemelerim
+   ![Denemelerim](static/images/11.png)
+
+# 6-) Geliştirme Aşamasındaki Modül Ekranları
+   ![Geliştirme Aşaması](static/images/12.png)
+   
 ## 🗂️ Proje Yapısı
 
 - **core:** Temel sistem bileşenleri, kullanıcı yönetimi
